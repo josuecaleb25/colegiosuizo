@@ -12,59 +12,6 @@ router.get('/test', (req, res) => {
   });
 });
 
-// Test alumnos
-router.get('/test-alumnos', async (req, res) => {
-  try {
-    const { data: alumnos, error } = await supabase
-      .from('alumnos')
-      .select(`
-        codigo_alumno,
-        personas!inner (
-          nombres,
-          apellidos
-        ),
-        matriculas!inner (
-          secciones!inner (
-            nombre,
-            grados!inner (
-              nombre
-            )
-          )
-        )
-      `)
-      .limit(10);
-
-    if (error) throw error;
-
-    const alumnosFormateados = alumnos?.map((a: any) => ({
-      codigo: a.codigo_alumno,
-      nombre_completo: `${a.personas.nombres} ${a.personas.apellidos}`,
-      salon: `${a.matriculas[0]?.secciones.grados.nombre} ${a.matriculas[0]?.secciones.nombre}`
-    })) || [];
-
-    res.json({
-      success: true,
-      total: alumnosFormateados.length,
-      data: alumnosFormateados
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener alumnos',
-      error: error.message
-    });
-  }
-});
-
-// Test endpoint simple
-router.get('/test', async (req, res) => {
-  res.json({
-    success: true,
-    message: 'Endpoint móvil funcionando correctamente',
-    timestamp: new Date().toISOString()
-  });
-});
-
 // Test usuarios sin autenticación
 router.get('/test-usuarios', async (req, res) => {
   try {
@@ -97,8 +44,7 @@ router.get('/test-usuarios', async (req, res) => {
   }
 });
 
-// Obtener todos los alumnos con QR
-// Obtener todos los alumnos con QR (sin autenticación temporal)
+// Obtener todos los alumnos con QR (sin autenticación)
 router.get('/usuarios', async (req, res) => {
   try {
     const { seccion, search } = req.query;
@@ -125,22 +71,10 @@ router.get('/usuarios', async (req, res) => {
             )
           )
         )
-      `);
+      `)
+      .eq('estado', 'activo');
 
-    // Filtrar por sección si se proporciona
-    if (seccion && seccion !== 'Todos') {
-      const [grado, seccionNombre] = seccion.split(' ');
-      query = query
-        .eq('matriculas.secciones.grados.nombre', grado)
-        .eq('matriculas.secciones.nombre', seccionNombre);
-    }
-
-    // Filtrar por búsqueda si se proporciona
-    if (search) {
-      query = query.or(`personas.nombres.ilike.%${search}%,personas.apellidos.ilike.%${search}%,codigo_alumno.ilike.%${search}%`);
-    }
-
-    const { data: alumnos, error } = await query.limit(100);
+    const { data: alumnos, error } = await query.limit(200);
 
     if (error) throw error;
 
@@ -176,62 +110,6 @@ router.get('/usuarios', async (req, res) => {
     });
   }
 });
-            grados!inner (
-              nombre
-            )
-          )
-        )
-      `)
-      .eq('estado', 'activo');
-
-    const { data: alumnos, error } = await query;
-
-    if (error) throw error;
-
-    let alumnosFormateados = alumnos?.map((a: any) => {
-      const matricula = a.matriculas[0];
-      const seccionNombre = matricula?.secciones?.nombre || '';
-      const gradoNombre = matricula?.secciones?.grados?.nombre || '';
-      
-      return {
-        id: a.id,
-        codigo: a.codigo_alumno,
-        nombre_completo: `${a.personas.nombres} ${a.personas.apellidos}`,
-        seccion: `${gradoNombre} ${seccionNombre}`,
-        qr_token: a.personas.codigos_qr?.[0]?.codigo || null,
-        email: a.personas.correo || `${a.personas.nombres.toLowerCase()}.${a.personas.apellidos.toLowerCase()}@peruanosuizo.edu.pe`
-      };
-    }) || [];
-
-    // Filtros
-    if (seccion && seccion !== 'Todos') {
-      alumnosFormateados = alumnosFormateados.filter((a: any) => 
-        a.seccion.includes(seccion)
-      );
-    }
-
-    if (search) {
-      const searchLower = search.toString().toLowerCase();
-      alumnosFormateados = alumnosFormateados.filter((a: any) =>
-        a.nombre_completo.toLowerCase().includes(searchLower) ||
-        a.codigo.toLowerCase().includes(searchLower)
-      );
-    }
-
-    res.json({
-      success: true,
-      data: alumnosFormateados.slice(0, 200),
-      total: alumnosFormateados.length,
-      message: `Se encontraron ${alumnosFormateados.length} estudiantes`
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener usuarios',
-      error: error.message
-    });
-  }
-});
 
 // Obtener alumnos para asistencia
 router.get('/asistencia/alumnos', async (req, res) => {
@@ -259,7 +137,7 @@ router.get('/asistencia/alumnos', async (req, res) => {
       `)
       .eq('estado', 'activo');
 
-    const { data: alumnos, error } = await query;
+    const { data: alumnos, error } = await query.limit(200);
 
     if (error) throw error;
 
@@ -279,8 +157,8 @@ router.get('/asistencia/alumnos', async (req, res) => {
       };
     });
 
-    let alumnosFormateados = alumnos?.map((a: any) => {
-      const matricula = a.matriculas[0];
+    const alumnosFormateados = alumnos?.map((a: any) => {
+      const matricula = a.matriculas?.[0];
       const seccionNombre = matricula?.secciones?.nombre || '';
       const gradoNombre = matricula?.secciones?.grados?.nombre || '';
       const asistencia = asistenciasMap[a.personas.id];
@@ -295,26 +173,9 @@ router.get('/asistencia/alumnos', async (req, res) => {
       };
     }) || [];
 
-    // Filtros
-    if (salon && salon !== 'Salon') {
-      const salonLetra = salon.toString().includes(' ') 
-        ? salon.toString().split(' ').pop() 
-        : salon;
-      alumnosFormateados = alumnosFormateados.filter((a: any) =>
-        a.salon.includes(salonLetra)
-      );
-    }
-
-    if (search) {
-      const searchLower = search.toString().toLowerCase();
-      alumnosFormateados = alumnosFormateados.filter((a: any) =>
-        a.nombre_completo.toLowerCase().includes(searchLower)
-      );
-    }
-
     res.json({
       success: true,
-      data: alumnosFormateados.slice(0, 200),
+      data: alumnosFormateados,
       total: alumnosFormateados.length,
       message: `Se encontraron ${alumnosFormateados.length} alumnos`
     });
