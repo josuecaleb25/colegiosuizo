@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tus colores originales -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="brand_dark">#6D2932</color>
+    <color name="accent_red">#BA1924</color>
+    <color name="inputcolorgris">#90A5B4</color>
+    <color name="primary_blue">#BA1924</color>
+
+    <!-- Material 3 Generated Colors (Light) -->
+    <color name="md_theme_primary">#8F4C38</color>
+    <color name="md_theme_onPrimary">#FFFFFF</color>
+    <color name="md_theme_primaryContainer">#FFDBD1</color>
+    <color name="md_theme_onPrimaryContainer">#723523</color>
+    <color name="md_theme_secondary">#77574E</color>
+    <color name="md_theme_onSecondary">#FFFFFF</color>
+    <color name="md_theme_secondaryContainer">#FFDBD1</color>
+    <color name="md_theme_onSecondaryContainer">#5D4037</color>
+    <color name="md_theme_tertiary">#8B4F24</color>
+    <color name="md_theme_onTertiary">#FFFFFF</color>
+    <color name="md_theme_tertiaryContainer">#FFDBC7</color>
+    <color name="md_theme_onTertiaryContainer">#6E380F</color>
+    <color name="md_theme_error">#BA1A1A</color>
+    <color name="md_theme_onError">#FFFFFF</color>
+    <color name="md_theme_errorContainer">#FFDAD6</color>
+    <color name="md_theme_onErrorContainer">#93000A</color>
+    <color name="md_theme_background">#FFF8F6</color>
+    <color name="md_theme_onBackground">#231917</color>
+    <color name="md_theme_surface">#FFF8F6</color>
+    <color name="md_theme_onSurface">#231917</color>
+    <color name="md_theme_surfaceVariant">#F5DED8</color>
+    <color name="md_theme_onSurfaceVariant">#53433F</color>
+    <color name="md_theme_outline">#85736E</color>
+    <color name="md_theme_outlineVariant">#D8C2BC</color>
+
+    <!-- Scheme Green 1 (Vibrante) -->
+    <color name="scheme2_top">#C7EFB2</color>
+    <color name="scheme2_bottom_left">#476838</color>
+    <color name="scheme2_bottom_right">#ABD398</color>
+
+    <!-- Scheme Green 2 (Muted/Pastel) -->
+    <color name="scheme3_top">#DCE6D5</color>
+    <color name="scheme3_bottom_left">#586253</color>
+    <color name="scheme3_bottom_right">#C0CAB9</color>
+</resources>

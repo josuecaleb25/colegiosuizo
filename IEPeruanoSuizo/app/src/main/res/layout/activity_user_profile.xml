@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/homeHeaderBackground"
+    tools:context=".UserProfile">
+
+    <!-- Header Layout Unificado -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/header_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="30dp"
+        android:paddingBottom="16dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <!-- Botón de atrás estilo Card -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/btn_back_profile"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            app:cardBackgroundColor="?attr/homeContentBackground"
+            app:cardCornerRadius="15dp"
+            app:cardElevation="0dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/righticon"
+                app:tint="#444444" />
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/potanosansbold"
+            android:text="Perfil"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- User Info Section -->
+    <LinearLayout
+        android:id="@+id/user_info_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="32dp"
+        app:layout_constraintTop_toBottomOf="@+id/header_layout">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            app:cardCornerRadius="37.5dp"
+            app:cardElevation="0dp">
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/gatobelo" />
+        </androidx.cardview.widget.CardView>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/pontanosemibold"
+                android:text="Sebastian Perez"
+                android:textColor="?attr/homeTextColorSebastian"
+                android:textSize="16sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/pontanosemibold"
+                android:text="sebastian.perez@peruanosuizo.edu.pe"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Options List -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="24dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_navigation"
+        app:layout_constraintTop_toBottomOf="@+id/user_info_header">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="32dp"
+            android:paddingBottom="32dp">
+
+            <!-- SECTION: Account -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+                android:fontFamily="@font/poppinssemibold"
+                android:text="Cuenta"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="13sp" />
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:orientation="horizontal">
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/informationperson" app:tint="?android:attr/textColorPrimary" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Mi informacion" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
+                <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:orientation="horizontal">
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/securtitynew" app:tint="?android:attr/textColorPrimary" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Contraseña y Seguridad" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
+                <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:orientation="horizontal">
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/notification" app:tint="?android:attr/textColorPrimary" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Notificaciones" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
+                <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
+            </LinearLayout>
+
+            <!-- SECTION: Preferences -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="8dp"
+                android:fontFamily="@font/poppinssemibold"
+                android:text="Preferencias"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="13sp" />
+
+            <LinearLayout
+                android:id="@+id/option_apariencia"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/palettenewiconfinal" app:tint="?android:attr/textColorPrimary" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Apariencia" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
+                <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:orientation="horizontal">
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/aboutcode" app:tint="?android:attr/textColorPrimary" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Acerca de la Aplicacion" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
+                <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
+            </LinearLayout>
+
+            <!-- SECTION: Support -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="8dp"
+                android:fontFamily="@font/poppinssemibold"
+                android:text="Soporte"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="13sp" />
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:orientation="horizontal">
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/helpuscontact" app:tint="?android:attr/textColorPrimary" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Centro de Ayuda" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
+                <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
+            </LinearLayout>
+
+            <LinearLayout 
+                android:id="@+id/option_logout"
+                android:layout_width="match_parent" 
+                android:layout_height="56dp" 
+                android:gravity="center_vertical" 
+                android:orientation="horizontal"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/logouticon" app:tint="#BA1924" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Logout" android:textColor="#BA1924" android:textSize="14sp" />
+                <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/flechaie" app:tint="#BA1924" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/bottomNavBackground"
+        app:elevation="0dp"
+        app:labelVisibilityMode="unlabeled"
+        app:menu="@menu/bottom_nav_menu"
+        app:itemIconTint="@color/nav_item_color_state"
+        app:itemActiveIndicatorStyle="@null"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

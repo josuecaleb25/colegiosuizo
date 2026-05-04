@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/white">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:context=".RegisterBiometric">
+
+        <include
+            android:id="@+id/include_actionbar"
+            layout="@layout/app_actionbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/titlebiometricregister"
+            android:text="Ultimo Paso"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginStart="25dp"
+            android:layout_marginEnd="25dp"
+            android:fontFamily="@font/poppinssemibold"
+            android:textColor="#BA1924"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            app:layout_constraintWidth_max="500dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/include_actionbar" />
+
+        <TextView
+            android:id="@+id/descripbiometric"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="25dp"
+            android:layout_marginEnd="25dp"
+            android:fontFamily="@font/poppinsmedium"
+            android:text="Para mayor seguridad, vincula tu rostro, ya que este será tu llave para entrar a la aplicación y para futuras asistencias"
+            android:textColor="#A8A7B2"
+            android:textSize="10sp"
+            app:layout_constraintWidth_max="500dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/titlebiometricregister" />
+
+        <ImageView
+            android:id="@+id/ImagePaso2Register"
+            android:src="@drawable/biometrichead"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="60dp"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            app:tint="#000000"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintWidth_percent="0.3"
+            app:layout_constraintWidth_max="250dp"
+            app:layout_constraintTop_toBottomOf="@+id/descripbiometric" />
+
+        <TextView
+            android:id="@+id/tvRecomenTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="25dp"
+            android:layout_marginEnd="25dp"
+            android:layout_marginTop="52dp"
+            android:text="Recomendaciones:"
+            android:fontFamily="@font/poppinssemibold"
+            android:textColor="#BA1924"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintWidth_max="500dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ImagePaso2Register" />
+
+        <LinearLayout
+            android:id="@+id/layoutRecomenList"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="25dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="25dp"
+            android:orientation="vertical"
+            app:layout_constraintWidth_max="500dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvRecomenTitle">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_chevron_right_red" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:text="Ubícate en un lugar con buena iluminación"
+                    android:textColor="#333333"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_chevron_right_red" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:text="Quítate lentes, gorras o mascarilla"
+                    android:textColor="#333333"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_chevron_right_red" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:text="Mantén el rostro centrado en el recuadro"
+                    android:textColor="#333333"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnSiguienteBiometric"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginTop="190dp"
+            android:backgroundTint="#BA1924"
+            android:text="Siguiente"
+            android:textSize="16sp"
+            android:textColor="@color/white"
+            android:fontFamily="@font/leaguespartanmedium"
+            app:cornerRadius="15dp"
+            app:layout_constraintWidth_max="450dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/layoutRecomenList" />
+
+        <Button
+            android:id="@+id/btnOmitir"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="32dp"
+            android:backgroundTint="#A8A7B2"
+            android:text="Omitir"
+            android:fontFamily="@font/leaguespartanmedium"
+            android:textSize="16sp"
+            android:textColor="@color/white"
+            app:cornerRadius="15dp"
+            app:layout_constraintWidth_max="450dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btnSiguienteBiometric" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

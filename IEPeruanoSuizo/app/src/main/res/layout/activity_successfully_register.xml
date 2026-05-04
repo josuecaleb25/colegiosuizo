@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/white">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:context=".SuccessfullyRegister">
+
+        <!-- Bloque superior independiente y centrado con ancho máximo -->
+        <ImageView
+            android:id="@+id/imgSuccess"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:src="@drawable/succefullyregister"
+            app:layout_constraintBottom_toTopOf="@+id/tvSuccessTitle"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.45"
+            app:layout_constraintVertical_chainStyle="packed"
+            app:layout_constraintWidth_percent="0.6"
+            app:layout_constraintWidth_max="350dp" />
+
+        <TextView
+            android:id="@+id/tvSuccessTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="Registro exitoso"
+            android:textColor="#BA1924"
+            android:fontFamily="@font/poppinssemibold"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            app:layout_constraintBottom_toTopOf="@+id/tvSuccessDesc"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/imgSuccess"
+            app:layout_constraintWidth_max="500dp" />
+
+        <TextView
+            android:id="@+id/tvSuccessDesc"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="48dp"
+            android:layout_marginTop="8dp"
+            android:fontFamily="@font/poppinsmedium"
+            android:layout_marginEnd="48dp"
+            android:gravity="center"
+            android:text="Tu cuenta ha sido creada correctamente"
+            android:textColor="#A8A7B2"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvSuccessTitle"
+            app:layout_constraintWidth_max="500dp" />
+
+        <!-- Botón Finalizar - Siempre al fondo con ancho máximo -->
+        <Button
+            android:id="@+id/btnFinalizar"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginBottom="32dp"
+            android:backgroundTint="#BA1924"
+            android:text="Finalizar"
+            android:textColor="@color/white"
+            android:fontFamily="@font/leaguespartanmedium"
+            android:textSize="16sp"
+            app:cornerRadius="15dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintVertical_bias="1.0"
+            app:layout_constraintWidth_max="450dp" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

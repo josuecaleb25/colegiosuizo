@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingVertical="18dp"
+    android:paddingHorizontal="20dp"
+    android:gravity="center_vertical"
+    android:weightSum="3">
+
+    <TextView
+        android:id="@+id/tv_nombre_alumno"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.3"
+        android:fontFamily="@font/poppinsmedium"
+        android:text="Nombre Alumno"
+        android:textColor="?attr/homeTextColorSebastian"
+        android:textSize="14sp"
+        android:singleLine="true"
+        android:ellipsize="end"/>
+
+    <TextView
+        android:id="@+id/tv_salon_alumno"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.8"
+        android:fontFamily="@font/poppinsregular"
+        android:gravity="center"
+        android:text="Jan 6, 2028"
+        android:textColor="#858585"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/tv_estado_entrada"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.9"
+        android:fontFamily="@font/poppinsbold"
+        android:gravity="end"
+        android:text="06:50 am"
+        android:textColor="#27AE60"
+        android:textSize="14sp" />
+</LinearLayout>

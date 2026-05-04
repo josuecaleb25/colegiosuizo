@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="homeHeaderBackground" format="color" />
+    <attr name="homeContentBackground" format="color" />
+    <attr name="homeCardBackground" format="color" />
+    <attr name="homeTextColorSebastian" format="color" />
+    <attr name="homeTextColorTitles" format="color" />
+    <attr name="homeTextColorCardLabel" format="color" />
+    <attr name="drawerBackground" format="color" />
+    <attr name="bottomNavBackground" format="color" />
+</resources>

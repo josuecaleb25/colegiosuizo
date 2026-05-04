@@ -1,0 +1,32 @@
+=== COMANDOS PARA SUBIR TODO A GITHUB ===
+
+1. Eliminar el repositorio git anidado de IEPeruanoSuizo:
+   rd /s /q IEPeruanoSuizo\.git
+
+2. Agregar todos los cambios:
+   git add .
+
+3. Hacer commit:
+   git commit -m "Configurar backend para Render con PostgreSQL y WhiteNoise"
+
+4. Subir a la rama josue:
+   git push -f origin josue
+
+=== VERIFICAR QUE TODO SUBIÓ ===
+
+Ir a: https://github.com/Sebin3/IEPeruanoSuizo/tree/josue
+
+Verificar que existan:
+- backend_colegio/requirements.txt
+- backend_colegio/build.sh
+- backend_colegio/runtime.txt
+- backend_colegio/DEPLOY_RENDER.md
+- IEPeruanoSuizo/ (con todo el contenido de la app)
+
+=== SIGUIENTE PASO ===
+
+Ir a render.com y seguir la guía en:
+backend_colegio/DEPLOY_RENDER.md
+
+O el resumen rápido en:
+backend_colegio/RESUMEN_CONFIGURACION.md

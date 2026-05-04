@@ -1,0 +1,41 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.IEPeruanoSuizoAPP" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <item name="colorPrimary">@color/inputcolorgris</item>
+
+        <!-- Atributos para Home -->
+        <item name="homeHeaderBackground">@color/white</item>
+        <item name="homeContentBackground">#F5F5F5</item>
+        <item name="homeCardBackground">@color/white</item>
+        <item name="homeTextColorSebastian">#141A1E</item>
+        <item name="homeTextColorTitles">#263238</item>
+        <item name="homeTextColorCardLabel">#455A64</item>
+        <item name="drawerBackground">#6D2932</item>
+        <item name="bottomNavBackground">@color/white</item>
+    </style>
+
+    <style name="Theme.IEPeruanoSuizoAPP" parent="Base.Theme.IEPeruanoSuizoAPP" />
+
+    <!-- Variantes de Temas por Color -->
+    <style name="Theme.IEPeruanoSuizoAPP.Green" parent="Base.Theme.IEPeruanoSuizoAPP">
+        <!-- Usamos colores de scheme3 para un verde profesional -->
+        <item name="colorPrimary">@color/scheme3_bottom_left</item>
+        <item name="homeHeaderBackground">@color/scheme3_top</item>
+        <item name="homeContentBackground">@color/scheme3_bottom_right</item>
+        <!-- homeCardBackground controla el color de los contenedores de botones en Inicio -->
+        <item name="homeCardBackground">@color/white</item>
+        <item name="drawerBackground">@color/scheme3_bottom_left</item>
+        <item name="bottomNavBackground">@color/scheme3_bottom_right</item>
+    </style>
+
+    <style name="DrawerTextStyle" parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:fontFamily">@font/leaguespartanmedium</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="CircleImage">
+        <item name="cornerSize">50%</item>
+    </style>
+</resources>

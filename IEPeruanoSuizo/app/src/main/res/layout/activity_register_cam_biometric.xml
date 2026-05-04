@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/white">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:context=".RegisterCamBiometric">
+
+        <include
+            android:id="@+id/include_actionbar"
+            layout="@layout/app_actionbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Contenedor Circular de la Cámara -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardCamera"
+            android:layout_width="220dp"
+            android:layout_height="220dp"
+            android:layout_marginTop="60dp"
+            app:cardCornerRadius="110dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="3dp"
+            app:strokeColor="#BA1924"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/include_actionbar">
+
+            <!-- Aquí irá la vista previa de la cámara -->
+            <View
+                android:id="@+id/cameraPreviewPlaceholder"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#F5F5F5" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/tvInstruction"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:text="Mire directo a la camara"
+            android:fontFamily="@font/poppinsmedium"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:gravity="center"
+            app:layout_constraintWidth_max="500dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cardCamera" />
+
+        <Button
+            android:id="@+id/btnContinuarCam"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginTop="330dp"
+            android:backgroundTint="#BA1924"
+            android:text="Continuar"
+            android:textColor="@color/white"
+            android:fontFamily="@font/poppinsmedium"
+            android:textSize="16dp"
+            app:cornerRadius="15dp"
+            app:layout_constraintWidth_max="450dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvInstruction" />
+
+        <Button
+            android:id="@+id/btnRetake"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="32dp"
+            android:backgroundTint="#A8A7B2"
+            android:text="Tomar denuevo"
+            android:fontFamily="@font/poppinsmedium"
+            android:textSize="16dp"
+            android:textColor="@color/white"
+            app:cornerRadius="15dp"
+            app:layout_constraintWidth_max="450dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btnContinuarCam" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/white">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:context=".AuthLogin">
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guidelineTop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.1" />
+
+        <ImageView
+            android:id="@+id/LogoIE"
+            android:src="@drawable/logoie"
+            android:scaleType="fitCenter"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintWidth_percent="0.5"
+            app:layout_constraintWidth_max="280dp"
+            android:adjustViewBounds="true"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/guidelineTop"
+            />
+
+        <TextView
+            android:id="@+id/Welcome"
+            android:text="Bienvenido!"
+            android:fontFamily="@font/leaguespartansemibold"
+            android:textSize="27sp"
+            android:textColor="#0E0D18"
+            android:gravity="center"
+            android:layout_marginTop="24dp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintWidth_max="500dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/LogoIE"
+            />
+
+        <TextView
+            android:id="@+id/DescripLogin"
+            android:text="Usa tus credenciales para acceder a tu cuenta"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:fontFamily="@font/poppinsmedium"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:textSize="13sp"
+            android:gravity="center"
+            android:textColor="#A8A7B2"
+            app:layout_constraintWidth_max="450dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/Welcome" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutUser"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginTop="32dp"
+            android:hint="Email"
+            android:textColorHint="@color/input_border_selector"
+            app:boxStrokeColor="@color/input_border_selector"
+            app:boxStrokeWidthFocused="2dp"
+            app:boxCornerRadiusBottomEnd="25dp"
+            app:boxCornerRadiusBottomStart="25dp"
+            app:boxCornerRadiusTopEnd="25dp"
+            app:boxCornerRadiusTopStart="25dp"
+            app:layout_constraintWidth_max="450dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/DescripLogin">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputTypeIDUSER"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinsmedium"
+                android:textColor="#0E0D18"
+                android:padding="16dp"
+                android:textSize="16sp"
+                android:inputType="textEmailAddress" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutPassword"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginTop="16dp"
+            android:hint="Contraseña"
+            android:textColorHint="@color/input_border_selector"
+            app:passwordToggleEnabled="true"
+            app:passwordToggleTint="@color/input_border_selector"
+            app:boxStrokeColor="@color/input_border_selector"
+            app:boxStrokeWidthFocused="2dp"
+            app:boxCornerRadiusBottomEnd="25dp"
+            app:boxCornerRadiusTopStart="25dp"
+            app:boxCornerRadiusTopEnd="25dp"
+            app:boxCornerRadiusBottomStart="25dp"
+            app:layout_constraintWidth_max="450dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/layoutUser" >
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputTypePassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:fontFamily="@font/poppinsmedium"
+                android:textColor="#0E0D18"
+                android:padding="16dp"
+                android:inputType="textPassword" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/ForgotPassword"
+            android:text="¿Olvidaste tu contraseña?"
+            android:fontFamily="@font/leaguespartansemibold"
+            android:textColor="#BA1924"
+            android:layout_marginTop="12dp"
+            android:textSize="15sp"
+            android:layout_marginEnd="10dp"
+            android:textStyle="bold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="@+id/layoutPassword"
+            app:layout_constraintTop_toBottomOf="@+id/layoutPassword" />
+
+        <Button
+            android:id="@+id/Login"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginTop="54dp"
+            android:textSize="16sp"
+            android:fontFamily="@font/leaguespartanmedium"
+            android:backgroundTint="#BA1924"
+            android:text="Iniciar sesión"
+            android:textColor="@color/white"
+            app:cornerRadius="15dp"
+            app:layout_constraintWidth_max="450dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ForgotPassword" />
+
+<!--        <androidx.constraintlayout.widget.ConstraintLayout-->
+<!--            android:id="@+id/orSection"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="32dp"-->
+<!--            app:layout_constraintWidth_max="450dp"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/Login">-->
+
+<!--            <View-->
+<!--                android:id="@+id/lineLeft"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="1dp"-->
+<!--                android:layout_marginStart="32dp"-->
+<!--                android:layout_marginEnd="16dp"-->
+<!--                android:background="#E0E0E0"-->
+<!--                app:layout_constraintBottom_toBottomOf="@+id/tvOr"-->
+<!--                app:layout_constraintEnd_toStartOf="@+id/tvOr"-->
+<!--                app:layout_constraintStart_toStartOf="parent"-->
+<!--                app:layout_constraintTop_toTopOf="@+id/tvOr" />-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/tvOr"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:fontFamily="@font/leaguespartanmedium"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Or"-->
+<!--                android:textColor="#A8A7B2"-->
+<!--                android:textSize="16sp"-->
+<!--                app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                app:layout_constraintEnd_toEndOf="parent"-->
+<!--                app:layout_constraintStart_toStartOf="parent"-->
+<!--                app:layout_constraintTop_toTopOf="parent" />-->
+
+<!--            <View-->
+<!--                android:id="@+id/lineRight"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="1dp"-->
+<!--                android:layout_marginStart="16dp"-->
+<!--                android:layout_marginEnd="32dp"-->
+<!--                android:background="#E0E0E0"-->
+<!--                app:layout_constraintBottom_toBottomOf="@+id/tvOr"-->
+<!--                app:layout_constraintEnd_toEndOf="parent"-->
+<!--                app:layout_constraintStart_toEndOf="@+id/tvOr"-->
+<!--                app:layout_constraintTop_toTopOf="@+id/tvOr" />-->
+<!--        </androidx.constraintlayout.widget.ConstraintLayout>-->
+
+<!--        <ImageView-->
+<!--            android:id="@+id/biometricIcon"-->
+<!--            android:layout_width="80dp"-->
+<!--            android:layout_height="80dp"-->
+<!--            android:layout_marginTop="24dp"-->
+<!--            android:alpha="0.4"-->
+<!--            android:src="@drawable/biometrichead"-->
+<!--            android:contentDescription="Acceso Biométrico"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/orSection" />-->
+
+<!--        <LinearLayout-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="32dp"-->
+<!--            android:layout_marginBottom="32dp"-->
+<!--            android:orientation="horizontal"-->
+<!--            app:layout_constraintBottom_toBottomOf="parent"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/biometricIcon">-->
+
+<!--            <TextView-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="No tienes una cuenta? "-->
+<!--                android:fontFamily="@font/poppinsmedium"-->
+<!--                android:textColor="#0E0D18"-->
+<!--                android:textSize="12sp" />-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/tvRegister"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Registrate"-->
+<!--                android:fontFamily="@font/poppinssemibold"-->
+<!--                android:textColor="#BA1924"-->
+<!--                android:textSize="12sp"-->
+<!--                android:textStyle="bold" />-->
+<!--        </LinearLayout>-->
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

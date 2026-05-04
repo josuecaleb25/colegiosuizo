@@ -1,0 +1,105 @@
+========================================
+CONFIGURACIÓN SUPABASE + RENDER
+========================================
+
+PASO 1: CREAR PROYECTO EN SUPABASE
+-----------------------------------
+1. Ve a https://supabase.com
+2. Crea cuenta (gratis)
+3. "New Project"
+   - Name: ieperuanosuizo
+   - Database Password: [guarda esta contraseña]
+   - Region: South America (São Paulo) - el más cercano
+4. Espera 2-3 minutos a que se cree
+
+PASO 2: EJECUTAR EL ESQUEMA SQL
+--------------------------------
+1. En Supabase, ve a "SQL Editor"
+2. Copia TODO el contenido de: SUPABASE_SCHEMA.sql
+3. Pégalo en el editor
+4. Click "Run" o presiona Ctrl+Enter
+5. Verifica que se crearon todas las tablas en "Table Editor"
+
+PASO 3: OBTENER LA CONNECTION STRING
+-------------------------------------
+1. En Supabase, ve a "Project Settings" (⚙️)
+2. Click en "Database"
+3. Busca "Connection string" → "URI"
+4. Copia la URL que se ve así:
+   postgresql://postgres:[YOUR-PASSWORD]@db.xxx.supabase.co:5432/postgres
+
+5. Reemplaza [YOUR-PASSWORD] con tu contraseña real
+
+PASO 4: CONFIGURAR RENDER
+--------------------------
+1. Ve a render.com
+2. Crea tu Web Service (como antes)
+3. En "Environment Variables" agrega:
+
+   SECRET_KEY=<genera-con-generate_secret_key.py>
+   DEBUG=False
+   DATABASE_URL=postgresql://postgres:TU-PASSWORD@db.xxx.supabase.co:5432/postgres
+   ALLOWED_HOSTS=tu-app.onrender.com
+
+4. NO necesitas crear PostgreSQL en Render (usas Supabase)
+
+PASO 5: DESPLEGAR
+------------------
+1. Build Command: ./build.sh
+2. Start Command: cd backend_colegio && gunicorn config.wsgi:application
+3. Click "Create Web Service"
+4. Espera 5-10 minutos
+
+PASO 6: CARGAR DATOS INICIALES
+-------------------------------
+Opción A - Desde Render Shell:
+   cd backend_colegio
+   python manage.py seed
+
+Opción B - Desde local:
+   # Configura DATABASE_URL en tu .env local
+   python manage.py seed
+
+========================================
+VENTAJAS DE SUPABASE
+========================================
+✅ PostgreSQL GRATIS permanente (500MB)
+✅ No se borra nunca (persistente)
+✅ Backups automáticos
+✅ Panel de administración visual
+✅ API REST automática
+✅ Realtime subscriptions
+✅ Storage para archivos
+✅ Authentication integrada
+
+========================================
+CONEXIÓN STRING DE EJEMPLO
+========================================
+postgresql://postgres:tu-password-aqui@db.abcdefghijk.supabase.co:5432/postgres
+
+Reemplaza:
+- tu-password-aqui: con tu contraseña de Supabase
+- abcdefghijk: con tu ID de proyecto
+
+========================================
+VERIFICAR QUE FUNCIONA
+========================================
+1. https://tu-app.onrender.com/api/mobile/test/
+2. https://tu-app.onrender.com/api/mobile/test-alumnos/
+3. https://tu-app.onrender.com/admin/
+
+========================================
+COMANDOS ÚTILES
+========================================
+
+# Ver tablas en Supabase
+SELECT table_name FROM information_schema.tables 
+WHERE table_schema = 'public';
+
+# Contar alumnos
+SELECT COUNT(*) FROM asistencia_alumno;
+
+# Ver usuarios
+SELECT email, rol FROM usuarios_usuario;
+
+========================================

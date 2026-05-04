@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@drawable/ic_home"
+        android:title="Home" />
+
+    <item
+        android:id="@+id/nav_homework"
+        android:icon="@drawable/icon_cursos"
+        android:title="Cursos" />
+
+    <item
+        android:id="@+id/nav_horarios"
+        android:icon="@drawable/iconcalendar"
+        android:title="Calendario" />
+
+    <item
+        android:id="@+id/nav_search"
+        android:icon="@drawable/ic_buscador"
+        android:title="Buscar" />
+
+    <item
+        android:id="@+id/nav_more"
+        android:icon="@drawable/ic_3puntos"
+        android:title="Más" />
+
+</menu>

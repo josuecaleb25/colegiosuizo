@@ -1,0 +1,17 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Customize your dark theme here. -->
+    <style name="Theme.IEPeruanoSuizoAPP" parent="Base.Theme.IEPeruanoSuizoAPP">
+        <!-- Colores específicos para Dark Mode -->
+        <item name="homeHeaderBackground">#000000</item>
+        <item name="homeContentBackground">#141314</item>
+        <item name="homeCardBackground">#1E1E1E</item>
+        <item name="homeTextColorSebastian">#FFFFFF</item>
+        <item name="homeTextColorTitles">#FFFFFF</item>
+        <item name="homeTextColorCardLabel">#FFFFFF</item>
+
+        <!-- Compatibilidad con vistas estándar -->
+        <item name="android:windowBackground">#000000</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="bottomNavBackground">#000000</item>
+    </style>
+</resources>
