@@ -98,6 +98,7 @@ router.get('/test-usuarios', async (req, res) => {
 });
 
 // Obtener todos los alumnos con QR
+// Obtener todos los alumnos con QR (sin autenticación temporal)
 router.get('/usuarios', async (req, res) => {
   try {
     const { seccion, search } = req.query;
@@ -119,6 +120,62 @@ router.get('/usuarios', async (req, res) => {
         matriculas!inner (
           secciones!inner (
             nombre,
+            grados!inner (
+              nombre
+            )
+          )
+        )
+      `);
+
+    // Filtrar por sección si se proporciona
+    if (seccion && seccion !== 'Todos') {
+      const [grado, seccionNombre] = seccion.split(' ');
+      query = query
+        .eq('matriculas.secciones.grados.nombre', grado)
+        .eq('matriculas.secciones.nombre', seccionNombre);
+    }
+
+    // Filtrar por búsqueda si se proporciona
+    if (search) {
+      query = query.or(`personas.nombres.ilike.%${search}%,personas.apellidos.ilike.%${search}%,codigo_alumno.ilike.%${search}%`);
+    }
+
+    const { data: alumnos, error } = await query.limit(100);
+
+    if (error) throw error;
+
+    // Formatear respuesta
+    const alumnosFormateados = alumnos?.map((a: any) => {
+      const matricula = a.matriculas?.[0];
+      const seccionNombre = matricula?.secciones?.nombre || '';
+      const gradoNombre = matricula?.secciones?.grados?.nombre || '';
+      
+      return {
+        id: a.id,
+        codigo: a.codigo_alumno,
+        nombre_completo: `${a.personas.nombres} ${a.personas.apellidos}`,
+        salon: `${gradoNombre} ${seccionNombre}`,
+        qr_token: a.personas.codigos_qr?.[0]?.codigo || null,
+        email: a.personas.correo || `${a.personas.nombres.toLowerCase()}.${a.personas.apellidos.toLowerCase()}@peruanosuizo.edu.pe`
+      };
+    }) || [];
+
+    res.json({
+      success: true,
+      message: 'Usuarios obtenidos exitosamente',
+      data: alumnosFormateados,
+      total: alumnosFormateados.length
+    });
+
+  } catch (error: any) {
+    console.error('Error al obtener usuarios:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener usuarios',
+      error: error.message
+    });
+  }
+});
             grados!inner (
               nombre
             )
