@@ -56,6 +56,47 @@ router.get('/test-alumnos', async (req, res) => {
   }
 });
 
+// Test endpoint simple
+router.get('/test', async (req, res) => {
+  res.json({
+    success: true,
+    message: 'Endpoint móvil funcionando correctamente',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Test usuarios sin autenticación
+router.get('/test-usuarios', async (req, res) => {
+  try {
+    const { data: alumnos, error } = await supabase
+      .from('alumnos')
+      .select(`
+        id,
+        codigo_alumno,
+        personas!inner (
+          nombres,
+          apellidos
+        )
+      `)
+      .limit(5);
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      message: 'Test usuarios exitoso',
+      data: alumnos || [],
+      total: alumnos?.length || 0
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: 'Error en test usuarios',
+      error: error.message
+    });
+  }
+});
+
 // Obtener todos los alumnos con QR
 router.get('/usuarios', async (req, res) => {
   try {
