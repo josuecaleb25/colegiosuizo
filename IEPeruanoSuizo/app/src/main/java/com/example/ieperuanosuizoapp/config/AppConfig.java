@@ -9,13 +9,13 @@ public class AppConfig {
     // - Para emulador Android Studio usar: "http://10.0.2.2:8000/"
     // - Para dispositivo físico usar tu IP local: "http://192.168.101.9:8000/"
     
-    // PRODUCCIÓN (Railway):
-    // - Cuando despliegues a Railway, cambiar a: "https://tu-app.railway.app/"
+    // PRODUCCIÓN (Render):
+    // - Backend desplegado en Render.com
     
-    // CONFIGURACIÓN ACTUAL: Dispositivo físico (desarrollo local)
-    public static final String BASE_URL = "http://192.168.101.9:8000/";  // Tu dispositivo físico
-    // public static final String BASE_URL = "http://10.0.2.2:8000/";  // Emulador
-    // public static final String BASE_URL = "https://tu-app.railway.app/";  // Producción Railway
+    // CONFIGURACIÓN ACTUAL: PRODUCCIÓN
+    public static final String BASE_URL = "https://colegiosuizo.onrender.com/api/";  // Producción Render
+    // public static final String BASE_URL = "http://192.168.101.9:8000/api/";  // Dispositivo físico (desarrollo)
+    // public static final String BASE_URL = "http://10.0.2.2:8000/api/";  // Emulador (desarrollo)
     
     // Configuración de timeouts
     public static final int CONNECT_TIMEOUT = 30; // segundos
