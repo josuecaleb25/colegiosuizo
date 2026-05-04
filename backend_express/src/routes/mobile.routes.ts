@@ -263,7 +263,7 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
       });
     }
 
-    const persona = codigosQr[0]?.personas;
+    const personaData = codigosQr[0]?.personas as any;
     const hoy = new Date().toISOString().split('T')[0];
     const ahora = new Date();
     const hora = ahora.getHours();
@@ -274,7 +274,7 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
     const { data: asistenciaExistente } = await supabase
       .from('asistencias')
       .select('hora_entrada')
-      .eq('persona_id', persona?.id)
+      .eq('persona_id', personaData?.id)
       .eq('fecha', hoy)
       .limit(1);
 
@@ -289,7 +289,7 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
     const { error: insertError } = await supabase
       .from('asistencias')
       .insert({
-        persona_id: persona?.id,
+        persona_id: personaData?.id,
         tipo_persona: 'alumno',
         fecha: hoy,
         hora_entrada: ahora.toTimeString().split(' ')[0],
@@ -302,7 +302,7 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
       success: true,
       message: 'Asistencia registrada exitosamente',
       data: {
-        alumno: `${persona?.nombres} ${persona?.apellidos}`,
+        alumno: `${personaData?.nombres} ${personaData?.apellidos}`,
         estado,
         hora: ahora.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })
       }
