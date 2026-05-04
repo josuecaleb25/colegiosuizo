@@ -1,1 +1,0 @@
-# Mobile API endpoints for IE Peruano Suizo App
