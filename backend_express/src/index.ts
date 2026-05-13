@@ -8,6 +8,13 @@ import authRoutes from './routes/auth.routes';
 import alumnosRoutes from './routes/alumnos.routes';
 import asistenciaRoutes from './routes/asistencia.routes';
 import mobileRoutes from './routes/mobile.routes';
+import cursosRoutes from './routes/cursos.routes';
+import calificacionesRoutes from './routes/calificaciones.routes';
+import horariosRoutes from './routes/horarios.routes';
+import comunicadosRoutes from './routes/comunicados.routes';
+import usuariosRoutes from './routes/usuarios.routes';
+import adminRoutes from './routes/admin.routes';
+import seccionesRoutes from './routes/secciones.routes';
 
 dotenv.config();
 
@@ -27,9 +34,21 @@ app.get('/', (req, res) => {
   res.json({ 
     success: true, 
     message: 'API Sistema de Asistencia IE Peruano Suizo',
-    version: '1.0.0',
+    version: '2.0.0',
     backend: 'Express.js + TypeScript',
-    database: 'Supabase (PostgreSQL)'
+    database: 'Supabase (PostgreSQL)',
+    endpoints: {
+      auth: '/api/auth',
+      alumnos: '/api/alumnos',
+      asistencia: '/api/asistencia',
+      mobile: '/api/mobile',
+      cursos: '/api/cursos',
+      calificaciones: '/api/calificaciones',
+      horarios: '/api/horarios',
+      comunicados: '/api/comunicados',
+      usuarios: '/api/usuarios',
+      admin: '/api/admin'
+    }
   });
 });
 
@@ -37,6 +56,13 @@ app.use('/api/auth', authRoutes);
 app.use('/api/alumnos', alumnosRoutes);
 app.use('/api/asistencia', asistenciaRoutes);
 app.use('/api/mobile', mobileRoutes);
+app.use('/api/cursos', cursosRoutes);
+app.use('/api/calificaciones', calificacionesRoutes);
+app.use('/api/horarios', horariosRoutes);
+app.use('/api/comunicados', comunicadosRoutes);
+app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/secciones', seccionesRoutes);
 
 // Manejo de errores
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

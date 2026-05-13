@@ -58,7 +58,7 @@ router.post('/login', async (req, res) => {
         rol: user.rol 
       },
       process.env.JWT_SECRET || 'secret',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      { expiresIn: '7d' }
     );
 
     res.json({

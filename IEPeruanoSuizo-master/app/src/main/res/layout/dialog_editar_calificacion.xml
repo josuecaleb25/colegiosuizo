@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/tv_nombre_elemento"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Nombre del elemento"
+        android:textColor="#141A1E"
+        android:textSize="16sp"
+        android:fontFamily="@font/pontanosemibold"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Calificación (0-20)"
+        android:textColor="#5E5F60"
+        android:textSize="13sp"
+        android:fontFamily="@font/pontanoregular"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/et_calificacion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Ingrese la calificación"
+        android:inputType="number"
+        android:maxLength="2"
+        android:textSize="14sp"
+        android:fontFamily="@font/pontanoregular"
+        android:padding="12dp"
+        android:background="@drawable/input_border_selector" />
+
+</LinearLayout>

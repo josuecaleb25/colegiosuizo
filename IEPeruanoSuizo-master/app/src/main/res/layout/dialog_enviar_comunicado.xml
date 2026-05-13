@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="8dp"
+    android:layout_margin="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enviar Comunicado"
+            android:textColor="#BA1924"
+            android:textSize="20sp"
+            android:fontFamily="@font/poppinssemibold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Crea un anuncio para tus estudiantes"
+            android:textColor="#90A5B4"
+            android:textSize="13sp"
+            android:fontFamily="@font/poppinsregular"
+            android:layout_marginTop="4dp"/>
+
+        <EditText
+            android:id="@+id/et_titulo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Título del comunicado"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/input_border_selector"
+            android:padding="12dp"
+            android:textSize="14sp"
+            android:fontFamily="@font/poppinsmedium"/>
+
+        <EditText
+            android:id="@+id/et_mensaje"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:hint="Escribe el mensaje aquí..."
+            android:layout_marginTop="16dp"
+            android:background="@drawable/input_border_selector"
+            android:padding="12dp"
+            android:gravity="top"
+            android:textSize="14sp"
+            android:fontFamily="@font/poppinsregular"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Seleccionar Salón"
+            android:textColor="#5E5F60"
+            android:textSize="14sp"
+            android:fontFamily="@font/poppinsmedium"
+            android:layout_marginTop="16dp"/>
+
+        <Spinner
+            android:id="@+id/spinner_salon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/input_border_selector"
+            android:padding="8dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_subir_banner"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Adjuntar Banner (Opcional)"
+            android:textColor="#5E5F60"
+            app:icon="@drawable/ic_fire"
+            app:iconTint="#5E5F60"
+            android:fontFamily="@font/poppinsmedium" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="24dp"
+            android:weightSum="2">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_cancelar"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Cancelar"
+                android:textColor="#BA1924"
+                app:strokeColor="#BA1924"
+                android:layout_marginEnd="8dp"
+                app:cornerRadius="12dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_publicar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Publicar"
+                android:backgroundTint="#BA1924"
+                android:textColor="@color/white"
+                android:layout_marginStart="8dp"
+                app:cornerRadius="12dp" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

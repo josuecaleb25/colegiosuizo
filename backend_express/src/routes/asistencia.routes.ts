@@ -279,4 +279,58 @@ router.get('/estadisticas', async (req, res) => {
   }
 });
 
+// Obtener historial de asistencia de un alumno
+router.get('/historial/:alumno_id', async (req, res) => {
+  try {
+    const { alumno_id } = req.params;
+    const { fecha_inicio, fecha_fin, limit = 100 } = req.query;
+
+    let query = supabase
+      .from('asistencias')
+      .select(`
+        id,
+        fecha,
+        hora_entrada,
+        estado,
+        observaciones
+      `)
+      .eq('alumno_id', alumno_id);
+
+    // Filtros de fecha
+    if (fecha_inicio) {
+      query = query.gte('fecha', fecha_inicio);
+    }
+
+    if (fecha_fin) {
+      query = query.lte('fecha', fecha_fin);
+    }
+
+    query = query.order('fecha', { ascending: false })
+                 .limit(Number(limit));
+
+    const { data: historial, error } = await query;
+
+    if (error) throw error;
+
+    const historialFormateado = historial?.map((h: any) => ({
+      fecha: h.fecha,
+      hora_entrada: h.hora_entrada,
+      estado: h.estado,
+      observaciones: h.observaciones
+    })) || [];
+
+    res.json({
+      success: true,
+      data: historialFormateado,
+      total: historialFormateado.length
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener historial de asistencia',
+      error: error.message
+    });
+  }
+});
+
 export default router;

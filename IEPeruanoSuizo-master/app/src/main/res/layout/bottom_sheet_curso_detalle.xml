@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bottom_sheet_background">
+
+    <!-- ÁREA DE LA MANIJA CON FONDO ROJO -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#BA1924"
+        android:orientation="vertical"
+        android:paddingTop="12dp"
+        android:paddingBottom="20dp">
+
+        <!-- Manija para arrastrar -->
+        <View
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/bottom_sheet_handle" />
+    </LinearLayout>
+
+    <!-- CABECERA ROJA -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#BA1924"
+        android:orientation="horizontal"
+        android:padding="20dp"
+        android:gravity="center_vertical">
+
+        <!-- Botón de retroceso (solo visible para profesor) -->
+        <ImageView
+            android:id="@+id/btn_back_to_list"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/righticon"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="4dp"
+            android:visibility="gone"
+            app:tint="@color/white" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="8dp">
+
+            <TextView
+                android:id="@+id/tv_curso_nombre"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Matematica"
+                android:textColor="@color/white"
+                android:textSize="24sp"
+                android:fontFamily="@font/potanosansbold"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/tv_curso_profesor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Profesor: Ricardo Huaman"
+                android:textColor="@color/white"
+                android:textSize="13sp"
+                android:fontFamily="@font/pontanoregular" />
+        </LinearLayout>
+
+        <!-- Badge del Promedio -->
+        <TextView
+            android:id="@+id/tv_promedio_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="17"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:fontFamily="@font/leaguespartanbold"
+            android:background="@drawable/badge_calificacion"
+            android:paddingHorizontal="28dp"
+            android:paddingVertical="8dp"
+            android:layout_marginStart="12dp" />
+    </LinearLayout>
+
+    <!-- CUERPO BLANCO CON LISTA -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/white"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="24dp">
+
+        <!-- Header de la tabla -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Nombre de elemento"
+                android:textColor="#141A1E"
+                android:textSize="13sp"
+                android:fontFamily="@font/pontanosemibold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Calificacion"
+                android:textColor="#141A1E"
+                android:textSize="13sp"
+                android:fontFamily="@font/pontanosemibold"
+                android:layout_marginStart="16dp" />
+        </LinearLayout>
+
+        <!-- Fila 1: Actitudes -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Actitudes"
+                android:textColor="#141A1E"
+                android:textSize="14sp"
+                android:fontFamily="@font/pontanoregular" />
+
+            <TextView
+                android:id="@+id/badge_actitudes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="- -"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:fontFamily="@font/leaguespartanbold"
+                android:background="@drawable/badge_calificacion"
+                android:paddingHorizontal="24dp"
+                android:paddingVertical="6dp" />
+        </LinearLayout>
+
+        <!-- Fila 2: Participación -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Participacion"
+                android:textColor="#141A1E"
+                android:textSize="14sp"
+                android:fontFamily="@font/pontanoregular" />
+
+            <TextView
+                android:id="@+id/badge_participacion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="- -"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:fontFamily="@font/leaguespartanbold"
+                android:background="@drawable/badge_calificacion"
+                android:paddingHorizontal="24dp"
+                android:paddingVertical="6dp" />
+        </LinearLayout>
+
+        <!-- Fila 3: Examen lore -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Examen lore"
+                android:textColor="#141A1E"
+                android:textSize="14sp"
+                android:fontFamily="@font/pontanoregular" />
+
+            <TextView
+                android:id="@+id/badge_examen1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="- -"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:fontFamily="@font/leaguespartanbold"
+                android:background="@drawable/badge_calificacion"
+                android:paddingHorizontal="24dp"
+                android:paddingVertical="6dp" />
+        </LinearLayout>
+
+        <!-- Fila 4: Examen lore -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Examen lore"
+                android:textColor="#141A1E"
+                android:textSize="14sp"
+                android:fontFamily="@font/pontanoregular" />
+
+            <TextView
+                android:id="@+id/badge_examen2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="- -"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:fontFamily="@font/leaguespartanbold"
+                android:background="@drawable/badge_calificacion"
+                android:paddingHorizontal="24dp"
+                android:paddingVertical="6dp" />
+        </LinearLayout>
+
+        <!-- ELEMENTOS ADICIONALES (ocultos inicialmente) -->
+        <LinearLayout
+            android:id="@+id/layout_elementos_adicionales"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <!-- Fila 5: Trabajo grupal -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="12dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Trabajo grupal"
+                    android:textColor="#141A1E"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/pontanoregular" />
+
+                <TextView
+                    android:id="@+id/badge_trabajo_grupal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="- -"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/leaguespartanbold"
+                    android:background="@drawable/badge_calificacion"
+                    android:paddingHorizontal="24dp"
+                    android:paddingVertical="6dp" />
+            </LinearLayout>
+
+            <!-- Fila 6: Proyecto final -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="12dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Proyecto final"
+                    android:textColor="#141A1E"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/pontanoregular" />
+
+                <TextView
+                    android:id="@+id/badge_proyecto_final"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="- -"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/leaguespartanbold"
+                    android:background="@drawable/badge_calificacion"
+                    android:paddingHorizontal="24dp"
+                    android:paddingVertical="6dp" />
+            </LinearLayout>
+
+            <!-- Fila 7: Exposición -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="12dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Exposición"
+                    android:textColor="#141A1E"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/pontanoregular" />
+
+                <TextView
+                    android:id="@+id/badge_exposicion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="- -"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/leaguespartanbold"
+                    android:background="@drawable/badge_calificacion"
+                    android:paddingHorizontal="24dp"
+                    android:paddingVertical="6dp" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Botón Agregar Evaluación (solo visible para profesores) -->
+        <Button
+            android:id="@+id/btn_agregar_evaluacion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="+ Agregar Evaluación"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:fontFamily="@font/pontanosemibold"
+            android:background="#BA1924"
+            android:paddingVertical="12dp"
+            android:visibility="gone" />
+
+        <!-- Ver más -->
+        <TextView
+            android:id="@+id/tv_ver_mas"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:text="Ver mas"
+            android:textColor="#BDBDBD"
+            android:textSize="13sp"
+            android:fontFamily="@font/pontanoregular"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="8dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

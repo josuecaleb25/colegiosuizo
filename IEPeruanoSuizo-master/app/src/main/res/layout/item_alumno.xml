@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground"
+    app:cardBackgroundColor="?attr/homeCardBackground"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <!-- Avatar circular -->
+        <TextView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/badge_calificacion"
+            android:gravity="center"
+            android:text="A"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:fontFamily="@font/leaguespartanbold" />
+
+        <!-- Información del alumno -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="16dp">
+
+            <TextView
+                android:id="@+id/tv_alumno_nombre"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Juan Pérez García"
+                android:textColor="?attr/homeTextColorSebastian"
+                android:textSize="14sp"
+                android:fontFamily="@font/pontanosemibold" />
+
+            <TextView
+                android:id="@+id/tv_alumno_id"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ID: 2024001"
+                android:textColor="#5E5F60"
+                android:textSize="12sp"
+                android:fontFamily="@font/pontanoregular"
+                android:layout_marginTop="2dp" />
+
+        </LinearLayout>
+
+        <!-- Promedio -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="end">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Promedio"
+                android:textColor="#5E5F60"
+                android:textSize="11sp"
+                android:fontFamily="@font/pontanoregular" />
+
+            <TextView
+                android:id="@+id/tv_alumno_promedio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="17/20"
+                android:textColor="?attr/homeTextColorSebastian"
+                android:textSize="16sp"
+                android:fontFamily="@font/leaguespartanbold"
+                android:layout_marginTop="2dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

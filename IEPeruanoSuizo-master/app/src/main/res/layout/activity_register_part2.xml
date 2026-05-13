@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/white">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:context=".RegisterPart2">
+
+        <include
+            android:id="@+id/include_actionbar"
+            layout="@layout/app_actionbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/RegisterPaso2"
+            android:text="Siguiente Paso"
+            android:layout_width="0dp"
+            android:fontFamily="@font/poppinssemibold"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginStart="25dp"
+            android:layout_marginEnd="25dp"
+            android:textColor="#BA1924"
+            android:textSize="24sp"
+            app:layout_constraintWidth_max="500dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/include_actionbar" />
+
+        <TextView
+            android:id="@+id/DescripRegister"
+            android:text="Necesitamos verificar que eres tu"
+            android:fontFamily="@font/poppinsmedium"
+            android:layout_width="0dp"
+            android:textColor="#A8A7B2"
+            android:layout_marginStart="25dp"
+            android:layout_marginEnd="25dp"
+            android:textSize="12sp"
+            android:layout_height="wrap_content"
+            app:layout_constraintWidth_max="500dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/RegisterPaso2" />
+
+        <ImageView
+            android:id="@+id/ImagePaso2Register"
+            android:src="@drawable/paso2register"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintWidth_percent="0.6"
+            app:layout_constraintWidth_max="300dp"
+            app:layout_constraintTop_toBottomOf="@+id/DescripRegister" />
+
+        <TextView
+            android:id="@+id/labelDni"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Ingresa tu DNI"
+            android:fontFamily="@font/poppinsmedium"
+            android:textColor="#A8A7B2"
+            android:textSize="14sp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginTop="32dp"
+            app:layout_constraintWidth_max="450dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ImagePaso2Register" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutdni"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginTop="8dp"
+            android:hint="DNI"
+            android:textColorHint="@color/input_border_selector"
+            app:boxStrokeColor="@color/input_border_selector"
+            app:boxStrokeWidthFocused="2dp"
+            app:boxCornerRadiusBottomEnd="25dp"
+            app:boxCornerRadiusBottomStart="25dp"
+            app:boxCornerRadiusTopEnd="25dp"
+            app:boxCornerRadiusTopStart="25dp"
+            app:layout_constraintWidth_max="450dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/labelDni">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/dniuser"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#0E0D18"
+                android:fontFamily="@font/poppinsmedium"
+                android:textSize="14sp"
+                android:padding="16dp"
+                android:inputType="number" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/labelPass"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/poppinsmedium"
+            android:textSize="14sp"
+            android:text="Crea una contraseña"
+            android:textColor="#A8A7B2"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginTop="24dp"
+            app:layout_constraintWidth_max="450dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/layoutdni" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutpass"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginTop="8dp"
+            android:hint="Contraseña"
+            android:textColorHint="@color/input_border_selector"
+            app:boxStrokeColor="@color/input_border_selector"
+            app:boxStrokeWidthFocused="2dp"
+            app:boxCornerRadiusBottomEnd="25dp"
+            app:boxCornerRadiusBottomStart="25dp"
+            app:boxCornerRadiusTopEnd="25dp"
+            app:boxCornerRadiusTopStart="25dp"
+            app:layout_constraintWidth_max="450dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/labelPass">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/passuser"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#0E0D18"
+                android:padding="16dp"
+                android:fontFamily="@font/poppinsmedium"
+                android:textSize="14sp"
+                android:inputType="textPassword" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <LinearLayout
+            android:id="@+id/layoutTerms"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginTop="16dp"
+            android:gravity="center_vertical"
+            app:layout_constraintWidth_max="450dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/layoutpass">
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/cbTerms"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                app:buttonTint="#BA1924" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginStart="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Al crear una cuenta, aceptas nuestros"
+                    android:fontFamily="@font/poppinsregular"
+                    android:textColor="#333333"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvTermsLink"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Terminos y Condiciones"
+                    android:fontFamily="@font/poppinssemibold"
+                    android:textColor="#BA1924"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnSiguiente1"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginTop="40dp"
+            android:layout_marginBottom="32dp"
+            android:backgroundTint="#BA1924"
+            android:textSize="16dp"
+            android:fontFamily="@font/leaguespartanmedium"
+            android:text="Siguiente"
+            android:textColor="@color/white"
+            app:cornerRadius="15dp"
+            app:layout_constraintWidth_max="450dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/layoutTerms" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
