@@ -1,25 +1,165 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/card_comunicado"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_width="330dp"
+    android:layout_height="200dp"
     app:cardCornerRadius="20dp"
-    app:cardElevation="2dp"
-    android:layout_marginHorizontal="16dp"
+    app:cardElevation="0dp"
+    android:layout_marginEnd="16dp"
     android:layout_marginBottom="16dp"
     app:cardBackgroundColor="@color/white">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="20dp">
+        android:layout_height="match_parent">
 
-        <!-- Botón de opciones (3 puntos) - Ahora en la esquina superior derecha -->
+        <!-- Banner: Ocupa TODO el card si está visible -->
+        <ImageView
+            android:id="@+id/iv_banner_comunicado"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Contenedor de texto -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layout_texto_comunicado"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="16dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="44dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <ImageView
+                android:id="@+id/iv_logo_ieps"
+                android:layout_width="45dp"
+                android:layout_height="28dp"
+                android:src="@drawable/logoie"
+                android:scaleType="fitCenter"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tv_titulo_comunicado"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="12dp"
+                android:text="Título"
+                android:textColor="#BA1924"
+                android:textSize="14sp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:fontFamily="@font/poppinssemibold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/iv_logo_ieps"/>
+
+            <!-- Hora del comunicado -->
+            <TextView
+                android:id="@+id/tv_hora_comunicado"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="10:30 AM"
+                android:textColor="#BA1924"
+                android:textSize="10sp"
+                android:fontFamily="@font/poppinsmedium"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_titulo_comunicado" />
+
+            <!-- Fecha y destinatario (usado en historial) -->
+            <TextView
+                android:id="@+id/tv_fecha_destinatario"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text=""
+                android:textColor="#9BA8AB"
+                android:textSize="10sp"
+                android:fontFamily="@font/poppinsregular"
+                android:visibility="gone"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_hora_comunicado"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <TextView
+                android:id="@+id/tv_contenido_comunicado"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Cuerpo del mensaje..."
+                android:textColor="#5E5F60"
+                android:textSize="12sp"
+                android:lineSpacingExtra="2dp"
+                android:maxLines="4"
+                android:ellipsize="end"
+                android:fontFamily="@font/poppinsregular"
+                app:layout_constraintTop_toBottomOf="@+id/tv_fecha_destinatario"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <TextView
+                android:id="@+id/btn_ver_mas_comunicado"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ver más"
+                android:textColor="#BA1924"
+                android:textSize="11sp"
+                android:fontFamily="@font/poppinsmedium"
+                android:layout_marginTop="6dp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@+id/tv_contenido_comunicado"
+                app:layout_constraintStart_toStartOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- Tag de Salón (Anclado al fondo derecho) -->
+        <TextView
+            android:id="@+id/tv_tag_salon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="14dp"
+            android:text="Salón: 4to A"
+            android:textColor="#BCC1CD"
+            android:textSize="10sp"
+            android:fontFamily="@font/poppinsmedium"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Estado (solo visible en historial, anclado al fondo izquierdo) -->
+        <TextView
+            android:id="@+id/tv_estado"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginBottom="14dp"
+            android:text="Enviado"
+            android:textColor="#4CAF50"
+            android:textSize="10sp"
+            android:fontFamily="@font/poppinsmedium"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:background="@drawable/bg_estado_enviado"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <!-- Botón de opciones (solo visible en historial, esquina superior derecha) -->
         <ImageView
             android:id="@+id/btn_opciones"
             android:layout_width="32dp"
             android:layout_height="32dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="12dp"
             android:src="@drawable/ic_more_vert"
             android:scaleType="centerInside"
             android:background="?attr/selectableItemBackgroundBorderless"
@@ -30,98 +170,6 @@
             app:tint="#5E5F60"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-
-        <!-- Logo IEPS -->
-        <ImageView
-            android:id="@+id/iv_logo_ieps"
-            android:layout_width="45dp"
-            android:layout_height="28dp"
-            android:src="@drawable/logoie"
-            android:scaleType="fitCenter"
-            android:layout_marginEnd="8dp"
-            app:layout_constraintEnd_toStartOf="@+id/btn_opciones"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <!-- Título del comunicado -->
-        <TextView
-            android:id="@+id/tv_titulo_comunicado"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="12dp"
-            android:text="Título del Comunicado"
-            android:textColor="#BA1924"
-            android:textSize="16sp"
-            android:maxLines="2"
-            android:ellipsize="end"
-            android:fontFamily="@font/poppinssemibold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/iv_logo_ieps"/>
-
-        <!-- Fecha y destinatario -->
-        <TextView
-            android:id="@+id/tv_fecha_destinatario"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Enviado 2026-05-13 para Todos"
-            android:textColor="#9BA8AB"
-            android:textSize="10sp"
-            android:fontFamily="@font/poppinsregular"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_titulo_comunicado"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <!-- Contenido del comunicado -->
-        <TextView
-            android:id="@+id/tv_contenido_comunicado"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Cuerpo del mensaje del comunicado..."
-            android:textColor="#5E5F60"
-            android:textSize="13sp"
-            android:lineSpacingExtra="2dp"
-            android:maxLines="4"
-            android:ellipsize="end"
-            android:fontFamily="@font/poppinsregular"
-            app:layout_constraintTop_toBottomOf="@+id/tv_fecha_destinatario"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <!-- Ver más -->
-        <TextView
-            android:id="@+id/btn_ver_mas_comunicado"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Ver más"
-            android:textColor="#BA1924"
-            android:textSize="12sp"
-            android:fontFamily="@font/poppinsmedium"
-            android:layout_marginTop="8dp"
-            android:visibility="gone"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackground"
-            android:padding="4dp"
-            app:layout_constraintTop_toBottomOf="@+id/tv_contenido_comunicado"
-            app:layout_constraintStart_toStartOf="parent" />
-
-        <!-- Estado del comunicado -->
-        <TextView
-            android:id="@+id/tv_estado"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Enviado"
-            android:textColor="#4CAF50"
-            android:textSize="11sp"
-            android:fontFamily="@font/poppinsmedium"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="4dp"
-            android:background="@drawable/bg_estado_enviado"
-            app:layout_constraintTop_toBottomOf="@+id/btn_ver_mas_comunicado"
-            app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView>

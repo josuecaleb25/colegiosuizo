@@ -130,19 +130,39 @@
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="13sp" />
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <LinearLayout
+                android:id="@+id/option_mi_informacion"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
                 <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/informationperson" app:tint="?android:attr/textColorPrimary" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Mi informacion" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
                 <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
             </LinearLayout>
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:alpha="0.4"
+                android:clickable="false">
                 <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/securtitynew" app:tint="?android:attr/textColorPrimary" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Contraseña y Seguridad" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
                 <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
             </LinearLayout>
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:alpha="0.4"
+                android:clickable="false">
                 <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/notification" app:tint="?android:attr/textColorPrimary" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Notificaciones" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
                 <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
@@ -173,7 +193,13 @@
                 <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
             </LinearLayout>
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:alpha="0.4"
+                android:clickable="false">
                 <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/aboutcode" app:tint="?android:attr/textColorPrimary" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Acerca de la Aplicacion" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
                 <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
@@ -190,13 +216,27 @@
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="13sp" />
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:alpha="0.4"
+                android:clickable="false">
                 <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/helpuscontact" app:tint="?android:attr/textColorPrimary" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Centro de Ayuda" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
                 <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
             </LinearLayout>
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <LinearLayout
+                android:id="@+id/btn_logout_profile"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
                 <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/logouticon" app:tint="#BA1924" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Logout" android:textColor="#BA1924" android:textSize="14sp" />
                 <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/flechaie" app:tint="#BA1924" />

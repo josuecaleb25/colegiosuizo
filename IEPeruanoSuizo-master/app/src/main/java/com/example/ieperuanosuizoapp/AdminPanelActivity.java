@@ -53,8 +53,10 @@ public class AdminPanelActivity extends AppCompatActivity {
         cardReportes.setOnClickListener(v -> 
             Toast.makeText(this, "Reportes y Estadísticas - Próximamente", Toast.LENGTH_SHORT).show());
         
-        cardAsistencia.setOnClickListener(v -> 
-            Toast.makeText(this, "Gestión de Asistencia - Próximamente", Toast.LENGTH_SHORT).show());
+        cardAsistencia.setOnClickListener(v -> {
+            Intent intent = new Intent(this, GestionAsistenciaActivity.class);
+            startActivity(intent);
+        });
         
         cardPlanificacion.setOnClickListener(v -> 
             Toast.makeText(this, "Planificación Académica - Próximamente", Toast.LENGTH_SHORT).show());

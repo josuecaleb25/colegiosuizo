@@ -89,12 +89,14 @@ public class AuthLogin extends AppCompatActivity {
                         editor.putString("user_mode", user.getRol() != null ? user.getRol().toUpperCase() : "ALUMNO");
                         editor.putString("user_token", data.getToken() != null ? data.getToken() : "");
                         editor.putString("user_name", user.getNombreCompleto() != null ? user.getNombreCompleto() : "Usuario");
+                        editor.putString("user_seccion", user.getSeccion() != null ? user.getSeccion() : "");
                         editor.apply();
 
                         // Log para debug
                         android.util.Log.d("AuthLogin", "Usuario ID guardado: " + user.getId());
                         android.util.Log.d("AuthLogin", "Usuario Email: " + user.getEmail());
                         android.util.Log.d("AuthLogin", "Usuario Rol: " + user.getRol());
+                        android.util.Log.d("AuthLogin", "Usuario Sección: " + user.getSeccion());
 
                         String nombreBienvenida = user.getNombres() != null ? user.getNombres() : "Usuario";
                         Toast.makeText(AuthLogin.this, "Bienvenido " + nombreBienvenida, Toast.LENGTH_SHORT).show();

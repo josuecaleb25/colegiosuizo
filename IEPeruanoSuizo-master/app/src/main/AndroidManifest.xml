@@ -8,6 +8,10 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
 
     <application
         android:allowBackup="true"
@@ -36,10 +40,19 @@
             android:name=".AdminPanelActivity"
             android:exported="false" />
         <activity
+            android:name=".GestionAsistenciaActivity"
+            android:exported="false" />
+        <activity
             android:name=".GestionEvaluacionesActivity"
             android:exported="false" />
         <activity
             android:name=".ViewApariencia"
+            android:exported="false" />
+        <activity
+            android:name=".NotificationsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MiInformacionActivity"
             android:exported="false" />
         <activity
             android:name=".UserProfile"
@@ -83,6 +96,16 @@
         <activity
             android:name=".MainActivity"
             android:exported="true" />
+        
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

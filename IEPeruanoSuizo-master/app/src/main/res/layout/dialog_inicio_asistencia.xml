@@ -56,6 +56,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:text="Al pulsar Comenzar se activará la cámara automáticamente (se pedirá permiso si hace falta)."
+            android:textColor="#5E5F60"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:layout_marginTop="12dp"
+            android:fontFamily="@font/poppinsregular"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:text="Si sales por error, puedes volver a entrar desde el menú principal."
             android:textColor="#90A5B4"
             android:textSize="11sp"

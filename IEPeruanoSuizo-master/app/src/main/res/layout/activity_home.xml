@@ -381,6 +381,7 @@
                     android:layout_height="wrap_content"
                     android:scrollbars="none"
                     android:clipToPadding="false"
+                    android:paddingStart="20dp"
                     android:paddingEnd="20dp">
                     <LinearLayout
                         android:id="@+id/container_comunicados_globales"
@@ -391,6 +392,19 @@
                         <!-- Dinámico: Máximo 3 -->
                     </LinearLayout>
                 </HorizontalScrollView>
+
+                <!-- Mensaje cuando no hay comunicados globales -->
+                <LinearLayout
+                    android:id="@+id/layout_no_comunicados_globales"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:layout_marginTop="12dp"
+                    android:visibility="gone">
+                    <ImageView android:layout_width="60dp" android:layout_height="60dp" android:src="@drawable/buhope" android:alpha="0.3" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="No hay comunicados por ahora" android:textColor="#BCC1CD" android:fontFamily="@font/poppinsmedium" android:textSize="13sp" android:layout_marginTop="4dp" />
+                </LinearLayout>
 
                 <!-- Título Comunicados por Salón -->
                 <TextView
@@ -412,6 +426,7 @@
                     android:layout_height="wrap_content"
                     android:scrollbars="none"
                     android:clipToPadding="false"
+                    android:paddingStart="20dp"
                     android:paddingEnd="20dp">
                     <LinearLayout
                         android:id="@+id/container_comunicados_salon"
@@ -422,6 +437,19 @@
                         <!-- Dinámico: Máximo 3 -->
                     </LinearLayout>
                 </HorizontalScrollView>
+
+                <!-- Mensaje cuando no hay comunicados de salón -->
+                <LinearLayout
+                    android:id="@+id/layout_no_comunicados_salon"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:layout_marginTop="12dp"
+                    android:visibility="gone">
+                    <ImageView android:layout_width="60dp" android:layout_height="60dp" android:src="@drawable/buhope" android:alpha="0.3" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="No hay comunicados por ahora" android:textColor="#BCC1CD" android:fontFamily="@font/poppinsmedium" android:textSize="13sp" android:layout_marginTop="4dp" />
+                </LinearLayout>
 
                 <!-- Layout Vacío -->
                 <LinearLayout
@@ -466,7 +494,7 @@
         <com.google.android.material.navigation.NavigationView
             android:id="@+id/navigation_view"
             android:layout_width="wrap_content"
-            android:layout_height="0dp"
+            android:layout_height="match_parent"
             android:background="@android:color/transparent"
             app:elevation="0dp"
             app:headerLayout="@layout/nav_header_main"
@@ -477,53 +505,8 @@
             app:itemTextAppearance="@style/DrawerTextStyle"
             app:menu="@menu/drawer_menu"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@+id/footer_drawer"
-            app:layout_constraintStart_toStartOf="parent" />
-
-        <!-- Footer del Drawer (Settings | Log out) -->
-        <LinearLayout
-            android:id="@+id/footer_drawer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="40dp"
-            android:layout_marginStart="24dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/configurationicon"
-                app:tint="#FFFFFF" />
-
-            <TextView
-                android:id="@+id/nav_settings_custom"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:fontFamily="@font/poppinsmedium"
-                android:text="Configuracion"
-                android:textColor="#FFFFFF"
-                android:textSize="13sp" />
-
-            <View
-                android:layout_width="1dp"
-                android:layout_height="20dp"
-                android:layout_marginHorizontal="16dp"
-                android:background="#40FFFFFF" />
-
-            <TextView
-                android:id="@+id/nav_logout_custom"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/poppinsmedium"
-                android:text="Cerrar sesión"
-                android:textColor="#FFFFFF"
-                android:textSize="13sp" />
-
-        </LinearLayout>
+            app:layout_constraintStart_toStartOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

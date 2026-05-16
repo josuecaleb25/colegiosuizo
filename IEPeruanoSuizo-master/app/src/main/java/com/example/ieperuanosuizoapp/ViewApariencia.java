@@ -66,7 +66,7 @@ public class ViewApariencia extends AppCompatActivity {
 
         View btnBack = findViewById(R.id.btn_back);
         if (btnBack != null) {
-            btnBack.setOnClickListener(v -> goBackToHome());
+            btnBack.setOnClickListener(v -> finish());
         }
 
         setupBottomNavigation();
@@ -108,7 +108,6 @@ public class ViewApariencia extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        goBackToHome();
     }
 
     private void setupBottomNavigation() {

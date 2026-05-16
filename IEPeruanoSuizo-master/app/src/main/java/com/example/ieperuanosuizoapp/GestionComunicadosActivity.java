@@ -108,13 +108,23 @@ public class GestionComunicadosActivity extends AppCompatActivity {
                 android.view.ViewGroup.MarginLayoutParams lp = 
                     (android.view.ViewGroup.MarginLayoutParams) v.getLayoutParams();
                 lp.width = android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+                lp.height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
                 lp.setMargins(0, 0, 0, (int) (12 * getResources().getDisplayMetrics().density));
                 v.setLayoutParams(lp);
 
                 // Configurar vistas
                 ((TextView) v.findViewById(R.id.tv_titulo_comunicado)).setText(item.titulo);
-                ((TextView) v.findViewById(R.id.tv_fecha_destinatario)).setText(item.detalle);
-                ((TextView) v.findViewById(R.id.tv_contenido_comunicado)).setVisibility(View.GONE);
+                
+                // Mostrar fecha y destinatario
+                TextView tvFechaDestinatario = v.findViewById(R.id.tv_fecha_destinatario);
+                tvFechaDestinatario.setText(item.detalle);
+                tvFechaDestinatario.setVisibility(View.VISIBLE);
+                
+                // Ocultar contenido en historial
+                v.findViewById(R.id.tv_contenido_comunicado).setVisibility(View.GONE);
+                v.findViewById(R.id.btn_ver_mas_comunicado).setVisibility(View.GONE);
+                v.findViewById(R.id.tv_tag_salon).setVisibility(View.GONE);
+                v.findViewById(R.id.iv_logo_ieps).setVisibility(View.GONE);
                 
                 // Configurar estado
                 TextView tvEstado = v.findViewById(R.id.tv_estado);
@@ -130,7 +140,7 @@ public class GestionComunicadosActivity extends AppCompatActivity {
                     tvEstado.setBackgroundResource(R.drawable.bg_estado_borrador);
                 }
                 
-                // Mostrar botón de opciones (siempre visible en historial)
+                // Mostrar botón de opciones
                 ImageView btnOpciones = v.findViewById(R.id.btn_opciones);
                 if (btnOpciones != null) {
                     btnOpciones.setVisibility(View.VISIBLE);

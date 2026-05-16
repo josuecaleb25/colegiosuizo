@@ -3,10 +3,12 @@ package com.example.ieperuanosuizoapp.api;
 import com.example.ieperuanosuizoapp.api.models.Alumno;
 import com.example.ieperuanosuizoapp.api.models.ApiResponse;
 import com.example.ieperuanosuizoapp.api.models.AsistenciaAlumno;
+import com.example.ieperuanosuizoapp.api.models.EscanearQrData;
 import com.example.ieperuanosuizoapp.api.models.LoginRequest;
 import com.example.ieperuanosuizoapp.api.models.LoginResponse;
 
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -33,6 +35,9 @@ public interface ApiService {
     Call<ApiResponse<List<AsistenciaAlumno>>> getAlumnosAsistencia(
         @Query("seccion") String seccion
     );
+
+    @POST("mobile/asistencia/escanear-qr")
+    Call<ApiResponse<EscanearQrData>> escanearQrAsistencia(@Body Map<String, String> body);
     
     // Comunicados
     @GET("comunicados")
@@ -111,5 +116,11 @@ public interface ApiService {
         @Query("seccion") String seccion,
         @Query("search") String search,
         @Query("limit") Integer limit
+    );
+
+    // Asistencia - Obtener asistencia por fecha (Admin)
+    @GET("admin/asistencia/fecha")
+    Call<ApiResponse<List<AsistenciaAlumno>>> getAsistenciaPorFecha(
+        @Query("fecha") String fecha
     );
 }

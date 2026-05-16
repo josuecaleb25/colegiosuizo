@@ -59,6 +59,7 @@ public class LoginResponse {
         private String nombres;
         private String apellidos;
         private String nombre_completo;
+        private String seccion;
 
         public String getId() {
             return id;
@@ -106,6 +107,14 @@ public class LoginResponse {
 
         public void setNombreCompleto(String nombre_completo) {
             this.nombre_completo = nombre_completo;
+        }
+
+        public String getSeccion() {
+            return seccion;
+        }
+
+        public void setSeccion(String seccion) {
+            this.seccion = seccion;
         }
 
         // Mantener compatibilidad con código que espera objeto persona

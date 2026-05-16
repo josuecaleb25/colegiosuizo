@@ -49,7 +49,18 @@ public class UserProfile extends AppCompatActivity {
             });
         }
 
-        // Cargar datos del perfil desde el backend
+        // Cargar datos iniciales de SharedPreferences
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        String savedName = prefs.getString("user_name", "Usuario");
+        String savedEmail = prefs.getString("user_email", "correo@ejemplo.com");
+        
+        android.widget.TextView tvNombre = findViewById(R.id.tv_user_name);
+        android.widget.TextView tvEmail = findViewById(R.id.tv_user_email);
+        
+        if (tvNombre != null) tvNombre.setText(savedName);
+        if (tvEmail != null) tvEmail.setText(savedEmail);
+
+        // Cargar datos actualizados del perfil desde el backend
         cargarPerfilDesdeBackend();
 
         // Botón Atrás
@@ -70,7 +81,34 @@ public class UserProfile extends AppCompatActivity {
             });
         }
 
+        // Navegación a Mi Información
+        View optionMiInformacion = findViewById(R.id.option_mi_informacion);
+        if (optionMiInformacion != null) {
+            optionMiInformacion.setOnClickListener(v -> {
+                Intent intent = new Intent(UserProfile.this, MiInformacionActivity.class);
+                startActivity(intent);
+            });
+        }
+
+        // Cerrar sesión
+        View btnLogout = findViewById(R.id.btn_logout_profile);
+        if (btnLogout != null) {
+            btnLogout.setOnClickListener(v -> cerrarSesion());
+        }
+
         setupBottomNavigation();
+    }
+
+    private void cerrarSesion() {
+        // Limpiar preferencias de usuario
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        prefs.edit().clear().apply();
+
+        // Redirigir al Login
+        Intent intent = new Intent(UserProfile.this, AuthLogin.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
     
     private void cargarPerfilDesdeBackend() {
