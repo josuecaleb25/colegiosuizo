@@ -61,9 +61,10 @@ router.get('/alumno/:personaId', async (req, res) => {
         .single();
 
       if (relacion) {
-        console.log('✅ Encontrado como padre, hijo persona_id:', relacion.alumnos.persona_id);
-        alumnoPersonaId = relacion.alumnos.persona_id;
-        alumno = { id: relacion.alumno_id, persona_id: relacion.alumnos.persona_id };
+        const alumnosData = relacion.alumnos as any;
+        console.log('✅ Encontrado como padre, hijo persona_id:', alumnosData.persona_id);
+        alumnoPersonaId = alumnosData.persona_id;
+        alumno = { id: relacion.alumno_id, persona_id: alumnosData.persona_id };
       } else {
         console.log('❌ No se encontró alumno ni relación padre-hijo');
         return res.status(404).json({
