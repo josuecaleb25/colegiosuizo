@@ -32,20 +32,45 @@ router.get('/alumno/:personaId', async (req, res) => {
   try {
     const { personaId } = req.params;
 
-    // Buscar alumno por persona_id
-    const { data: alumno, error: alumnoError } = await supabase
+    console.log('📚 Obteniendo cursos para persona_id:', personaId);
+
+    // Primero intentar buscar como alumno directo
+    let alumno = null;
+    let alumnoPersonaId = personaId;
+
+    const { data: alumnoDirecto, error: alumnoError } = await supabase
       .from('alumnos')
-      .select('id')
+      .select('id, persona_id')
       .eq('persona_id', personaId)
       .eq('estado', 'activo')
       .single();
 
-    if (alumnoError || !alumno) {
-      console.log('No se encontró alumno para persona_id:', personaId);
-      return res.status(404).json({
-        success: false,
-        message: 'Alumno no encontrado'
-      });
+    if (alumnoDirecto) {
+      console.log('✅ Encontrado como alumno directo');
+      alumno = alumnoDirecto;
+      alumnoPersonaId = alumnoDirecto.persona_id;
+    } else {
+      // Si no es alumno, buscar si es padre y obtener el hijo
+      console.log('🔍 No es alumno, buscando como padre...');
+      
+      const { data: relacion, error: relacionError } = await supabase
+        .from('padres_alumnos')
+        .select('alumno_id, alumnos!inner(persona_id, estado)')
+        .eq('padre_id', personaId)
+        .eq('alumnos.estado', 'activo')
+        .single();
+
+      if (relacion) {
+        console.log('✅ Encontrado como padre, hijo persona_id:', relacion.alumnos.persona_id);
+        alumnoPersonaId = relacion.alumnos.persona_id;
+        alumno = { id: relacion.alumno_id, persona_id: relacion.alumnos.persona_id };
+      } else {
+        console.log('❌ No se encontró alumno ni relación padre-hijo');
+        return res.status(404).json({
+          success: false,
+          message: 'Alumno no encontrado'
+        });
+      }
     }
 
     // Obtener la matrícula del alumno para saber su sección
@@ -100,7 +125,9 @@ router.get('/alumno/:personaId', async (req, res) => {
       const primerNombre = docente.personas.nombres.split(' ')[0];
 
       return {
-        id: curso.id,
+        id: asignacion.id, // IMPORTANTE: Devolver asignacion_id para que funcionen las evaluaciones
+        curso_id: curso.id, // Mantener curso_id por si se necesita
+        alumno_id: alumnoPersonaId, // ID del alumno (persona_id) para las calificaciones - SIEMPRE el del hijo
         nombre: curso.nombre,
         descripcion: curso.descripcion,
         color: curso.color,
@@ -180,7 +207,8 @@ router.get('/profesor/:docenteId', async (req, res) => {
       const salon = `${grado.nombre} ${seccion.nombre}`;
 
       return {
-        id: curso.id,
+        id: asignacion.id, // IMPORTANTE: Devolver asignacion_id, no curso_id
+        curso_id: curso.id, // Mantener curso_id por si se necesita
         nombre: curso.nombre,
         descripcion: curso.descripcion,
         color: curso.color,

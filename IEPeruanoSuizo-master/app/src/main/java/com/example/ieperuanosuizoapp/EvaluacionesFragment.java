@@ -4,19 +4,47 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.ieperuanosuizoapp.api.RetrofitClient;
+import com.example.ieperuanosuizoapp.api.models.ApiResponse;
+import com.example.ieperuanosuizoapp.api.models.Evaluacion;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class EvaluacionesFragment extends Fragment {
 
-    public static EvaluacionesFragment newInstance() {
-        return new EvaluacionesFragment();
+    private String asignacionId;
+    private RecyclerView rvEvaluaciones;
+    private ProgressBar progressBar;
+    private View layoutEmpty;
+    private EvaluacionesAdapter adapter;
+
+    public static EvaluacionesFragment newInstance(String asignacionId) {
+        EvaluacionesFragment fragment = new EvaluacionesFragment();
+        Bundle args = new Bundle();
+        args.putString("asignacion_id", asignacionId);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            asignacionId = getArguments().getString("asignacion_id");
+        }
     }
 
     @Nullable
@@ -24,27 +52,70 @@ public class EvaluacionesFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_evaluaciones_profesor, container, false);
 
-        RecyclerView rv = view.findViewById(R.id.rv_evaluaciones);
-        rv.setLayoutManager(new LinearLayoutManager(getContext()));
+        rvEvaluaciones = view.findViewById(R.id.rv_evaluaciones);
+        progressBar = view.findViewById(R.id.progress_evaluaciones);
+        layoutEmpty = view.findViewById(R.id.layout_empty_evaluaciones);
         
-        EvaluacionesAdapter adapter = new EvaluacionesAdapter();
-        rv.setAdapter(adapter);
-
-        // Datos de prueba según tu imagen
-        List<String> items = new ArrayList<>();
-        items.add("Actitudes");
-        items.add("Participacion");
-        items.add("Proyecto");
-        items.add("Examen I");
-        items.add("Examen II");
-        items.add("Examen final");
-        adapter.setItems(items);
+        rvEvaluaciones.setLayoutManager(new LinearLayoutManager(getContext()));
+        
+        adapter = new EvaluacionesAdapter();
+        rvEvaluaciones.setAdapter(adapter);
 
         view.findViewById(R.id.btn_add_evaluacion).setOnClickListener(v -> {
             mostrarDialogoAgregar();
         });
 
+        cargarEvaluaciones();
+
         return view;
+    }
+
+    private void cargarEvaluaciones() {
+        if (asignacionId == null) {
+            Toast.makeText(getContext(), "Error: No se encontró la asignación", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        mostrarCargando(true);
+
+        RetrofitClient.getApiService()
+            .getEvaluacionesCurso(asignacionId)
+            .enqueue(new Callback<ApiResponse<List<Evaluacion>>>() {
+                @Override
+                public void onResponse(Call<ApiResponse<List<Evaluacion>>> call, Response<ApiResponse<List<Evaluacion>>> response) {
+                    mostrarCargando(false);
+                    
+                    if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                        List<Evaluacion> evaluaciones = response.body().getData();
+                        
+                        if (evaluaciones != null && !evaluaciones.isEmpty()) {
+                            adapter.setItems(evaluaciones);
+                            rvEvaluaciones.setVisibility(View.VISIBLE);
+                            layoutEmpty.setVisibility(View.GONE);
+                        } else {
+                            rvEvaluaciones.setVisibility(View.GONE);
+                            layoutEmpty.setVisibility(View.VISIBLE);
+                        }
+                    } else {
+                        Toast.makeText(getContext(), "Error al cargar evaluaciones", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ApiResponse<List<Evaluacion>>> call, Throwable t) {
+                    mostrarCargando(false);
+                    Toast.makeText(getContext(), "Error de conexión: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+    }
+
+    private void mostrarCargando(boolean mostrar) {
+        if (progressBar != null) {
+            progressBar.setVisibility(mostrar ? View.VISIBLE : View.GONE);
+        }
+        if (rvEvaluaciones != null) {
+            rvEvaluaciones.setVisibility(mostrar ? View.GONE : View.VISIBLE);
+        }
     }
 
     private void mostrarDialogoAgregar() {
@@ -53,13 +124,16 @@ public class EvaluacionesFragment extends Fragment {
                 .setView(v)
                 .create();
 
+        android.widget.EditText etNombre = v.findViewById(R.id.et_nombre_evaluacion);
+
         v.findViewById(R.id.btn_cancelar).setOnClickListener(view -> dialog.dismiss());
         v.findViewById(R.id.btn_aceptar).setOnClickListener(view -> {
-            String nombre = ((android.widget.EditText) v.findViewById(R.id.et_nombre_evaluacion)).getText().toString();
+            String nombre = etNombre.getText().toString().trim();
             if (!nombre.isEmpty()) {
-                // Aquí iría la lógica para guardar en el backend
-                android.widget.Toast.makeText(getContext(), "Evaluación creada: " + nombre, android.widget.Toast.LENGTH_SHORT).show();
+                crearEvaluacion(nombre);
                 dialog.dismiss();
+            } else {
+                Toast.makeText(getContext(), "Ingrese un nombre", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -67,7 +141,48 @@ public class EvaluacionesFragment extends Fragment {
         configurarAnchoDialogo(dialog);
     }
 
-    private void mostrarDialogoEditar(String nombreActual) {
+    private void crearEvaluacion(String nombre) {
+        // Verificar que tenemos asignacionId
+        if (asignacionId == null || asignacionId.isEmpty()) {
+            android.util.Log.e("EvaluacionesFragment", "❌ asignacionId es null o vacío");
+            Toast.makeText(getContext(), "Error: No se encontró el ID de la asignación", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // Obtener el siguiente orden
+        int siguienteOrden = adapter.getItemCount() + 1;
+
+        Evaluacion nuevaEvaluacion = new Evaluacion(asignacionId, nombre, 1.0, siguienteOrden);
+
+        android.util.Log.d("EvaluacionesFragment", "📝 Creando evaluación: " + nombre + ", asignacionId: " + asignacionId + ", orden: " + siguienteOrden);
+
+        RetrofitClient.getApiService()
+            .crearEvaluacion(nuevaEvaluacion)
+            .enqueue(new Callback<ApiResponse<Evaluacion>>() {
+                @Override
+                public void onResponse(Call<ApiResponse<Evaluacion>> call, Response<ApiResponse<Evaluacion>> response) {
+                    if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                        Toast.makeText(getContext(), "Evaluación creada exitosamente", Toast.LENGTH_SHORT).show();
+                        cargarEvaluaciones(); // Recargar lista
+                    } else {
+                        String errorMsg = "Error al crear evaluación";
+                        if (response.body() != null && response.body().getMessage() != null) {
+                            errorMsg = response.body().getMessage();
+                        }
+                        android.util.Log.e("EvaluacionesFragment", "Error: " + errorMsg + ", Code: " + response.code());
+                        Toast.makeText(getContext(), errorMsg, Toast.LENGTH_LONG).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ApiResponse<Evaluacion>> call, Throwable t) {
+                    android.util.Log.e("EvaluacionesFragment", "Error de conexión: " + t.getMessage(), t);
+                    Toast.makeText(getContext(), "Error de conexión: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
+    }
+
+    private void mostrarDialogoEditar(Evaluacion evaluacion) {
         View v = LayoutInflater.from(getContext()).inflate(R.layout.dialog_nueva_evaluacion, null);
         
         TextView tvTitle = v.findViewById(R.id.tv_dialog_title);
@@ -75,8 +190,8 @@ public class EvaluacionesFragment extends Fragment {
         android.widget.EditText etNombre = v.findViewById(R.id.et_nombre_evaluacion);
         
         tvTitle.setText("Editar Evaluacion");
-        tvSubtitle.setText("Nuevo nombre de " + nombreActual);
-        etNombre.setText(nombreActual);
+        tvSubtitle.setText("Nuevo nombre de " + evaluacion.getNombre());
+        etNombre.setText(evaluacion.getNombre());
 
         android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(getContext(), R.style.CustomDialogTheme)
                 .setView(v)
@@ -84,10 +199,12 @@ public class EvaluacionesFragment extends Fragment {
 
         v.findViewById(R.id.btn_cancelar).setOnClickListener(view -> dialog.dismiss());
         v.findViewById(R.id.btn_aceptar).setOnClickListener(view -> {
-            String nuevoNombre = etNombre.getText().toString();
+            String nuevoNombre = etNombre.getText().toString().trim();
             if (!nuevoNombre.isEmpty()) {
-                android.widget.Toast.makeText(getContext(), "Evaluación actualizada", android.widget.Toast.LENGTH_SHORT).show();
+                actualizarEvaluacion(evaluacion.getId(), nuevoNombre);
                 dialog.dismiss();
+            } else {
+                Toast.makeText(getContext(), "Ingrese un nombre", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -95,20 +212,83 @@ public class EvaluacionesFragment extends Fragment {
         configurarAnchoDialogo(dialog);
     }
 
-    private void mostrarDialogoEliminar() {
+    private void actualizarEvaluacion(String evaluacionId, String nuevoNombre) {
+        // Usar Map para enviar solo el campo que queremos actualizar
+        Map<String, Object> datos = new HashMap<>();
+        datos.put("nombre", nuevoNombre);
+
+        RetrofitClient.getApiService()
+            .actualizarEvaluacion(evaluacionId, datos)
+            .enqueue(new Callback<ApiResponse<Evaluacion>>() {
+                @Override
+                public void onResponse(Call<ApiResponse<Evaluacion>> call, Response<ApiResponse<Evaluacion>> response) {
+                    if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                        Toast.makeText(getContext(), "Evaluación actualizada", Toast.LENGTH_SHORT).show();
+                        cargarEvaluaciones();
+                    } else {
+                        String errorMsg = "Error al actualizar";
+                        if (response.body() != null && response.body().getMessage() != null) {
+                            errorMsg = response.body().getMessage();
+                        }
+                        android.util.Log.e("EvaluacionesFragment", "Error actualizando: " + errorMsg);
+                        Toast.makeText(getContext(), errorMsg, Toast.LENGTH_LONG).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ApiResponse<Evaluacion>> call, Throwable t) {
+                    android.util.Log.e("EvaluacionesFragment", "Error de conexión al actualizar: " + t.getMessage(), t);
+                    Toast.makeText(getContext(), "Error de conexión: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
+    }
+
+    private void mostrarDialogoEliminar(Evaluacion evaluacion) {
         View v = LayoutInflater.from(getContext()).inflate(R.layout.dialog_eliminar_evaluacion, null);
+        
         android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(getContext(), R.style.CustomDialogTheme)
                 .setView(v)
                 .create();
 
         v.findViewById(R.id.btn_cancelar).setOnClickListener(view -> dialog.dismiss());
         v.findViewById(R.id.btn_aceptar).setOnClickListener(view -> {
-            android.widget.Toast.makeText(getContext(), "Evaluación eliminada", android.widget.Toast.LENGTH_SHORT).show();
+            eliminarEvaluacion(evaluacion.getId());
             dialog.dismiss();
         });
 
         dialog.show();
         configurarAnchoDialogo(dialog);
+    }
+
+    private void eliminarEvaluacion(String evaluacionId) {
+        android.util.Log.d("EvaluacionesFragment", "Eliminando evaluación: " + evaluacionId);
+        
+        RetrofitClient.getApiService()
+            .eliminarEvaluacion(evaluacionId)
+            .enqueue(new Callback<ApiResponse<Object>>() {
+                @Override
+                public void onResponse(Call<ApiResponse<Object>> call, Response<ApiResponse<Object>> response) {
+                    android.util.Log.d("EvaluacionesFragment", "Response code: " + response.code());
+                    
+                    if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                        Toast.makeText(getContext(), "Evaluación eliminada", Toast.LENGTH_SHORT).show();
+                        cargarEvaluaciones();
+                    } else {
+                        String errorMsg = "Error al eliminar";
+                        if (response.body() != null && response.body().getMessage() != null) {
+                            errorMsg = response.body().getMessage();
+                        }
+                        android.util.Log.e("EvaluacionesFragment", "Error eliminando: " + errorMsg);
+                        Toast.makeText(getContext(), errorMsg, Toast.LENGTH_LONG).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ApiResponse<Object>> call, Throwable t) {
+                    android.util.Log.e("EvaluacionesFragment", "Error de conexión al eliminar: " + t.getMessage(), t);
+                    Toast.makeText(getContext(), "Error de conexión: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
     }
 
     private void configurarAnchoDialogo(android.app.AlertDialog dialog) {
@@ -120,9 +300,9 @@ public class EvaluacionesFragment extends Fragment {
     }
 
     private class EvaluacionesAdapter extends RecyclerView.Adapter<EvaluacionesAdapter.ViewHolder> {
-        private List<String> items = new ArrayList<>();
+        private List<Evaluacion> items = new ArrayList<>();
 
-        void setItems(List<String> items) {
+        void setItems(List<Evaluacion> items) {
             this.items = items;
             notifyDataSetChanged();
         }
@@ -136,15 +316,15 @@ public class EvaluacionesFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            String item = items.get(position);
-            holder.tvNombre.setText(item);
+            Evaluacion evaluacion = items.get(position);
+            holder.tvNombre.setText(evaluacion.getNombre());
             
             holder.btnEdit.setOnClickListener(v -> {
-                mostrarDialogoEditar(item);
+                mostrarDialogoEditar(evaluacion);
             });
             
             holder.btnDelete.setOnClickListener(v -> {
-                mostrarDialogoEliminar();
+                mostrarDialogoEliminar(evaluacion);
             });
         }
 

@@ -53,7 +53,8 @@ public class CursoDetalleProfesorActivity extends AppCompatActivity {
         TabLayout tabLayout = findViewById(R.id.tab_layout);
         ViewPager2 viewPager = findViewById(R.id.view_pager);
 
-        viewPager.setAdapter(new SectionsPagerAdapter(this));
+        SectionsPagerAdapter adapter = new SectionsPagerAdapter(this);
+        viewPager.setAdapter(adapter);
 
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
             switch (position) {
@@ -68,6 +69,21 @@ public class CursoDetalleProfesorActivity extends AppCompatActivity {
                     break;
             }
         }).attach();
+
+        // Listener para detectar cambios de pestaña
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                // Cuando se selecciona la pestaña de Estudiantes, notificar al fragmento
+                if (position == 1) {
+                    Fragment fragment = getSupportFragmentManager().findFragmentByTag("f" + position);
+                    if (fragment instanceof ContainerEstudiantesFragment) {
+                        ((ContainerEstudiantesFragment) fragment).onTabSelected();
+                    }
+                }
+            }
+        });
     }
 
     private void setupBottomNavigation() {
@@ -120,7 +136,7 @@ public class CursoDetalleProfesorActivity extends AppCompatActivity {
             if (position == 1) {
                 return ContainerEstudiantesFragment.newInstance(cursoId, salon);
             } else if (position == 2) {
-                return EvaluacionesFragment.newInstance();
+                return EvaluacionesFragment.newInstance(cursoId); // cursoId es realmente asignacion_id
             }
             // Retornamos fragmentos vacíos por ahora para las otras pestañas
             return PlaceholderFragment.newInstance(position);

@@ -68,7 +68,11 @@ public class EstudiantesFragment extends Fragment {
         adapter = new EstudiantesAdapter();
         adapter.setOnEstudianteClickListener(estudiante -> {
             if (getParentFragment() instanceof ContainerEstudiantesFragment) {
-                ((ContainerEstudiantesFragment) getParentFragment()).navegarADetalle(estudiante.getNombre());
+                ((ContainerEstudiantesFragment) getParentFragment()).navegarADetalle(
+                    estudiante.getId(), 
+                    estudiante.getNombre(), 
+                    cursoId
+                );
             }
         });
 

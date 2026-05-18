@@ -10,6 +10,7 @@ import asistenciaRoutes from './routes/asistencia.routes';
 import mobileRoutes from './routes/mobile.routes';
 import cursosRoutes from './routes/cursos.routes';
 import calificacionesRoutes from './routes/calificaciones.routes';
+import evaluacionesRoutes from './routes/evaluaciones';
 import horariosRoutes from './routes/horarios.routes';
 import comunicadosRoutes from './routes/comunicados.routes';
 import usuariosRoutes from './routes/usuarios.routes';
@@ -44,6 +45,7 @@ app.get('/', (req, res) => {
       mobile: '/api/mobile',
       cursos: '/api/cursos',
       calificaciones: '/api/calificaciones',
+      evaluaciones: '/api/evaluaciones',
       horarios: '/api/horarios',
       comunicados: '/api/comunicados',
       usuarios: '/api/usuarios',
@@ -58,6 +60,7 @@ app.use('/api/asistencia', asistenciaRoutes);
 app.use('/api/mobile', mobileRoutes);
 app.use('/api/cursos', cursosRoutes);
 app.use('/api/calificaciones', calificacionesRoutes);
+app.use('/api/evaluaciones', evaluacionesRoutes);
 app.use('/api/horarios', horariosRoutes);
 app.use('/api/comunicados', comunicadosRoutes);
 app.use('/api/usuarios', usuariosRoutes);

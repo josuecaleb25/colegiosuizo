@@ -125,13 +125,14 @@ public class CursosActivity extends AppCompatActivity {
             String profesor = jsonObj.has("profesor") ? jsonObj.get("profesor").getAsString() : "";
             String promedio = jsonObj.has("promedio") ? jsonObj.get("promedio").getAsString() : "0";
             String seccion = jsonObj.has("seccion") ? jsonObj.get("seccion").getAsString() : "";
+            String alumnoId = jsonObj.has("alumno_id") ? jsonObj.get("alumno_id").getAsString() : userId; // Usar alumno_id del backend o userId como fallback
             
-            View cursoCard = crearCursoCard(id, nombre, profesor, promedio, seccion);
+            View cursoCard = crearCursoCard(id, nombre, profesor, promedio, seccion, alumnoId);
             cursosContainer.addView(cursoCard);
         }
     }
 
-    private View crearCursoCard(String id, String nombre, String profesor, String promedio, String seccion) {
+    private View crearCursoCard(String id, String nombre, String profesor, String promedio, String seccion, String alumnoId) {
         // Inflar el layout de la card
         View cardView = LayoutInflater.from(this).inflate(R.layout.item_curso_card, cursosContainer, false);
         
@@ -153,12 +154,12 @@ public class CursosActivity extends AppCompatActivity {
         }
         
         // Configurar click listener
-        cardView.setOnClickListener(v -> handleCursoClick(id, nombre, profesor, promedio, seccion));
+        cardView.setOnClickListener(v -> handleCursoClick(id, nombre, profesor, promedio, seccion, alumnoId));
         
         return cardView;
     }
 
-    private void handleCursoClick(String cursoId, String nombreCurso, String nombreProfesor, String promedio, String salon) {
+    private void handleCursoClick(String cursoId, String nombreCurso, String nombreProfesor, String promedio, String salon, String alumnoId) {
         if ("PROFESOR".equals(userMode)) {
             // Profesor: Abrir la nueva Activity con Tabs
             Intent intent = new Intent(this, CursoDetalleProfesorActivity.class);
@@ -167,11 +168,13 @@ public class CursosActivity extends AppCompatActivity {
             intent.putExtra("salon", salon);
             startActivity(intent);
         } else {
-            // Alumno: Mostrar Bottom Sheet con sus notas
-            CursoDetalleBottomSheet bottomSheet = CursoDetalleBottomSheet.newInstance(
+            // Alumno/Padre: Mostrar Bottom Sheet con sus notas reales
+            CursoDetalleBottomSheet bottomSheet = CursoDetalleBottomSheet.newInstanceConIds(
                     nombreCurso,
                     nombreProfesor,
-                    promedio
+                    promedio,
+                    cursoId,   // asignacion_id
+                    alumnoId   // alumno_id (persona_id del alumno/hijo)
             );
             bottomSheet.show(getSupportFragmentManager(), "CursoDetalle");
         }
