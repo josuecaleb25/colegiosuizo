@@ -24,6 +24,15 @@
         android:theme="@style/Theme.IEPeruanoSuizoAPP"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".DetalleComunicadoGestionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CrearComunicadoActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CursoDetalleProfesorActivity"
+            android:exported="false" />
+        <activity
             android:name=".UsuariosActivity"
             android:exported="false" />
         <activity

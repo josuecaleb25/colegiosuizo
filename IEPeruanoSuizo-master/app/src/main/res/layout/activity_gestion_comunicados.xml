@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/homeHeaderBackground"
+    android:background="@android:color/white"
     tools:context=".GestionComunicadosActivity">
 
     <!-- Header Section (Estilo Cursos) -->
@@ -31,21 +31,25 @@
             app:layout_constraintBottom_toBottomOf="parent">
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
                 android:layout_gravity="center"
-                android:src="@drawable/chvronlefticon"
+                android:src="@drawable/righticon"
                 app:tint="#444444" />
         </androidx.cardview.widget.CardView>
 
         <TextView
             android:id="@+id/tv_title"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:fontFamily="@font/potanosansbold"
             android:text="Gestión de Comunicados"
             android:textColor="?android:attr/textColorPrimary"
-            android:textSize="20sp"
+            android:textSize="18sp"
+            android:gravity="center"
+            android:layout_marginHorizontal="70dp"
+            android:ellipsize="end"
+            android:maxLines="1"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -57,13 +61,95 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="?attr/homeContentBackground"
+        android:background="@android:color/white"
         app:layout_constraintBottom_toTopOf="@+id/bottom_navigation"
         app:layout_constraintTop_toBottomOf="@+id/header_layout">
 
+        <!-- Barra de Búsqueda y Contador -->
+        <LinearLayout
+            android:id="@+id/layout_search_counter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="24dp"
+            android:paddingTop="20dp"
+            android:gravity="center_vertical"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="0dp"
+                android:layout_height="55dp"
+                android:backgroundTint="#F5F5F5"
+                android:layout_weight="1"
+                android:background="@drawable/bg_card_white"
+                android:paddingHorizontal="16dp">
+
+                <ImageView
+                    android:id="@+id/iv_search"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_buscador"
+                    app:tint="#858585"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <EditText
+                    android:id="@+id/et_buscar_comunicado"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="12dp"
+                    android:background="@null"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="Buscar comunicados"
+                    android:inputType="text"
+                    android:textColor="#858585"
+                    android:textColorHint="#9BA8AB"
+                    android:textSize="14sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/iv_search" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="105dp"
+                android:layout_height="55dp"
+                android:layout_marginStart="12dp"
+                app:cardBackgroundColor="#BA1924"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_megaphone"
+                        app:tint="@android:color/white" />
+
+                    <TextView
+                        android:id="@+id/tv_count_comunicados"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:text="0"
+                        android:includeFontPadding="false"
+                        android:gravity="center_vertical"
+                        android:textColor="@android:color/white"
+                        android:textSize="18sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/layout_search_counter">
 
             <LinearLayout
                 android:id="@+id/container_historial"
@@ -109,9 +195,25 @@
             android:textColor="@color/white"
             android:fontFamily="@font/poppinsmedium"
             android:backgroundTint="#BA1924"
-            app:icon="@drawable/ic_fire"
+            app:icon="@android:drawable/ic_input_add"
             app:iconTint="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Loader de Material Design -->
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/loading_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            android:visibility="gone"
+            app:indicatorColor="#BA1924"
+            app:trackColor="#E0E0E0"
+            app:trackThickness="4dp"
+            app:indicatorSize="48dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

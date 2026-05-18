@@ -159,13 +159,11 @@ public class CursosActivity extends AppCompatActivity {
 
     private void handleCursoClick(String nombreCurso, String nombreProfesor, String promedio, String salon) {
         if ("PROFESOR".equals(userMode)) {
-            // Profesor: Mostrar Bottom Sheet con lista de alumnos
-            ListaAlumnosBottomSheet bottomSheet = ListaAlumnosBottomSheet.newInstance(
-                    nombreCurso,
-                    nombreProfesor,
-                    salon
-            );
-            bottomSheet.show(getSupportFragmentManager(), "ListaAlumnos");
+            // Profesor: Abrir la nueva Activity con Tabs
+            Intent intent = new Intent(this, CursoDetalleProfesorActivity.class);
+            intent.putExtra("nombre_curso", nombreCurso);
+            intent.putExtra("salon", salon);
+            startActivity(intent);
         } else {
             // Alumno: Mostrar Bottom Sheet con sus notas
             CursoDetalleBottomSheet bottomSheet = CursoDetalleBottomSheet.newInstance(

@@ -32,12 +32,11 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
                 android:layout_gravity="center"
-                android:rotation="180"
-                android:src="@drawable/chvronlefticon"
-                app:tint="#666666" />
+                android:src="@drawable/righticon"
+                app:tint="?android:attr/textColorPrimary" />
         </androidx.cardview.widget.CardView>
 
         <TextView
@@ -48,7 +47,7 @@
             android:fontFamily="@font/potanosansbold"
             android:text="Usuarios"
             android:textColor="#141A1E"
-            android:textSize="22sp"
+            android:textSize="18sp"
             app:layout_constraintBottom_toBottomOf="@+id/btn_back"
             app:layout_constraintStart_toEndOf="@+id/btn_back"
             app:layout_constraintTop_toTopOf="@+id/btn_back" />
@@ -113,7 +112,7 @@
                     android:paddingVertical="14dp"
                     android:textColor="#333333"
                     android:textColorHint="#9BA8AB"
-                    android:textSize="14sp" />
+                    android:textSize="11sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Filter Chips -->

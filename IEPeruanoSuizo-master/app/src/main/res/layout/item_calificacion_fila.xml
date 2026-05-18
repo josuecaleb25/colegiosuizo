@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingVertical="12dp">
+
+    <ImageView
+        android:id="@+id/iv_icono_item"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/exam_icon"
+        app:tint="#141A1E"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_nombre_evaluacion"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:fontFamily="@font/leaguespartanmedium"
+        android:text="Nombre de Evaluacion"
+        android:textColor="#141A1E"
+        android:textSize="15sp"
+        app:layout_constraintBottom_toBottomOf="@id/iv_icono_item"
+        app:layout_constraintEnd_toStartOf="@+id/card_nota"
+        app:layout_constraintStart_toEndOf="@id/iv_icono_item"
+        app:layout_constraintTop_toTopOf="@id/iv_icono_item" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_nota"
+        android:layout_width="70dp"
+        android:layout_height="35dp"
+        app:cardBackgroundColor="#141A1E"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/tv_nota"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="--"
+            android:textColor="@android:color/white"
+            android:fontFamily="@font/pontanomedium"
+            android:textSize="16sp" />
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -46,11 +46,11 @@
                     app:layout_constraintBottom_toBottomOf="parent">
 
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
                         android:layout_gravity="center"
                         android:src="@drawable/righticon"
-                        app:tint="#444444" />
+                        app:tint="?android:attr/textColorPrimary" />
                 </androidx.cardview.widget.CardView>
 
                 <TextView
@@ -60,7 +60,7 @@
                     android:fontFamily="@font/potanosansbold"
                     android:text="Asistencia"
                     android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="20sp"
+                    android:textSize="18sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"

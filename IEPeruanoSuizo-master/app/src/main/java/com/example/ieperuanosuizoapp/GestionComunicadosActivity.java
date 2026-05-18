@@ -25,8 +25,12 @@ import java.util.List;
 public class GestionComunicadosActivity extends AppCompatActivity {
 
     private LinearLayout containerHistorial, layoutEmptyHistory;
+    private TextView tvCountComunicados;
+    private android.widget.EditText etBuscar;
+    private com.google.android.material.progressindicator.CircularProgressIndicator loadingIndicator;
     private String userMode;
     private List<HistorialItem> listaHistorial = new ArrayList<>();
+    private List<HistorialItem> listaFiltrada = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,9 +52,17 @@ public class GestionComunicadosActivity extends AppCompatActivity {
 
         containerHistorial = findViewById(R.id.container_historial);
         layoutEmptyHistory = findViewById(R.id.layout_empty_history);
+        loadingIndicator = findViewById(R.id.loading_indicator);
+        tvCountComunicados = findViewById(R.id.tv_count_comunicados);
+        etBuscar = findViewById(R.id.et_buscar_comunicado);
         
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
-        findViewById(R.id.fab_nuevo_comunicado).setOnClickListener(v -> mostrarDialogoEnviar());
+        findViewById(R.id.fab_nuevo_comunicado).setOnClickListener(v -> {
+            Intent intent = new Intent(this, CrearComunicadoActivity.class);
+            startActivity(intent);
+        });
+
+        setupSearchLogic();
 
         // Cargar historial desde el backend
         cargarHistorialDesdeBackend();
@@ -94,58 +106,64 @@ public class GestionComunicadosActivity extends AppCompatActivity {
         });
     }
 
+    private void setupSearchLogic() {
+        etBuscar.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filtrarComunicados(s.toString());
+            }
+            @Override public void afterTextChanged(android.text.Editable s) {}
+        });
+    }
+
+    private void filtrarComunicados(String query) {
+        listaFiltrada.clear();
+        if (query.isEmpty()) {
+            listaFiltrada.addAll(listaHistorial);
+        } else {
+            String lowerQuery = query.toLowerCase();
+            for (HistorialItem item : listaHistorial) {
+                if (item.titulo.toLowerCase().contains(lowerQuery) || 
+                    item.emisor.toLowerCase().contains(lowerQuery) || 
+                    item.salon.toLowerCase().contains(lowerQuery)) {
+                    listaFiltrada.add(item);
+                }
+            }
+        }
+        actualizarVistaHistorial();
+        tvCountComunicados.setText(String.valueOf(listaFiltrada.size()));
+    }
+
     private void actualizarVistaHistorial() {
         containerHistorial.removeAllViews();
         
-        if (listaHistorial.isEmpty()) {
+        if (listaFiltrada.isEmpty()) {
             layoutEmptyHistory.setVisibility(View.VISIBLE);
         } else {
             layoutEmptyHistory.setVisibility(View.GONE);
-            for (HistorialItem item : listaHistorial) {
-                View v = LayoutInflater.from(this).inflate(R.layout.item_comunicado, containerHistorial, false);
+            for (HistorialItem item : listaFiltrada) {
+                View v = LayoutInflater.from(this).inflate(R.layout.item_comunicado_gestion, containerHistorial, false);
                 
-                // Ajustar layout params para que ocupe todo el ancho
-                android.view.ViewGroup.MarginLayoutParams lp = 
-                    (android.view.ViewGroup.MarginLayoutParams) v.getLayoutParams();
-                lp.width = android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-                lp.height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-                lp.setMargins(0, 0, 0, (int) (12 * getResources().getDisplayMetrics().density));
-                v.setLayoutParams(lp);
-
                 // Configurar vistas
                 ((TextView) v.findViewById(R.id.tv_titulo_comunicado)).setText(item.titulo);
+                ((TextView) v.findViewById(R.id.tv_emisor_nombre)).setText(item.emisor);
+                ((TextView) v.findViewById(R.id.tv_vistos_count)).setText("Vistos por " + item.vistosCount + " personas");
+                ((TextView) v.findViewById(R.id.tv_hora)).setText(item.hora);
+                ((TextView) v.findViewById(R.id.tv_salon_destinatario)).setText(item.salon);
                 
-                // Mostrar fecha y destinatario
-                TextView tvFechaDestinatario = v.findViewById(R.id.tv_fecha_destinatario);
-                tvFechaDestinatario.setText(item.detalle);
-                tvFechaDestinatario.setVisibility(View.VISIBLE);
-                
-                // Ocultar contenido en historial
-                v.findViewById(R.id.tv_contenido_comunicado).setVisibility(View.GONE);
-                v.findViewById(R.id.btn_ver_mas_comunicado).setVisibility(View.GONE);
-                v.findViewById(R.id.tv_tag_salon).setVisibility(View.GONE);
-                v.findViewById(R.id.iv_logo_ieps).setVisibility(View.GONE);
-                
-                // Configurar estado
-                TextView tvEstado = v.findViewById(R.id.tv_estado);
-                tvEstado.setText(item.estado);
-                tvEstado.setVisibility(View.VISIBLE);
-                
-                // Configurar color según estado
-                if ("Enviado".equals(item.estado)) {
-                    tvEstado.setTextColor(Color.parseColor("#4CAF50"));
-                    tvEstado.setBackgroundResource(R.drawable.bg_estado_enviado);
-                } else if ("Borrador".equals(item.estado)) {
-                    tvEstado.setTextColor(Color.parseColor("#FF9800"));
-                    tvEstado.setBackgroundResource(R.drawable.bg_estado_borrador);
-                }
-                
-                // Mostrar botón de opciones
-                ImageView btnOpciones = v.findViewById(R.id.btn_opciones);
-                if (btnOpciones != null) {
-                    btnOpciones.setVisibility(View.VISIBLE);
-                    btnOpciones.setOnClickListener(view -> mostrarMenuOpciones(item, v));
-                }
+                // Al hacer clic, abrir el detalle del comunicado
+                v.setOnClickListener(view -> {
+                    Intent intent = new Intent(this, DetalleComunicadoGestionActivity.class);
+                    intent.putExtra("id", item.id);
+                    intent.putExtra("titulo", item.titulo);
+                    intent.putExtra("emisor", item.emisor);
+                    intent.putExtra("hora", item.hora);
+                    intent.putExtra("salon", item.salon);
+                    intent.putExtra("vistos", item.vistosCount);
+                    // Pasamos la descripción completa (necesitaremos extraerla en el loop de carga)
+                    intent.putExtra("descripcion", item.contenido);
+                    startActivity(intent);
+                });
                 
                 containerHistorial.addView(v);
             }
@@ -344,6 +362,10 @@ public class GestionComunicadosActivity extends AppCompatActivity {
             layoutEmptyHistory.setVisibility(View.VISIBLE);
             return;
         }
+
+        if (loadingIndicator != null) loadingIndicator.setVisibility(View.VISIBLE);
+        containerHistorial.setVisibility(View.GONE);
+        layoutEmptyHistory.setVisibility(View.GONE);
         
         com.example.ieperuanosuizoapp.api.RetrofitClient.getApiService()
             .getHistorialComunicadosEnviados(userId)
@@ -351,6 +373,9 @@ public class GestionComunicadosActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>> call,
                                      retrofit2.Response<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>> response) {
+                    if (loadingIndicator != null) loadingIndicator.setVisibility(View.GONE);
+                    containerHistorial.setVisibility(View.VISIBLE);
+                    
                     if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                         List<Object> historialData = response.body().getData();
                         
@@ -362,14 +387,36 @@ public class GestionComunicadosActivity extends AppCompatActivity {
                             
                             String id = jsonObj.has("id") ? jsonObj.get("id").getAsString() : "";
                             String titulo = jsonObj.has("titulo") ? jsonObj.get("titulo").getAsString() : "";
+                            String contenido = jsonObj.has("contenido") ? jsonObj.get("contenido").getAsString() : "";
                             String fechaPublicacion = jsonObj.has("fecha_publicacion") ? jsonObj.get("fecha_publicacion").getAsString() : "";
-                            String destinatario = jsonObj.has("destinatario") ? jsonObj.get("destinatario").getAsString() : "";
+                            String emisor = jsonObj.has("emisor") ? jsonObj.get("emisor").getAsString() : "Administración";
+                            String destinatario = jsonObj.has("destinatario") ? jsonObj.get("destinatario").getAsString() : "Global";
                             String estado = jsonObj.has("estado") ? jsonObj.get("estado").getAsString() : "Enviado";
+                            int vistos = jsonObj.has("vistos_count") ? jsonObj.get("vistos_count").getAsInt() : 0;
                             
-                            String detalle = "Enviado " + fechaPublicacion.substring(0, 10) + " para " + destinatario;
-                            listaHistorial.add(new HistorialItem(id, titulo, detalle, estado));
+                            // Formatear hora de "2024-05-14T10:30:00" a "10:30 AM"
+                            String horaStr = "";
+                            try {
+                                String[] partes = fechaPublicacion.split("T");
+                                if (partes.length > 1) {
+                                    String[] horaPartes = partes[1].split(":");
+                                    int h = Integer.parseInt(horaPartes[0]);
+                                    int m = Integer.parseInt(horaPartes[1]);
+                                    String ampm = h >= 12 ? "pm" : "am";
+                                    if (h > 12) h -= 12;
+                                    if (h == 0) h = 12;
+                                    horaStr = String.format(java.util.Locale.US, "%d:%02d %s", h, m, ampm);
+                                }
+                            } catch (Exception e) {
+                                horaStr = "--:--";
+                            }
+                            
+                            listaHistorial.add(new HistorialItem(id, titulo, emisor, horaStr, destinatario, estado, vistos, contenido));
                         }
                         
+                        listaFiltrada.clear();
+                        listaFiltrada.addAll(listaHistorial);
+                        tvCountComunicados.setText(String.valueOf(listaFiltrada.size()));
                         actualizarVistaHistorial();
                     } else {
                         layoutEmptyHistory.setVisibility(View.VISIBLE);
@@ -378,6 +425,8 @@ public class GestionComunicadosActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>> call, Throwable t) {
+                    if (loadingIndicator != null) loadingIndicator.setVisibility(View.GONE);
+                    containerHistorial.setVisibility(View.VISIBLE);
                     Toast.makeText(GestionComunicadosActivity.this, "Error al cargar historial: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                     layoutEmptyHistory.setVisibility(View.VISIBLE);
                 }
@@ -559,7 +608,17 @@ public class GestionComunicadosActivity extends AppCompatActivity {
     }
 
     private static class HistorialItem {
-        String id, titulo, detalle, estado;
-        HistorialItem(String i, String t, String d, String e) { id = i; titulo = t; detalle = d; estado = e; }
+        String id, titulo, emisor, hora, salon, estado, contenido;
+        int vistosCount;
+        HistorialItem(String id, String titulo, String emisor, String hora, String salon, String estado, int vistosCount, String contenido) {
+            this.id = id;
+            this.titulo = titulo;
+            this.emisor = emisor;
+            this.hora = hora;
+            this.salon = salon;
+            this.estado = estado;
+            this.vistosCount = vistosCount;
+            this.contenido = contenido;
+        }
     }
 }

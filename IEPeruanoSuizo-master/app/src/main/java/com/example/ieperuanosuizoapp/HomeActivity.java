@@ -164,6 +164,10 @@ public class HomeActivity extends AppCompatActivity {
                 overridePendingTransition(0, 0);
                 drawerLayout.closeDrawer(GravityCompat.START);
                 return true;
+            } else if (id == R.id.nav_switch_role) {
+                switchUserRole();
+                drawerLayout.closeDrawer(GravityCompat.START);
+                return true;
             }
 
             // Cerrar el drawer para otros ítems si es necesario
@@ -242,6 +246,31 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
+    private void switchUserRole() {
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        String currentRole = prefs.getString("user_mode", "ALUMNO");
+        String nextRole;
+
+        if ("ALUMNO".equals(currentRole)) {
+            nextRole = "PROFESOR";
+        } else if ("PROFESOR".equals(currentRole)) {
+            nextRole = "ADMIN";
+        } else {
+            nextRole = "ALUMNO";
+        }
+
+        prefs.edit().putString("user_mode", nextRole).apply();
+        userMode = nextRole;
+
+        android.widget.Toast.makeText(this, "Rol cambiado a: " + nextRole, android.widget.Toast.LENGTH_SHORT).show();
+
+        // Refrescar la UI y el menú
+        actualizarVisibilidadMenuLateral();
+        actualizarDatosUsuario();
+        comunicadosCargados = false;
+        cargarComunicados();
+    }
+
     private void actualizarDatosUsuario() {
         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         String name = prefs.getString("user_name", "Usuario");
@@ -304,6 +333,7 @@ public class HomeActivity extends AppCompatActivity {
         menu.findItem(R.id.nav_horarios).setVisible(true);
         menu.findItem(R.id.nav_perfil).setVisible(true);
         menu.findItem(R.id.nav_identificacion).setVisible(true);
+        menu.findItem(R.id.nav_switch_role).setVisible(true);
 
         // Lógica de visibilidad por Rol
         // Normalizar el rol para comparación (aceptar variantes)
