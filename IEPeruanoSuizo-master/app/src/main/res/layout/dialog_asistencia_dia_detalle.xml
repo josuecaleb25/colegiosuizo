@@ -129,8 +129,11 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_dialog_alumnos"
         android:layout_width="match_parent"
-        android:layout_height="340dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:layout_marginTop="12dp"
+        android:minHeight="300dp"
+        android:maxHeight="450dp"
         android:clipToPadding="false"
         android:paddingBottom="8dp"
         tools:listitem="@layout/item_alumno_asistencia" />

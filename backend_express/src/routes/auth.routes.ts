@@ -17,33 +17,52 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Buscar usuario en Supabase
-    const { data: users, error } = await supabase
-      .from('usuarios')
+    // Buscar persona por correo
+    const { data: personas, error: personaError } = await supabase
+      .from('personas')
       .select(`
-        *,
-        personas!inner (
-          nombres,
-          apellidos
-        )
+        id,
+        dni,
+        nombres,
+        apellidos,
+        correo,
+        alumnos (id, codigo_alumno, estado),
+        docentes (id, codigo_docente, estado)
       `)
-      .eq('email', email)
-      .eq('activo', true)
+      .eq('correo', email)
       .limit(1);
 
-    if (error || !users || users.length === 0) {
+    if (personaError || !personas || personas.length === 0) {
       return res.status(401).json({
         success: false,
         message: 'Credenciales incorrectas'
       });
     }
 
-    const user = users[0];
+    const persona = personas[0];
 
-    // Verificar contraseña
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    // Determinar rol y contraseña esperada
+    let rol = 'padre';
+    let passwordEsperada = 'Suizo2026*';
 
-    if (!isValidPassword) {
+    // Verificar si es admin
+    if (email === 'admin@colegio.com') {
+      rol = 'administrador';
+      passwordEsperada = 'admin123';
+    }
+    // Verificar si es profesor
+    else if (email === 'profesor@colegio.com' || (persona.docentes && persona.docentes.length > 0)) {
+      rol = 'profesor';
+      passwordEsperada = 'profesor123';
+    }
+    // Si tiene alumno asociado, es un padre (no alumno)
+    else if (persona.alumnos && persona.alumnos.length > 0) {
+      rol = 'padre';
+      passwordEsperada = 'Suizo2026*';
+    }
+
+    // Verificar contraseña (comparación directa por ahora)
+    if (password !== passwordEsperada) {
       return res.status(401).json({
         success: false,
         message: 'Credenciales incorrectas'
@@ -53,9 +72,9 @@ router.post('/login', async (req, res) => {
     // Generar token
     const token = jwt.sign(
       { 
-        id: user.id, 
-        email: user.email, 
-        rol: user.rol 
+        id: persona.id, 
+        email: persona.correo, 
+        rol: rol 
       },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '7d' }
@@ -66,12 +85,12 @@ router.post('/login', async (req, res) => {
       message: 'Login exitoso',
       data: {
         user: {
-          id: user.id,
-          email: user.email,
-          nombres: user.personas.nombres,
-          apellidos: user.personas.apellidos,
-          rol: user.rol,
-          nombre_completo: `${user.personas.nombres} ${user.personas.apellidos}`
+          id: persona.id,
+          email: persona.correo,
+          nombres: persona.nombres,
+          apellidos: persona.apellidos,
+          rol: rol,
+          nombre_completo: `${persona.nombres} ${persona.apellidos}`
         },
         tokens: {
           access: token,

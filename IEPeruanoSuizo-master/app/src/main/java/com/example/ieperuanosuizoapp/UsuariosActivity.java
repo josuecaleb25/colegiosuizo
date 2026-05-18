@@ -35,11 +35,11 @@ import retrofit2.Response;
 public class UsuariosActivity extends AppCompatActivity implements UsuariosAdapter.OnUsuarioClickListener {
 
     private RecyclerView rvUsuarios;
-    private ProgressBar progressLoading;
+    private com.google.android.material.progressindicator.CircularProgressIndicator loadingIndicator;
     private LinearLayout layoutEmptyState;
     private TextView tvTotalUsuarios;
     private TextInputEditText searchEditText;
-    private ChipGroup chipGroupFilters;
+    private com.google.android.material.textfield.MaterialAutoCompleteTextView auto_complete_salon_filter;
     
     private UsuariosAdapter adapter;
     private List<Usuario> todosLosUsuarios = new ArrayList<>();
@@ -65,11 +65,11 @@ public class UsuariosActivity extends AppCompatActivity implements UsuariosAdapt
         btnBack.setOnClickListener(v -> finish());
 
         rvUsuarios = findViewById(R.id.rv_usuarios);
-        progressLoading = findViewById(R.id.progress_loading);
+        loadingIndicator = findViewById(R.id.loading_indicator);
         layoutEmptyState = findViewById(R.id.layout_empty_state);
         tvTotalUsuarios = findViewById(R.id.tv_total_usuarios);
         searchEditText = findViewById(R.id.search_edit_text);
-        chipGroupFilters = findViewById(R.id.chip_group_filters);
+        auto_complete_salon_filter = findViewById(R.id.auto_complete_salon_filter);
     }
 
     private void setupRecyclerView() {
@@ -95,16 +95,13 @@ public class UsuariosActivity extends AppCompatActivity implements UsuariosAdapt
     }
 
     private void setupFilters() {
-        chipGroupFilters.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            if (checkedIds.isEmpty()) {
-                filtroSeccionActual = "Todos";
-            } else {
-                int checkedId = checkedIds.get(0);
-                Chip chip = findViewById(checkedId);
-                if (chip != null) {
-                    filtroSeccionActual = chip.getText().toString();
-                }
-            }
+        String[] salones = {"Todos", "1ro A", "1ro B", "1ro C", "1ro D", "1ro E", "2do A", "2do B", "2do C", "2do D"};
+        android.widget.ArrayAdapter<String> adapterSalones = new android.widget.ArrayAdapter<>(
+                this,
+                android.R.layout.simple_dropdown_item_1line, salones);
+        auto_complete_salon_filter.setAdapter(adapterSalones);
+        auto_complete_salon_filter.setOnItemClickListener((parent, view, position, id) -> {
+            filtroSeccionActual = salones[position];
             filtrarUsuarios();
         });
     }
@@ -176,11 +173,13 @@ public class UsuariosActivity extends AppCompatActivity implements UsuariosAdapt
     }
 
     private void actualizarContador(int total) {
-        tvTotalUsuarios.setText(total + " estudiante" + (total != 1 ? "s" : ""));
+        tvTotalUsuarios.setText(String.valueOf(total));
     }
 
     private void mostrarCargando(boolean mostrar) {
-        progressLoading.setVisibility(mostrar ? View.VISIBLE : View.GONE);
+        if (loadingIndicator != null) {
+            loadingIndicator.setVisibility(mostrar ? View.VISIBLE : View.GONE);
+        }
         rvUsuarios.setVisibility(mostrar ? View.GONE : View.VISIBLE);
     }
 

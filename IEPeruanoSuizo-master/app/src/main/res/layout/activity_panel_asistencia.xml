@@ -36,6 +36,7 @@
                     android:id="@+id/btn_back"
                     android:layout_width="45dp"
                     android:layout_height="45dp"
+                    android:visibility="gone"
                     app:cardBackgroundColor="?attr/homeContentBackground"
                     app:cardCornerRadius="15dp"
                     app:cardElevation="0dp"
@@ -87,20 +88,43 @@
 
             </androidx.cardview.widget.CardView>
 
-            <!-- Botón Activar Cámara -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_activar_camara"
+            <!-- Botones de Acción Cámara y Sesión -->
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="60dp"
+                android:layout_height="wrap_content"
                 android:layout_marginHorizontal="24dp"
                 android:layout_marginTop="14dp"
-                android:backgroundTint="#BA1924"
-                android:fontFamily="@font/poppinsmedium"
-                android:text="Activar Camara"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="12sp"
-                app:cornerRadius="20dp" />
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_activar_camara"
+                    android:layout_width="0dp"
+                    android:layout_height="60dp"
+                    android:layout_weight="1.2"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="#BA1924"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:text="Activar Camara"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    app:cornerRadius="20dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_culminar_asistencia"
+                    android:layout_width="0dp"
+                    android:layout_height="60dp"
+                    android:layout_weight="0.8"
+                    android:backgroundTint="#5E5F60"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:text="Culminar"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    app:cornerRadius="20dp" />
+
+            </LinearLayout>
 
             <!-- Buscador y Selector de Salón -->
             <LinearLayout

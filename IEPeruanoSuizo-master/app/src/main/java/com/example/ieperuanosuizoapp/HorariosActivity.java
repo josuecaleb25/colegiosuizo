@@ -252,6 +252,21 @@ public class HorariosActivity extends AppCompatActivity {
             String aula = jsonObj.has("aula") ? jsonObj.get("aula").getAsString() : "";
             String seccion = jsonObj.has("seccion") ? jsonObj.get("seccion").getAsString() : "";
             
+            // Si es RECREO, mostrar solo una línea divisoria
+            if ("RECREO".equals(curso)) {
+                View lineaDivisoria = new View(this);
+                lineaDivisoria.setBackgroundColor(Color.parseColor("#CCCCCC"));
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    (int) (1 * getResources().getDisplayMetrics().density)
+                );
+                params.topMargin = (int) (16 * getResources().getDisplayMetrics().density);
+                params.bottomMargin = (int) (16 * getResources().getDisplayMetrics().density);
+                lineaDivisoria.setLayoutParams(params);
+                coursesContainer.addView(lineaDivisoria);
+                continue; // Saltar al siguiente horario
+            }
+            
             View itemView = inflater.inflate(R.layout.item_horario, coursesContainer, false);
 
             ((TextView) itemView.findViewById(R.id.tv_start_time)).setText(horaInicio);

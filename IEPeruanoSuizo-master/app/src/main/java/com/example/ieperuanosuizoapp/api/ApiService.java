@@ -123,4 +123,11 @@ public interface ApiService {
     Call<ApiResponse<List<AsistenciaAlumno>>> getAsistenciaPorFecha(
         @Query("fecha") String fecha
     );
+    
+    // Asistencia - Obtener días asistidos de un alumno
+    @GET("mobile/asistencia/dias-asistidos/{persona_id}")
+    Call<ApiResponse<Object>> getDiasAsistidos(
+        @retrofit2.http.Path("persona_id") String personaId,
+        @Query("semana") String semana
+    );
 }

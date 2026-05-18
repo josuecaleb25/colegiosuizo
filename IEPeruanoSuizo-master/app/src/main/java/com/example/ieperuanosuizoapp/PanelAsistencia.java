@@ -70,7 +70,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 public class PanelAsistencia extends AppCompatActivity {
 
     private PreviewView previewView;
-    private MaterialButton btnActivarCamara;
+    private MaterialButton btnActivarCamara, btnCulminarAsistencia;
     private ActivityResultLauncher<String> requestPermissionLauncher;
     private boolean isCameraActive = false;
     private ProcessCameraProvider cameraProvider;
@@ -124,6 +124,7 @@ public class PanelAsistencia extends AppCompatActivity {
         mainLayout = findViewById(R.id.main);
         previewView = findViewById(R.id.previewView);
         btnActivarCamara = findViewById(R.id.btn_activar_camara);
+        btnCulminarAsistencia = findViewById(R.id.btn_culminar_asistencia);
         autoCompleteSalon = findViewById(R.id.autoComplete_salon);
         cameraContainer = findViewById(R.id.camera_container);
         etBuscador = findViewById(R.id.et_buscador);
@@ -151,17 +152,8 @@ public class PanelAsistencia extends AppCompatActivity {
         setupSearchAnimation();
         actualizarVistaTabla();
 
-        findViewById(R.id.btn_back).setOnClickListener(v -> {
-            if (etBuscador.hasFocus() || !etBuscador.getText().toString().isEmpty() || !autoCompleteSalon.getText().toString().equals("Salon")) {
-                etBuscador.setText("");
-                autoCompleteSalon.setText("Salon", false);
-                hideSearchMode();
-            } else if (isCameraActive || sesionComenzada) {
-                mostrarDialogoConfirmarSalir();
-            } else {
-                finish();
-            }
-        });
+        // Al presionar arriba (título), volvemos a la cámara si estábamos buscando
+        findViewById(R.id.tv_title).setOnClickListener(v -> hideSearchMode());
 
         requestPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
@@ -178,11 +170,20 @@ public class PanelAsistencia extends AppCompatActivity {
 
         btnActivarCamara.setOnClickListener(v -> {
             if (isCameraActive) {
-                mostrarDialogoConfirmarDetenerCamara();
+                stopCamera();
             } else {
                 checkCameraPermissionAndStartOnly();
             }
         });
+
+        btnCulminarAsistencia.setOnClickListener(v -> {
+            if (sesionComenzada) {
+                mostrarDialogoConfirmarCulminarSesion();
+            } else {
+                Toast.makeText(this, "Inicia la asistencia primero", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         setupBottomNavigation(findViewById(R.id.bottom_navigation));
 
         // Verificar si la asistencia ya fue confirmada hoy en este dispositivo
@@ -238,37 +239,17 @@ public class PanelAsistencia extends AppCompatActivity {
         }
     }
 
-    private void mostrarDialogoConfirmarSalir() {
+    private void mostrarDialogoConfirmarCulminarSesion() {
         new MaterialAlertDialogBuilder(this)
-                .setTitle("¿Salir del registro?")
-                .setMessage("Aún tienes una sesión de asistencia activa. Si sales sin detener la cámara y confirmar, los registros escaneados se quedarán guardados en el servidor pero no se generará el resumen local.\n\n¿Deseas salir de todos modos?")
+                .setTitle("¿Culminar registro?")
+                .setMessage("Se dará por terminado este registro de asistencia y se guardará el resumen en el historial.")
                 .setNegativeButton("Cancelar", (d, w) -> d.dismiss())
-                .setPositiveButton("Salir", (d, w) -> finish())
-                .setNeutralButton("Detener y Confirmar", (d, w) -> {
+                .setPositiveButton("Culminar", (d, w) -> {
                     d.dismiss();
                     stopCamera();
                     String fechaIso = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Calendar.getInstance().getTime());
                     List<AsistenciaAlumno> snapshot = construirListaConfirmacionDesdeAlumnos();
                     mostrarModalConfirmacionAsistenciaDia(fechaIso, snapshot);
-                })
-                .show();
-    }
-
-    private void mostrarDialogoConfirmarDetenerCamara() {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("¿Detener la cámara?")
-                .setMessage(
-                        "Si detienes la cámara, se dará por terminado este registro de asistencia.\n\n"
-                                + "Para hacer un registro nuevo tendrás que eliminar el registro anterior desde la gestión correspondiente y volver a comenzar.")
-                .setNegativeButton("Cancelar", (d, w) -> d.dismiss())
-                .setPositiveButton("Continuar", (d, w) -> {
-                    d.dismiss();
-                    stopCamera();
-                    if (sesionComenzada) {
-                        String fechaIso = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Calendar.getInstance().getTime());
-                        List<AsistenciaAlumno> snapshot = construirListaConfirmacionDesdeAlumnos();
-                        mostrarModalConfirmacionAsistenciaDia(fechaIso, snapshot);
-                    }
                 })
                 .show();
     }
@@ -540,13 +521,17 @@ public class PanelAsistencia extends AppCompatActivity {
         TransitionManager.beginDelayedTransition(mainLayout, new AutoTransition());
         cameraContainer.setVisibility(View.GONE);
         btnActivarCamara.setVisibility(View.GONE);
+        btnCulminarAsistencia.setVisibility(View.GONE);
         actualizarVistaTabla();
     }
 
     private void hideSearchMode() {
         TransitionManager.beginDelayedTransition(mainLayout, new AutoTransition());
+        etBuscador.setText("");
+        autoCompleteSalon.setText("Salon", false);
         cameraContainer.setVisibility(View.VISIBLE);
         btnActivarCamara.setVisibility(View.VISIBLE);
+        btnCulminarAsistencia.setVisibility(View.VISIBLE);
         etBuscador.clearFocus();
         actualizarVistaTabla();
     }
@@ -638,8 +623,11 @@ public class PanelAsistencia extends AppCompatActivity {
         MaterialButton btn = v.findViewById(R.id.btn_confirm_aceptar);
         btn.setOnClickListener(x -> {
             AsistenciaLocalStore.guardar(PanelAsistencia.this, fechaIso, snapshot);
-            Toast.makeText(PanelAsistencia.this, "Registro guardado. Consúltalo en Gestión de asistencias.", Toast.LENGTH_LONG).show();
             ad.dismiss();
+            // Navegar a Gestión de Asistencia al culminar
+            Intent intent = new Intent(PanelAsistencia.this, GestionAsistenciaActivity.class);
+            startActivity(intent);
+            finish(); // Cerramos el panel ya que la sesión terminó
         });
         ad.show();
     }
@@ -749,11 +737,7 @@ public class PanelAsistencia extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (isCameraActive || sesionComenzada) {
-            mostrarDialogoConfirmarSalir();
-        } else {
-            super.onBackPressed();
-        }
+        super.onBackPressed();
     }
 
     @Override

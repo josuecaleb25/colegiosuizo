@@ -133,14 +133,17 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
         
         private void descargarQR(Usuario usuario) {
             try {
-                // Obtener el bitmap del QR
-                android.graphics.Bitmap qrBitmap = obtenerBitmapQR(usuario);
-                if (qrBitmap == null) {
+                // Obtener el bitmap del QR original
+                android.graphics.Bitmap qrOriginal = obtenerBitmapQR(usuario);
+                if (qrOriginal == null) {
                     android.widget.Toast.makeText(itemView.getContext(), 
                         "No se pudo obtener el código QR", 
                         android.widget.Toast.LENGTH_SHORT).show();
                     return;
                 }
+                
+                // Agregar el marco rojo antes de guardar
+                android.graphics.Bitmap qrConMarco = agregarMarcoRojo(qrOriginal);
                 
                 // Guardar en la galería
                 String nombreArchivo = "QR_" + usuario.getCodigoAlumno() + "_" + System.currentTimeMillis() + ".png";
@@ -157,7 +160,7 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
                     
                     if (imageUri != null) {
                         java.io.OutputStream outputStream = resolver.openOutputStream(imageUri);
-                        qrBitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, outputStream);
+                        qrConMarco.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, outputStream);
                         outputStream.close();
                         
                         android.widget.Toast.makeText(itemView.getContext(), 
@@ -175,7 +178,7 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
                     
                     java.io.File imageFile = new java.io.File(iepsDir, nombreArchivo);
                     java.io.FileOutputStream outputStream = new java.io.FileOutputStream(imageFile);
-                    qrBitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, outputStream);
+                    qrConMarco.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, outputStream);
                     outputStream.close();
                     
                     // Notificar a la galería
@@ -197,21 +200,24 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
         
         private void compartirQR(Usuario usuario) {
             try {
-                // Obtener el bitmap del QR
-                android.graphics.Bitmap qrBitmap = obtenerBitmapQR(usuario);
-                if (qrBitmap == null) {
+                // Obtener el bitmap del QR original
+                android.graphics.Bitmap qrOriginal = obtenerBitmapQR(usuario);
+                if (qrOriginal == null) {
                     android.widget.Toast.makeText(itemView.getContext(), 
                         "No se pudo obtener el código QR", 
                         android.widget.Toast.LENGTH_SHORT).show();
                     return;
                 }
                 
+                // Agregar el marco rojo antes de compartir
+                android.graphics.Bitmap qrConMarco = agregarMarcoRojo(qrOriginal);
+                
                 // Guardar temporalmente en caché
                 java.io.File cachePath = new java.io.File(itemView.getContext().getCacheDir(), "images");
                 cachePath.mkdirs();
                 java.io.File imageFile = new java.io.File(cachePath, "qr_temp.png");
                 java.io.FileOutputStream stream = new java.io.FileOutputStream(imageFile);
-                qrBitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream);
+                qrConMarco.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream);
                 stream.close();
                 
                 // Crear URI usando FileProvider
@@ -236,6 +242,36 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
                     "Error al compartir QR: " + e.getMessage(), 
                     android.widget.Toast.LENGTH_SHORT).show();
             }
+        }
+        
+        private android.graphics.Bitmap agregarMarcoRojo(android.graphics.Bitmap original) {
+            int width = original.getWidth();
+            int height = original.getHeight();
+            
+            // Calculamos un borde proporcional (ej: 10% del tamaño)
+            int borderSize = width / 10;
+            int newWidth = width + (borderSize * 2);
+            int newHeight = height + (borderSize * 2);
+            
+            android.graphics.Bitmap bitmapConMarco = android.graphics.Bitmap.createBitmap(
+                newWidth, newHeight, original.getConfig());
+            android.graphics.Canvas canvas = new android.graphics.Canvas(bitmapConMarco);
+            
+            // 1. Pintamos el fondo de ROJO (el marco)
+            android.graphics.Paint paintBorde = new android.graphics.Paint();
+            paintBorde.setColor(android.graphics.Color.parseColor("#BA1924")); // Tu rojo corporativo
+            canvas.drawRect(0, 0, newWidth, newHeight, paintBorde);
+            
+            // 2. Pintamos un cuadro blanco interno para que el QR resalte bien
+            android.graphics.Paint paintBlanco = new android.graphics.Paint();
+            paintBlanco.setColor(android.graphics.Color.WHITE);
+            // El blanco llega casi hasta el borde del QR (dejando un margen de 4px por estética)
+            canvas.drawRect(4, 4, newWidth - 4, newHeight - 4, paintBlanco);
+            
+            // 3. Dibujamos el QR original en el centro
+            canvas.drawBitmap(original, borderSize, borderSize, null);
+            
+            return bitmapConMarco;
         }
         
         private android.graphics.Bitmap obtenerBitmapQR(Usuario usuario) {

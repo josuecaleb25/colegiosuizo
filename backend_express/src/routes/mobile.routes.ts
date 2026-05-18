@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import supabase from '../config/database';
+import { optionalAuthMiddleware, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
@@ -112,9 +113,40 @@ router.get('/usuarios', async (req, res) => {
 });
 
 // Obtener alumnos para asistencia
-router.get('/asistencia/alumnos', async (req, res) => {
+router.get('/asistencia/alumnos', optionalAuthMiddleware, async (req: AuthRequest, res) => {
   try {
     const { salon, search } = req.query;
+    const user = req.user;
+    
+    // Si es profesor, obtener sus secciones asignadas
+    let seccionesPermitidas: string[] = [];
+    
+    if (user && user.rol === 'profesor') {
+      // Buscar el docente por persona_id
+      const { data: personas } = await supabase
+        .from('personas')
+        .select('id')
+        .eq('correo', user.email)
+        .single();
+
+      if (personas) {
+        const { data: docente } = await supabase
+          .from('docentes')
+          .select('id')
+          .eq('persona_id', personas.id)
+          .single();
+
+        if (docente) {
+          // Obtener secciones asignadas al docente
+          const { data: asignaciones } = await supabase
+            .from('asignaciones')
+            .select('seccion_id')
+            .eq('docente_id', docente.id);
+
+          seccionesPermitidas = asignaciones?.map((a: any) => a.seccion_id) || [];
+        }
+      }
+    }
     
     let query = supabase
       .from('alumnos')
@@ -127,6 +159,7 @@ router.get('/asistencia/alumnos', async (req, res) => {
           apellidos
         ),
         matriculas!inner (
+          seccion_id,
           secciones!inner (
             nombre,
             grados!inner (
@@ -140,6 +173,15 @@ router.get('/asistencia/alumnos', async (req, res) => {
     const { data: alumnos, error } = await query.limit(200);
 
     if (error) throw error;
+
+    // Filtrar por secciones permitidas si es profesor
+    let alumnosFiltrados = alumnos || [];
+    if (user && user.rol === 'profesor' && seccionesPermitidas.length > 0) {
+      alumnosFiltrados = alumnosFiltrados.filter((a: any) => {
+        const matricula = a.matriculas?.[0];
+        return seccionesPermitidas.includes(matricula?.seccion_id);
+      });
+    }
 
     // Obtener asistencias de hoy
     const hoy = new Date().toISOString().split('T')[0];
@@ -157,7 +199,7 @@ router.get('/asistencia/alumnos', async (req, res) => {
       };
     });
 
-    const alumnosFormateados = alumnos?.map((a: any) => {
+    const alumnosFormateados = alumnosFiltrados.map((a: any) => {
       const matricula = a.matriculas?.[0];
       const seccionNombre = matricula?.secciones?.nombre || '';
       const gradoNombre = matricula?.secciones?.grados?.nombre || '';
@@ -171,7 +213,7 @@ router.get('/asistencia/alumnos', async (req, res) => {
         hora_registro: asistencia?.hora_entrada || null,
         estado_entrada: asistencia?.estado || 'ausente'
       };
-    }) || [];
+    });
 
     res.json({
       success: true,
@@ -270,6 +312,145 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error al registrar asistencia',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/mobile/asistencia/dias-asistidos/:personaId - Obtener días asistidos de un alumno
+router.get('/asistencia/dias-asistidos/:personaId', async (req, res) => {
+  try {
+    const { personaId } = req.params;
+    const { semana } = req.query; // Opcional: filtrar por semana actual
+
+    let fechaInicio: string;
+    let fechaFin: string;
+
+    if (semana === 'actual') {
+      // Obtener lunes y viernes de la semana actual
+      const hoy = new Date();
+      const diaSemana = hoy.getDay(); // 0=domingo, 1=lunes, etc.
+      const diasDesdeLunes = diaSemana === 0 ? 6 : diaSemana - 1; // Ajustar para que lunes sea 0
+      
+      const lunes = new Date(hoy);
+      lunes.setDate(hoy.getDate() - diasDesdeLunes);
+      fechaInicio = lunes.toISOString().split('T')[0];
+      
+      const viernes = new Date(lunes);
+      viernes.setDate(lunes.getDate() + 4); // Lunes + 4 días = Viernes
+      fechaFin = viernes.toISOString().split('T')[0];
+    } else {
+      // Por defecto, últimos 30 días
+      const hoy = new Date();
+      fechaFin = hoy.toISOString().split('T')[0];
+      const hace30Dias = new Date(hoy);
+      hace30Dias.setDate(hoy.getDate() - 30);
+      fechaInicio = hace30Dias.toISOString().split('T')[0];
+    }
+
+    // Obtener asistencias del alumno (presente y tardanza cuentan)
+    const { data: asistencias, error } = await supabase
+      .from('asistencias')
+      .select('fecha, estado, hora_entrada')
+      .eq('persona_id', personaId)
+      .gte('fecha', fechaInicio)
+      .lte('fecha', fechaFin)
+      .order('fecha', { ascending: false });
+
+    if (error) throw error;
+
+    // Calcular estadísticas
+    const totalDias = asistencias?.length || 0;
+    const diasPresente = asistencias?.filter(a => a.estado === 'presente').length || 0;
+    const diasTardanza = asistencias?.filter(a => a.estado === 'tardanza').length || 0;
+    
+    // Calcular racha actual (días consecutivos de asistencia)
+    let rachaActual = 0;
+    if (asistencias && asistencias.length > 0) {
+      // Obtener todas las asistencias ordenadas de más reciente a más antigua
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      
+      // Verificar si hoy es día escolar (lunes a viernes)
+      const diaHoy = hoy.getDay();
+      const esFinDeSemana = diaHoy === 0 || diaHoy === 6;
+      
+      // Empezar desde el último día escolar
+      let fechaActual = new Date(hoy);
+      
+      // Si hoy es fin de semana, retroceder al viernes
+      if (esFinDeSemana) {
+        if (diaHoy === 0) { // Domingo
+          fechaActual.setDate(fechaActual.getDate() - 2); // Retroceder a viernes
+        } else { // Sábado
+          fechaActual.setDate(fechaActual.getDate() - 1); // Retroceder a viernes
+        }
+      }
+      
+      // Contar días consecutivos de asistencia
+      for (const asistencia of asistencias) {
+        const fechaAsistencia = new Date(asistencia.fecha + 'T00:00:00');
+        fechaAsistencia.setHours(0, 0, 0, 0);
+        const fechaEsperada = fechaActual.toISOString().split('T')[0];
+        const fechaAsist = fechaAsistencia.toISOString().split('T')[0];
+        
+        if (fechaAsist === fechaEsperada) {
+          rachaActual++;
+          // Retroceder al siguiente día escolar
+          fechaActual.setDate(fechaActual.getDate() - 1);
+          // Saltar fines de semana
+          while (fechaActual.getDay() === 0 || fechaActual.getDay() === 6) {
+            fechaActual.setDate(fechaActual.getDate() - 1);
+          }
+        } else {
+          // Si no hay asistencia en el día esperado, la racha se rompe
+          break;
+        }
+      }
+    }
+
+    // Obtener días de la semana actual con asistencia
+    const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    const asistenciasSemana: { [key: string]: boolean } = {
+      lunes: false,
+      martes: false,
+      miercoles: false,
+      jueves: false,
+      viernes: false
+    };
+
+    if (semana === 'actual' && asistencias) {
+      asistencias.forEach(asistencia => {
+        const fecha = new Date(asistencia.fecha + 'T00:00:00');
+        const dia = fecha.getDay(); // 0=domingo, 1=lunes, etc.
+        const nombreDia = diasSemana[dia];
+        
+        if (nombreDia in asistenciasSemana) {
+          asistenciasSemana[nombreDia] = true;
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        total_dias: totalDias,
+        dias_presente: diasPresente,
+        dias_tardanza: diasTardanza,
+        racha_actual: rachaActual,
+        asistencias_semana: asistenciasSemana,
+        historial: asistencias?.map(a => ({
+          fecha: a.fecha,
+          estado: a.estado,
+          hora_entrada: a.hora_entrada
+        })) || []
+      }
+    });
+  } catch (error: any) {
+    console.error('Error al obtener días asistidos:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener días asistidos',
       error: error.message
     });
   }

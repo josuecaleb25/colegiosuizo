@@ -120,17 +120,18 @@ public class CursosActivity extends AppCompatActivity {
         for (Object obj : cursosData) {
             com.google.gson.JsonObject jsonObj = gson.toJsonTree(obj).getAsJsonObject();
             
+            String id = jsonObj.has("id") ? jsonObj.get("id").getAsString() : "";
             String nombre = jsonObj.has("nombre") ? jsonObj.get("nombre").getAsString() : "";
             String profesor = jsonObj.has("profesor") ? jsonObj.get("profesor").getAsString() : "";
             String promedio = jsonObj.has("promedio") ? jsonObj.get("promedio").getAsString() : "0";
             String seccion = jsonObj.has("seccion") ? jsonObj.get("seccion").getAsString() : "";
             
-            View cursoCard = crearCursoCard(nombre, profesor, promedio, seccion);
+            View cursoCard = crearCursoCard(id, nombre, profesor, promedio, seccion);
             cursosContainer.addView(cursoCard);
         }
     }
 
-    private View crearCursoCard(String nombre, String profesor, String promedio, String seccion) {
+    private View crearCursoCard(String id, String nombre, String profesor, String promedio, String seccion) {
         // Inflar el layout de la card
         View cardView = LayoutInflater.from(this).inflate(R.layout.item_curso_card, cursosContainer, false);
         
@@ -152,15 +153,16 @@ public class CursosActivity extends AppCompatActivity {
         }
         
         // Configurar click listener
-        cardView.setOnClickListener(v -> handleCursoClick(nombre, profesor, promedio, seccion));
+        cardView.setOnClickListener(v -> handleCursoClick(id, nombre, profesor, promedio, seccion));
         
         return cardView;
     }
 
-    private void handleCursoClick(String nombreCurso, String nombreProfesor, String promedio, String salon) {
+    private void handleCursoClick(String cursoId, String nombreCurso, String nombreProfesor, String promedio, String salon) {
         if ("PROFESOR".equals(userMode)) {
             // Profesor: Abrir la nueva Activity con Tabs
             Intent intent = new Intent(this, CursoDetalleProfesorActivity.class);
+            intent.putExtra("curso_id", cursoId);
             intent.putExtra("nombre_curso", nombreCurso);
             intent.putExtra("salon", salon);
             startActivity(intent);

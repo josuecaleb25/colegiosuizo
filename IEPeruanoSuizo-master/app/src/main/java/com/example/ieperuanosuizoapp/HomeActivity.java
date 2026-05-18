@@ -109,6 +109,7 @@ public class HomeActivity extends AppCompatActivity {
 
         setupPerspectiveDrawer();
         setupComunicadosLogic();
+        cargarDiasAsistidos(); // Cargar días asistidos desde el backend
 
         // Configurar navegación del Drawer
         navigationView.setNavigationItemSelectedListener(item -> {
@@ -276,18 +277,21 @@ public class HomeActivity extends AppCompatActivity {
         String name = prefs.getString("user_name", "Usuario");
         String role = prefs.getString("user_mode", "ALUMNO");
 
-        // Actualizar saludo
+        // Obtener solo el primer nombre
+        String primerNombre = name.split(" ")[0];
+
+        // Actualizar saludo con solo el primer nombre
         if (tvUserName != null) {
-            tvUserName.setText(name);
+            tvUserName.setText(primerNombre);
         }
 
-        // Actualizar Drawer Header
+        // Actualizar Drawer Header con nombre completo
         View headerView = navigationView.getHeaderView(0);
         if (headerView != null) {
             TextView tvNameDrawer = headerView.findViewById(R.id.tv_user_name_drawer);
             TextView tvRoleDrawer = headerView.findViewById(R.id.tv_user_role_drawer);
 
-            if (tvNameDrawer != null) tvNameDrawer.setText(name);
+            if (tvNameDrawer != null) tvNameDrawer.setText(name); // Nombre completo en el drawer
             if (tvRoleDrawer != null) tvRoleDrawer.setText(role);
         }
     }
@@ -333,13 +337,15 @@ public class HomeActivity extends AppCompatActivity {
         menu.findItem(R.id.nav_horarios).setVisible(true);
         menu.findItem(R.id.nav_perfil).setVisible(true);
         menu.findItem(R.id.nav_identificacion).setVisible(true);
-        menu.findItem(R.id.nav_switch_role).setVisible(true);
+        
+        // Cambiar de Rol solo visible para administradores
+        menu.findItem(R.id.nav_switch_role).setVisible(false);
 
         // Lógica de visibilidad por Rol
         // Normalizar el rol para comparación (aceptar variantes)
-        String rolNormalizado = userMode != null ? userMode.toUpperCase().trim() : "ALUMNO";
+        String rolNormalizado = userMode != null ? userMode.toUpperCase().trim() : "PADRE";
         
-        if ("ALUMNO".equals(rolNormalizado)) {
+        if ("ALUMNO".equals(rolNormalizado) || "PADRE".equals(rolNormalizado)) {
             menu.findItem(R.id.nav_cursos).setVisible(true);
             menu.findItem(R.id.nav_horarios).setVisible(true);
             menu.findItem(R.id.nav_perfil).setVisible(true);
@@ -378,6 +384,7 @@ public class HomeActivity extends AppCompatActivity {
             menu.findItem(R.id.nav_perfil).setVisible(true);
             menu.findItem(R.id.nav_identificacion).setVisible(true);
             menu.findItem(R.id.nav_asistencia).setVisible(true);
+            menu.findItem(R.id.nav_switch_role).setVisible(true); // Solo admin puede cambiar de rol
             menu.findItem(R.id.nav_panel_admin).setVisible(true);
             
             // Ocultar Cursos y Horarios para el Admin
@@ -817,6 +824,78 @@ public class HomeActivity extends AppCompatActivity {
         }
 
         ivDailyIllustration.setImageResource(illustrationRes);
+    }
+    
+    private void cargarDiasAsistidos() {
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        String userId = prefs.getString("user_id", null);
+        
+        if (userId == null) {
+            android.util.Log.w("HomeActivity", "No se encontró user_id para cargar asistencia");
+            return;
+        }
+        
+        // Llamar al endpoint de días asistidos
+        com.example.ieperuanosuizoapp.api.RetrofitClient.getApiService()
+            .getDiasAsistidos(userId, "actual")
+            .enqueue(new retrofit2.Callback<com.example.ieperuanosuizoapp.api.models.ApiResponse<Object>>() {
+                @Override
+                public void onResponse(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<Object>> call,
+                                     retrofit2.Response<com.example.ieperuanosuizoapp.api.models.ApiResponse<Object>> response) {
+                    if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                        Object data = response.body().getData();
+                        
+                        // Parsear la respuesta
+                        com.google.gson.Gson gson = new com.google.gson.Gson();
+                        com.google.gson.JsonObject jsonData = gson.toJsonTree(data).getAsJsonObject();
+                        
+                        int rachaActual = jsonData.has("racha_actual") ? jsonData.get("racha_actual").getAsInt() : 0;
+                        
+                        // Obtener asistencias de la semana
+                        com.google.gson.JsonObject asistenciasSemana = jsonData.has("asistencias_semana") ? 
+                            jsonData.getAsJsonObject("asistencias_semana") : new com.google.gson.JsonObject();
+                        
+                        boolean lunes = asistenciasSemana.has("lunes") && asistenciasSemana.get("lunes").getAsBoolean();
+                        boolean martes = asistenciasSemana.has("martes") && asistenciasSemana.get("martes").getAsBoolean();
+                        boolean miercoles = asistenciasSemana.has("miercoles") && asistenciasSemana.get("miercoles").getAsBoolean();
+                        boolean jueves = asistenciasSemana.has("jueves") && asistenciasSemana.get("jueves").getAsBoolean();
+                        boolean viernes = asistenciasSemana.has("viernes") && asistenciasSemana.get("viernes").getAsBoolean();
+                        
+                        // Actualizar UI
+                        actualizarUIAsistencia(rachaActual, lunes, martes, miercoles, jueves, viernes);
+                        
+                    } else {
+                        android.util.Log.w("HomeActivity", "Error al cargar días asistidos: " + response.message());
+                    }
+                }
+
+                @Override
+                public void onFailure(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<Object>> call, Throwable t) {
+                    android.util.Log.e("HomeActivity", "Error al cargar días asistidos: " + t.getMessage());
+                }
+            });
+    }
+    
+    private void actualizarUIAsistencia(int racha, boolean lunes, boolean martes, boolean miercoles, boolean jueves, boolean viernes) {
+        // Actualizar racha (días seguidos)
+        TextView tvRacha = findViewById(R.id.tv_streak_number);
+        if (tvRacha != null) {
+            tvRacha.setText(String.valueOf(racha));
+        }
+        
+        // Actualizar checkmarks de días de la semana
+        ImageView checkLunes = findViewById(R.id.check_lunes);
+        ImageView checkMartes = findViewById(R.id.check_martes);
+        ImageView checkMiercoles = findViewById(R.id.check_miercoles);
+        ImageView checkJueves = findViewById(R.id.check_jueves);
+        ImageView checkViernes = findViewById(R.id.check_viernes);
+        
+        // Actualizar visibilidad según asistencia
+        if (checkLunes != null) checkLunes.setVisibility(lunes ? View.VISIBLE : View.INVISIBLE);
+        if (checkMartes != null) checkMartes.setVisibility(martes ? View.VISIBLE : View.INVISIBLE);
+        if (checkMiercoles != null) checkMiercoles.setVisibility(miercoles ? View.VISIBLE : View.INVISIBLE);
+        if (checkJueves != null) checkJueves.setVisibility(jueves ? View.VISIBLE : View.INVISIBLE);
+        if (checkViernes != null) checkViernes.setVisibility(viernes ? View.VISIBLE : View.INVISIBLE);
     }
 
     @Override

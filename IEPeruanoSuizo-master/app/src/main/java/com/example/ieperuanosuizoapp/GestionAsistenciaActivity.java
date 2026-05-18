@@ -9,7 +9,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -51,8 +50,7 @@ import retrofit2.Response;
 
 public class GestionAsistenciaActivity extends AppCompatActivity {
 
-    private TextView tvSubtitulo;
-    private ProgressBar progressHistorial;
+    private com.google.android.material.progressindicator.CircularProgressIndicator progressHistorial;
     private RecyclerView rvHistorial;
     private LinearLayout layoutEmpty;
 
@@ -89,7 +87,6 @@ public class GestionAsistenciaActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        tvSubtitulo = findViewById(R.id.tv_fecha_seleccionada);
         progressHistorial = findViewById(R.id.progress_historial);
         rvHistorial = findViewById(R.id.rv_historial);
         layoutEmpty = findViewById(R.id.layout_empty);
@@ -138,10 +135,14 @@ public class GestionAsistenciaActivity extends AppCompatActivity {
         progressHistorial.setVisibility(View.VISIBLE);
         rvHistorial.setVisibility(View.GONE);
         layoutEmpty.setVisibility(View.GONE);
-        tvSubtitulo.setText("Cargando historial…");
 
         new Thread(() -> {
             List<String> fechas = construirFechasLaborablesAnoEnCurso();
+            // Asegurarnos de que "hoy" esté en la lista para que el registro local se vea
+            String hoy = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Calendar.getInstance().getTime());
+            if (!fechas.contains(hoy)) {
+                fechas.add(0, hoy);
+            }
             ExecutorService pool = Executors.newFixedThreadPool(8);
             CountDownLatch latch = new CountDownLatch(fechas.size());
             List<AsistenciaDiaResumen> acumulado = Collections.synchronizedList(new ArrayList<>());
@@ -195,7 +196,6 @@ public class GestionAsistenciaActivity extends AppCompatActivity {
                     return;
                 }
                 progressHistorial.setVisibility(View.GONE);
-                tvSubtitulo.setText("Año en curso · por mes (solo días con registro)");
                 if (filas.isEmpty()) {
                     layoutEmpty.setVisibility(View.VISIBLE);
                     rvHistorial.setVisibility(View.GONE);

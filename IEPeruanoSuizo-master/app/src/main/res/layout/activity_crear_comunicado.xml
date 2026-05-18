@@ -66,7 +66,7 @@
             android:orientation="vertical"
             android:paddingHorizontal="24dp"
             android:paddingTop="16dp"
-            android:paddingBottom="24dp">
+            android:paddingBottom="150dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -132,25 +132,37 @@
                 android:textColor="#BA1924"
                 android:textSize="13sp" />
 
-            <com.google.android.material.card.MaterialCardView
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_destinatarios"
+                style="@style/Widget.Material3.TextInputLayout.FilledBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                app:cardBackgroundColor="#BA1924"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp">
+                app:boxBackgroundColor="#BA1924"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxStrokeWidth="0dp"
+                app:boxStrokeWidthFocused="0dp"
+                app:endIconTint="@android:color/white"
+                app:hintEnabled="false">
 
-                <Spinner
-                    android:id="@+id/spinner_destinatarios"
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/auto_complete_destinatarios"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="50dp"
+                    android:inputType="none"
                     android:paddingHorizontal="16dp"
-                    android:backgroundTint="@android:color/white"
-                    android:overlapAnchor="false"
-                    android:spinnerMode="dropdown"
-                    android:dropDownVerticalOffset="50dp"
-                    android:dropDownHeight="160dp" />
-            </com.google.android.material.card.MaterialCardView>
+                    android:paddingTop="0dp"
+                    android:paddingBottom="0dp"
+                    android:textColor="@android:color/white"
+                    android:fontFamily="@font/poppinsregular"
+                    android:textSize="14sp"
+                    android:dropDownHeight="150dp"
+                    android:popupBackground="@android:color/white"
+                    tools:ignore="LabelFor" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Adjuntar Imagen -->
             <TextView

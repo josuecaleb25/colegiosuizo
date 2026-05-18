@@ -92,6 +92,9 @@ public class AuthLogin extends AppCompatActivity {
                         editor.putString("user_seccion", user.getSeccion() != null ? user.getSeccion() : "");
                         editor.apply();
 
+                        // Inicializar RetrofitClient con el contexto
+                        RetrofitClient.init(AuthLogin.this);
+
                         // Log para debug
                         android.util.Log.d("AuthLogin", "Usuario ID guardado: " + user.getId());
                         android.util.Log.d("AuthLogin", "Usuario Email: " + user.getEmail());

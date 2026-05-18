@@ -17,11 +17,9 @@ router.get('/', async (req, res) => {
         tipo,
         destinatario_tipo,
         fecha_publicacion,
-        usuarios!inner (
-          personas!inner (
-            nombres,
-            apellidos
-          )
+        personas!inner (
+          nombres,
+          apellidos
         ),
         secciones (
           nombre,
@@ -50,12 +48,10 @@ router.get('/', async (req, res) => {
       tipo: com.tipo,
       destinatario_tipo: com.destinatario_tipo,
       fecha_publicacion: com.fecha_publicacion,
-      autor: `${com.usuarios.personas.nombres} ${com.usuarios.personas.apellidos}`,
-      destinatario: com.destinatario_tipo === 'global' 
-        ? 'Todos' 
-        : com.secciones 
-          ? `${com.secciones.grados.nombre}${com.secciones.nombre}`
-          : 'N/A'
+      emisor: `${com.personas.nombres} ${com.personas.apellidos}`,
+      seccion: com.secciones 
+        ? `${com.secciones.grados.nombre}${com.secciones.nombre}`
+        : null
     })) || [];
 
     res.json({
@@ -130,7 +126,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { 
-      usuario_id, 
+      usuario_id,  // La app envía esto pero lo usaremos como persona_id
       titulo, 
       contenido, 
       tipo, 
@@ -139,17 +135,37 @@ router.post('/', async (req, res) => {
       grado_id 
     } = req.body;
 
-    if (!usuario_id || !titulo || !contenido || !destinatario_tipo) {
+    console.log('📝 Crear comunicado - Body recibido:', req.body);
+
+    // Usar usuario_id como persona_id (la app envía persona_id con el nombre usuario_id)
+    const persona_id = usuario_id;
+
+    if (!persona_id || !titulo || !contenido || !destinatario_tipo) {
       return res.status(400).json({
         success: false,
-        message: 'Faltan datos requeridos'
+        message: 'Faltan datos requeridos: usuario_id (persona_id), titulo, contenido, destinatario_tipo'
+      });
+    }
+
+    // Validar que si es seccion o grado, tenga el ID correspondiente
+    if (destinatario_tipo === 'seccion' && !seccion_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'seccion_id es requerido cuando destinatario_tipo es "seccion"'
+      });
+    }
+
+    if (destinatario_tipo === 'grado' && !grado_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'grado_id es requerido cuando destinatario_tipo es "grado"'
       });
     }
 
     const { data, error } = await supabase
       .from('comunicados_nuevos')
       .insert({
-        usuario_id,
+        persona_id,  // Ahora usa persona_id
         titulo,
         contenido,
         tipo: tipo || 'general',
@@ -160,7 +176,12 @@ router.post('/', async (req, res) => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Error al insertar comunicado:', error);
+      throw error;
+    }
+
+    console.log('✅ Comunicado creado exitosamente:', data.id);
 
     res.json({
       success: true,
@@ -168,6 +189,7 @@ router.post('/', async (req, res) => {
       data
     });
   } catch (error: any) {
+    console.error('❌ Error en POST /comunicados:', error);
     res.status(500).json({
       success: false,
       message: 'Error al crear comunicado',
@@ -238,6 +260,8 @@ router.get('/historial/enviados', async (req, res) => {
       });
     }
 
+    console.log('📋 Obteniendo historial para persona_id:', usuario_id);
+
     const { data, error } = await supabase
       .from('comunicados_nuevos')
       .select(`
@@ -258,11 +282,16 @@ router.get('/historial/enviados', async (req, res) => {
           nombre
         )
       `)
-      .eq('usuario_id', usuario_id)
-      .eq('activo', true)  // ✅ SOLO mostrar comunicados activos
+      .eq('persona_id', usuario_id)  // Cambio: usar persona_id
+      .eq('activo', true)
       .order('fecha_publicacion', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Error al obtener historial:', error);
+      throw error;
+    }
+
+    console.log(`✅ Encontrados ${data?.length || 0} comunicados`);
 
     const comunicadosFormateados = data?.map((com: any) => {
       let destinatario = 'Todos';
@@ -284,7 +313,8 @@ router.get('/historial/enviados', async (req, res) => {
         destinatario_tipo: com.destinatario_tipo,
         fecha_publicacion: com.fecha_publicacion,
         destinatario: destinatario,
-        estado: 'Enviado'  // ✅ Siempre "Enviado" porque solo mostramos activos
+        salon: destinatario,  // Alias para compatibilidad con la app
+        estado: 'Enviado'
       };
     }) || [];
 
@@ -293,6 +323,7 @@ router.get('/historial/enviados', async (req, res) => {
       data: comunicadosFormateados
     });
   } catch (error: any) {
+    console.error('❌ Error en GET /historial/enviados:', error);
     res.status(500).json({
       success: false,
       message: 'Error al obtener historial',

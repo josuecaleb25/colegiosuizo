@@ -1,0 +1,74 @@
+VERIFICACIÓN DE ENDPOINTS - BACKEND LOCAL
+==========================================
+
+Backend corriendo en: http://192.168.101.7:3000
+
+ENDPOINTS PRINCIPALES:
+----------------------
+
+1. LOGIN
+   POST http://192.168.101.7:3000/api/auth/login
+   Body: {"email":"anibalmoreno@peruanosuizo.edu.pe","password":"profesor123"}
+
+2. CURSOS DEL PROFESOR
+   GET http://192.168.101.7:3000/api/cursos/profesor/{persona_id}
+   Ejemplo: GET http://192.168.101.7:3000/api/cursos/profesor/4bc221a7-1886-4c1a-8282-8677bf0701a5
+
+3. ALUMNOS PARA ASISTENCIA
+   GET http://192.168.101.7:3000/api/mobile/asistencia/alumnos
+   Header: Authorization: Bearer {token}
+
+4. ESCANEAR QR
+   POST http://192.168.101.7:3000/api/mobile/asistencia/escanear-qr
+   Body: {"qr_token":"QR1A001"}
+
+CONFIGURACIÓN DE LA APP:
+-------------------------
+✅ USE_LOCAL = true
+✅ LOCAL_URL = "http://192.168.101.7:3000/api/"
+✅ Puerto del backend: 3000
+
+PASOS PARA PROBAR:
+------------------
+1. Asegúrate de que el backend esté corriendo (npm run dev)
+2. Verifica que tu dispositivo esté en la misma red WiFi (192.168.101.x)
+3. Limpia los datos de la app en tu dispositivo:
+   - Configuración > Aplicaciones > Tu App > Almacenamiento > Borrar datos
+4. Reinstala la app desde Android Studio
+5. Inicia sesión con un profesor:
+   - Email: anibalmoreno@peruanosuizo.edu.pe
+   - Password: profesor123
+6. Verifica que solo veas 1 curso (Matemática)
+
+PROFESORES DE PRUEBA:
+---------------------
+1. anibalmoreno@peruanosuizo.edu.pe → Matemática (1ro A)
+2. elcyhernandez@peruanosuizo.edu.pe → Comunicación (1ro A)
+3. nellymujica@peruanosuizo.edu.pe → Inglés (1ro A)
+4. pabloveramendi@peruanosuizo.edu.pe → CC.SS. (1ro A)
+5. aydeearellano@peruanosuizo.edu.pe → D.P.C.C. (1ro A)
+6. edgarvega@peruanosuizo.edu.pe → Ed. Religiosa (1ro A)
+7. rociososa@peruanosuizo.edu.pe → C y T (1ro A)
+8. rosmerycorrea@peruanosuizo.edu.pe → EPT (1ro A)
+9. maricellatimoteo@peruanosuizo.edu.pe → Arte (1ro A)
+10. castrovaldivia@peruanosuizo.edu.pe → Ed. Física y Tutoría (1ro A)
+
+Todos con contraseña: profesor123
+
+VERIFICACIÓN DEL BACKEND:
+-------------------------
+El backend está funcionando correctamente. Probado con:
+- curl http://localhost:3000/api/cursos/profesor/4bc221a7-1886-4c1a-8282-8677bf0701a5
+- Respuesta: Solo devuelve 1 curso (Matemática) ✅
+
+PROBLEMA IDENTIFICADO:
+----------------------
+La app está mostrando datos en CACHÉ. El backend está funcionando correctamente.
+
+SOLUCIÓN:
+---------
+1. Limpia los datos de la app (Configuración > Apps > Borrar datos)
+2. O desinstala y reinstala la app
+3. Vuelve a iniciar sesión
+
+El backend YA está filtrando correctamente los cursos por profesor.

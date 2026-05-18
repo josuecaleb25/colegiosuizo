@@ -1,0 +1,206 @@
+CREDENCIALES DE ALUMNOS - 158 ESTUDIANTES
+==========================================
+
+CONTRASEÑA PARA TODOS: Suizo2026*
+
+CREDENCIALES DE PROFESORES - 10 DOCENTES DE 1°A
+================================================
+
+CONTRASEÑA PARA TODOS: profesor123
+
+1. anibalmoreno@peruanosuizo.edu.pe - Aníbal Moreno (Matemática)
+2. elcyhernandez@peruanosuizo.edu.pe - Elcy Filomena Hernandez Rodas (Comunicación)
+3. nellymujica@peruanosuizo.edu.pe - Nelly Mujica Galvez (Inglés)
+4. pabloveramendi@peruanosuizo.edu.pe - Pablo Veramendi Rivera (CC.SS.)
+5. aydeearellano@peruanosuizo.edu.pe - Aydee Glosbinda Arellano Cabada (D.P.C.C.)
+6. edgarvega@peruanosuizo.edu.pe - Edgar Mauro Vega Quiñones (Ed. Religiosa)
+7. rociososa@peruanosuizo.edu.pe - Rocío Sosa (C y T)
+8. rosmerycorrea@peruanosuizo.edu.pe - Rosmery Ysabel Correa Caytano (EPT)
+9. maricellatimoteo@peruanosuizo.edu.pe - Maricella Johana Timoteo Gahona (Arte)
+10. castrovaldivia@peruanosuizo.edu.pe - Walter Manuel Castro Valdivia (Ed. Física y Tutoría)
+
+NOTA: Estos profesores solo pueden ver y gestionar alumnos de 1°A (32 alumnos)
+
+==========================================
+CREDENCIALES DE ALUMNOS
+==========================================
+
+1RO A (32 alumnos)
+------------------
+1.  - ABAD VILLANERA, LISETH SAYURI
+2. bazannavarro@peruanosuizo.edu.pe - BAZAN NAVARRO, LEONARDO ARTURO
+3. cabanillaslinan@peruanosuizo.edu.pe - CABANILLAS LINAN, ANGEL GABRIEL BEAT
+4. carrillovilchez@peruanosuizo.edu.pe - CARRILLO VILCHEZ, EDGARDO MIGUEL
+5. cernavillar@peruanosuizo.edu.pe - CERNA VILLAR, AARON DAVI
+6. chavarriaranda@peruanosuizo.edu.pe - CHAVARRIA ARANDA, JEREMY
+7. condorolivas@peruanosuizo.edu.pe - CONDOR OLIVAS, MACKENZYE ROMINA
+8. cuzcanoespinoza@peruanosuizo.edu.pe - CUZCANO ESPINOZA, LIZETH VALLOLET
+9. espinozayarleque@peruanosuizo.edu.pe - ESPINOZA YARLEQUE, JHOSTIN
+10. godoysoria@peruanosuizo.edu.pe - GODOY SORIA, KARLA MERLYN
+11. gutierrezmoreno@peruanosuizo.edu.pe - GUTIERREZ MORENO, JOSE EDUARDO
+12. huamancarhuacota@peruanosuizo.edu.pe - HUAMAN CARHUACOTA, ENMANUEL JESUS DANIEL
+13. huertaastonitas@peruanosuizo.edu.pe - HUERTA ASTONITAS, LEONELA
+14. incapaccori@peruanosuizo.edu.pe - INCA PACCORI, JEREMY OSCAR
+15. juarez@peruanosuizo.edu.pe - JUAREZ, RUMAY JULY
+16. loyolaespinola@peruanosuizo.edu.pe - LOYOLA ESPINOLA, CARLOS NICOLAS
+17. marcossanchez@peruanosuizo.edu.pe - MARCOS SANCHEZ, ALEXANDER ANDRE
+18. mezaccente@peruanosuizo.edu.pe - MEZA CCENTE, JORDY ANDERSON
+19. minanvalverde@peruanosuizo.edu.pe - MINAN VALVERDE, ANA CAMILA
+20. naventaucanay@peruanosuizo.edu.pe - NAVENTA UCANAY, DARIANA STEFANY
+21. orequevedo@peruanosuizo.edu.pe - ORE QUEVEDO, JOSE FERNANDO
+22. raymundosoto@peruanosuizo.edu.pe - RAYMUNDO SOTO, ALESSANDRO
+23. riojatoledo@peruanosuizo.edu.pe - RIOJA TOLEDO, KAREN MILAGROS
+24. riveramallqui@peruanosuizo.edu.pe - RIVERA MALLQUI, JEANPIERO MANUEL
+25. romeroreyes@peruanosuizo.edu.pe - ROMERO REYES, MIRKO JOHEL
+26. salaspanaifo@peruanosuizo.edu.pe - SALAS PANAIFO, LEYSY ESTHER
+27. salgadopalacios@peruanosuizo.edu.pe - SALGADO PALACIOS, ANDRY RYAN
+28. santiagosulca@peruanosuizo.edu.pe - SANTIAGO SULCA, MELANY DARLYN
+29. seronalca@peruanosuizo.edu.pe - SERON ALCA, RODRIGO CRISTOBAL
+30. vasquezcano@peruanosuizo.edu.pe - VASQUEZ CANO, EDINSON VALENTINO
+31. vegaaguero@peruanosuizo.edu.pe - VEGA AGUERO, CRISTIANO SANTIAGO
+32. vilchezparaguay@peruanosuizo.edu.pe - VILCHEZ PARAGUAY, NAHIDU SOFIA
+
+1RO B (32 alumnos)
+------------------
+33. barrioscordoba@peruanosuizo.edu.pe - BARRIOS CORDOBA, KEIWERLYN YORGINA
+34. bejaranotorres@peruanosuizo.edu.pe - BEJARANO TORRES, ALEJANDRO GIANCARLO
+35. canchonoriega@peruanosuizo.edu.pe - CANCHO NORIEGA, SHIRLEY SOFIA
+36. castanedavasquez@peruanosuizo.edu.pe - CASTANEDA VASQUEZ, CRISTOFER JORGE ALBERTO
+37. chuicaordonez@peruanosuizo.edu.pe - CHUICA ORDONEZ, CARLOS THIAGO
+38. coralsaldana@peruanosuizo.edu.pe - CORAL SALDANA, TIARA MELISSA
+39. gervasioevangelista@peruanosuizo.edu.pe - GERVASIO EVANGELISTA, THIAGO ANTHUAN
+40. gomezaranibar@peruanosuizo.edu.pe - GOMEZ ARANIBAR, DANAE MILUZKA
+41. guerreroarirama@peruanosuizo.edu.pe - GUERRERO ARIRAMA, KATERIN LUANA
+42. guzmancastillo@peruanosuizo.edu.pe - GUZMAN CASTILLO, ANDRE THIAGO
+43. herreraclaudio@peruanosuizo.edu.pe - HERRERA CLAUDIO, NAOMI JAZMIN
+44. juaresjimenez@peruanosuizo.edu.pe - JUARES JIMENEZ, RODRIGO BELKAN
+45. kanekopaitan@peruanosuizo.edu.pe - KANEKO PAITAN, BRITTANY YARITZA
+46. marcaberrospi@peruanosuizo.edu.pe - MARCA BERROSPI, GABRIEL ADRIEL
+47. maytacapcha@peruanosuizo.edu.pe - MAYTA CAPCHA, JORDAN
+48. maytacapcha@peruanosuizo.edu.pe - MAYTA CAPCHA, JOSUE (mismo email que #47)
+49. munantehuanca@peruanosuizo.edu.pe - MUNANTE HUANCA, VALENTINA
+50. penabardales@peruanosuizo.edu.pe - PENA BARDALES, JUNIOR VALENTIN
+51. perezchuica@peruanosuizo.edu.pe - PEREZ CHUICA, JAN JACOBO
+52. pizarrodelaguila@peruanosuizo.edu.pe - PIZARRO DEL AGUILA, IKER ADRIANO
+53. pomaponce@peruanosuizo.edu.pe - POMA PONCE, NADESKA JHASMIN
+54. riveropino@peruanosuizo.edu.pe - RIVERO PINO, IAN DANIEL
+55. romerozubieta@peruanosuizo.edu.pe - ROMERO ZUBIETA, JOAQUIN ANGEL
+56. sanchezmorales@peruanosuizo.edu.pe - SANCHEZ MORALES, SARAHY DANIELA
+57. soriapaguada@peruanosuizo.edu.pe - SORIA PAGUADA, YARELY XIOMARA
+58. toscanochoco@peruanosuizo.edu.pe - TOSCANO CHOCO, KEVIN EFRAIN
+59. umanvargas@peruanosuizo.edu.pe - UMAN VARGAS, ADRIANO
+60. vasquezsobrino@peruanosuizo.edu.pe - VASQUEZ SOBRINO, TERRY ANDRE
+61. vegacastro@peruanosuizo.edu.pe - VEGA CASTRO, ROCIO IVETH
+62. villalvagarcia@peruanosuizo.edu.pe - VILLALVA GARCIA, GABRIEL JOSETH
+63. villarrealfernandez@peruanosuizo.edu.pe - VILLARREAL FERNANDEZ, GEORGE NICOLAS
+64. yacolcayalico@peruanosuizo.edu.pe - YACOLCA YALICO, YOHAO SEBASTIAN KAREV
+
+1RO C (32 alumnos)
+------------------
+65. acerosernaque@peruanosuizo.edu.pe - ACERO SERNAQUE, LUIS NEYMAR
+66. alarconflores@peruanosuizo.edu.pe - ALARCON FLORES, BRAYAN SALVADOR
+67. arbitrovasquez@peruanosuizo.edu.pe - ARBITRO VASQUEZ, GILLARY MISHEL
+68. barrioscolos@peruanosuizo.edu.pe - BARRIOS COLOS, EDSALDE ZARELIZ
+69. berrospiescribe@peruanosuizo.edu.pe - BERROSPI ESCRIBA, SALVADOR ESTEFANO
+70. calderonurbina@peruanosuizo.edu.pe - CALDERON URBINA, CAMILA ANTONELLA
+71. castanedacano@peruanosuizo.edu.pe - CASTANEDA CANO, ALESSANDRO
+72. espinozajimenez@peruanosuizo.edu.pe - ESPINOZA JIMENEZ, FABRIZZIO ALESSANDRO
+73. friasrojas@peruanosuizo.edu.pe - FRIAS ROJAS, JAMILETH NICOL
+74. garciaurrutia@peruanosuizo.edu.pe - GARCIA URRUTIA, JUAN ALBERTO
+75. guevaraalvarado@peruanosuizo.edu.pe - GUEVARA ALVARADO, ANDREA
+76. hernandezrodriguez@peruanosuizo.edu.pe - HERNANDEZ RODRIGUEZ, ISABEL SOFIA
+77. hilariochoque@peruanosuizo.edu.pe - HILARIO CHOQUE, THIGO ADRIANO
+78. infanterodriguez@peruanosuizo.edu.pe - INFANTE RODRIGUEZ, VICTORIA ALEJANDRA
+79. labastidassanchez@peruanosuizo.edu.pe - LABASTIDAS SANCHEZ, ORIANNY JULIESKA
+80. macojimenez@peruanosuizo.edu.pe - MACO JIMENEZ, YENIFER
+81. mendozagallegos@peruanosuizo.edu.pe - MENDOZA GALLEGOS, FABRIZIO GERMAN
+82. mogollonvalencia@peruanosuizo.edu.pe - MOGOLLON VALENCIA, MARIANA
+83. olanopacherres@peruanosuizo.edu.pe - OLANO PACHERRES, BRAYELY NICOL
+84. oyoladelacruz@peruanosuizo.edu.pe - OYOLA DE LA CRUZ, JOAO DERECK
+85. pasacheancajima@peruanosuizo.edu.pe - PASACHE ANCAJIMA, FRANCO STEBAN
+86. perezponte@peruanosuizo.edu.pe - PEREZ PONTE, ALONDRA ARIANA
+87. ramiosperez@peruanosuizo.edu.pe - RAMIOS PEREZ, ANAIS ALEXA
+88. ramirezatuncar@peruanosuizo.edu.pe - RAMIREZ ATUNCAR, ABRAHAM ESTEBAN
+89. ramirezbandres@peruanosuizo.edu.pe - RAMIREZ BANDRES, ANGELES DELEYCAR
+90. reyessoto@peruanosuizo.edu.pe - REYES SOTO, LEONEL JAIRO
+91. sabinochuquizuta@peruanosuizo.edu.pe - SABINO CHUQUIZUTA, EVANS ANDRE
+92. saldarriagaespinoza@peruanosuizo.edu.pe - SALDARRIAGA ESPINOZA, JOSE LUIS
+93. silvamacuma@peruanosuizo.edu.pe - SILVA MACUMA, MARLON DAVID
+94. suarezlanda@peruanosuizo.edu.pe - SUAREZ LANDA, MILEY AYELEN
+95. suclupe valencia@peruanosuizo.edu.pe - SUCLUPE VALENCIA, JAN POOL
+96. tarazonahuerta@peruanosuizo.edu.pe - TARAZONA HUERTA, JANETH JASURI
+
+1RO D (31 alumnos)
+------------------
+97. ayalaespinoza@peruanosuizo.edu.pe - AYALA ESPINOZA, DALESSANDRO
+98. ayastamore@peruanosuizo.edu.pe - AYASTA MORE, JOHANA VICTORIA
+99. bustamantecandia@peruanosuizo.edu.pe - BUSTAMANTE CANDIA, NAHUEL BENJAMIN
+100. capchaguevara@peruanosuizo.edu.pe - CAPCHA GUEVARA, EVANNS IKER
+101. contreraschavez@peruanosuizo.edu.pe - CONTRERAS CHAVEZ, BRYAN JOSEPH
+102. cuyahuaynalaya@peruanosuizo.edu.pe - CUYA HUAYNALAYA, ALINA SAHORI
+103. esquivelhinostroza@peruanosuizo.edu.pe - ESQUIVEL HINOSTROZA, JAMES ANTONY
+104. gonzalessalazar@peruanosuizo.edu.pe - GONZALES SALAZAR, GENESIS FABIOLA
+105. guerrerogutierrez@peruanosuizo.edu.pe - GUERRERO GUTIERREZ, CARELY JESUS
+106. huamanzorilla@peruanosuizo.edu.pe - HUAMAN ZORILLA, JUAN CRISTIANO
+107. humalivargas@peruanosuizo.edu.pe - HUMALI VARGAS, EMILY
+108. juarezgonzales@peruanosuizo.edu.pe - JUAREZ GONZALES, FABIAN ALEXANDER
+109. lozasolano@peruanosuizo.edu.pe - LOZA SOLANO, BRYANA CRISTAL
+110. morenolopez@peruanosuizo.edu.pe - MORENO LOPEZ, SNEIDER DAYIRO
+111. namuchedurand@peruanosuizo.edu.pe - NAMUCHE DURAND, ASTRID MICHELLE
+112. padillanoriega@peruanosuizo.edu.pe - PADILLA NORIEGA, FABIO NICOLA
+113. perezlopez@peruanosuizo.edu.pe - PEREZ LOPEZ, ALEXANDRA FABIOLA
+114. principeavila@peruanosuizo.edu.pe - PRINCIPE AVILA, MAYRA TALIA
+115. quintanabriceno@peruanosuizo.edu.pe - QUINTANA BRICENO, ANYURIS ANDRIANNYS
+116. quirozchota@peruanosuizo.edu.pe - QUIROZ CHOTA, SALMA WINIBELL
+117. ramirezcontreras@peruanosuizo.edu.pe - RAMIREZ CONTRERAS, BARBARA MINA
+118. regueraespejo@peruanosuizo.edu.pe - REGUERA ESPEJO, DAVID CRISTIAN RAUL
+119. rodrieznunez@peruanosuizo.edu.pe - RODRIEZ NUNEZ, VICTOR GABRIEL
+120. rojaslopez@peruanosuizo.edu.pe - ROJAS LOPEZ, DIEGO EDUARDO
+121. sanchezacosta@peruanosuizo.edu.pe - SANCHEZ ACOSTA, ERVIN NEYMAR
+122. saucedozamora@peruanosuizo.edu.pe - SAUCEDO ZAMORA, GIAN FRANCO
+123. simongalvez@peruanosuizo.edu.pe - SIMON GALVEZ, MELANY
+124. tamaniarimuya@peruanosuizo.edu.pe - TAMANI ARIMUYA, SAYURI ALEJANDRA
+125. ticonadamian@peruanosuizo.edu.pe - TICONA DAMIAN, RUTH MAHAL
+126. torresarguedas@peruanosuizo.edu.pe - TORRES ARGUEDAS, GABRIEL AARON
+127. vasquezsaavedra@peruanosuizo.edu.pe - VASQUEZ SAAVEDRA, FABIANO FRANCISCO
+
+1RO E (31 alumnos)
+------------------
+128. amancacarpena@peruanosuizo.edu.pe - AMANCA CARPENA, LEONARDO JOSUE ANGEL
+129. balderacespedes@peruanosuizo.edu.pe - BALDERA CESPEDES, KAROLEHY
+130. berrioscastillo@peruanosuizo.edu.pe - BERRIOS CASTILLO, ALAN DAMIAN
+131. calderonurbina@peruanosuizo.edu.pe - CALDERON URBINA, JESUS ENNODIO (mismo email que #70)
+132. carbajalpalacios@peruanosuizo.edu.pe - CARBAJAL PALACIOS, THIAGO FERNANDO
+133. dagagonzales@peruanosuizo.edu.pe - DAGA GONZALES, STIFEL HENDRICH
+134. diazcacha@peruanosuizo.edu.pe - DIAZ CACHA, YOLY SAHORI
+135. espinosalazar@peruanosuizo.edu.pe - ESPINO SALAZAR, JESUS CLEMENTE
+136. farroleon@peruanosuizo.edu.pe - FARRO LEON, ALEXIS JUNIOR
+137. herreratafur@peruanosuizo.edu.pe - HERRERA TAFUR, SEBASTIAN VALENTINO
+138. huamanpinan@peruanosuizo.edu.pe - HUAMAN PINAN, DARIANA YADIRA
+139. jimenezsaldana@peruanosuizo.edu.pe - JIMENEZ SALDANA, THIAGO PAUL
+140. leongabriel@peruanosuizo.edu.pe - LEON GABRIEL, EDGAR FABRICIO
+141. millavillalva@peruanosuizo.edu.pe - MILLA VILLALVA, RIHANNA THAISA
+142. molinasanchez@peruanosuizo.edu.pe - MOLINA SANCHEZ, FRANYELIS ARANZA
+143. murohuaman@peruanosuizo.edu.pe - MURO HUAMAN, MILAN AMIR
+144. parracondorchoa@peruanosuizo.edu.pe - PARRA CONDORCHOA, MADELEY CIELO
+145. perezlucena@peruanosuizo.edu.pe - PEREZ LUCENA, JOSE MANUEL
+146. pumatayolsen@peruanosuizo.edu.pe - PUMATAY OLSEN, LUIS ADRIAN
+147. quinonespena@peruanosuizo.edu.pe - QUINONES PENA, SAYAKA TAIMARA
+148. quirozmestanza@peruanosuizo.edu.pe - QUIROZ MESTANZA, NADINNE YAMILETH
+149. reyesmartinez@peruanosuizo.edu.pe - REYES MARTINEZ, GERARD FERNANDO
+150. roalcabamaldonado@peruanosuizo.edu.pe - ROALCABA MALDONADO, LUIS ANGEL
+151. rojasbetancourt@peruanosuizo.edu.pe - ROJAS BETANCOURT, CRISTOPHER
+152. salinascerna@peruanosuizo.edu.pe - SALINAS CERNA, KATHLEEN DANALEE
+153. saucedovasques@peruanosuizo.edu.pe - SAUCEDO VASQUES, YHARIEL JHOMAR
+154. serafinmartinez@peruanosuizo.edu.pe - SERAFIN MARTINEZ, REYCON DAVID
+155. siesquenmoncada@peruanosuizo.edu.pe - SIESQUEN MONCADA, DARYELY ANDREA
+156. trujillogarcia@peruanosuizo.edu.pe - TRUJILLO GARCIA, ALEXIS JORDY
+157. verasteguiruelas@peruanosuizo.edu.pe - VERASTEGUI RUELAS, HILLARY SAMARA
+158. villenamelgar@peruanosuizo.edu.pe - VILLENA MELGAR, HASAEL ENMANUEL
+
+NOTAS:
+------
+- Hay 2 alumnos con apellido "MAYTA CAPCHA" (#47 y #48) que comparten el mismo email
+- Hay 2 alumnos con apellido "CALDERON URBINA" (#70 y #131) que comparten el mismo email
+- Todos los emails están en minúsculas sin espacios ni tildes
+- Contraseña única para todos: Suizo2026*

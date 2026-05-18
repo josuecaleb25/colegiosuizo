@@ -18,8 +18,8 @@
 
         <androidx.cardview.widget.CardView
             android:id="@+id/btn_back"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
             android:clickable="true"
             android:focusable="true"
             app:cardBackgroundColor="?attr/homeContentBackground"
@@ -37,43 +37,20 @@
                 app:tint="?android:attr/textColorPrimary" />
         </androidx.cardview.widget.CardView>
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/tv_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:orientation="vertical"
+            android:fontFamily="@font/potanosansbold"
+            android:text="Gestión de Asistencias"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="18sp"
+            android:gravity="center"
+            android:layout_marginHorizontal="70dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/btn_back"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/potanosansbold"
-                android:text="Asistencias"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textSize="20sp" />
-
-            <TextView
-                android:id="@+id/tv_fecha_seleccionada"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:fontFamily="@font/poppinsregular"
-                android:text="Año en curso · por mes (solo días con registro)"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="13sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:fontFamily="@font/poppinsregular"
-                android:text="En cada día: icono de papelera = eliminar solo el registro guardado en este teléfono."
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="11sp" />
-        </LinearLayout>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -89,13 +66,18 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <ProgressBar
+            <!-- Loader de Material Design 3 -->
+            <com.google.android.material.progressindicator.CircularProgressIndicator
                 android:id="@+id/progress_historial"
-                style="?android:attr/progressBarStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:visibility="gone" />
+                android:indeterminate="true"
+                android:visibility="gone"
+                app:indicatorColor="#BA1924"
+                app:trackColor="#E0E0E0"
+                app:trackThickness="4dp"
+                app:indicatorSize="48dp" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_historial"

@@ -3,22 +3,88 @@ import supabase from '../config/database';
 
 const router = Router();
 
-// GET /api/horarios/alumno/:alumnoId - Horario de un alumno
-router.get('/alumno/:alumnoId', async (req, res) => {
+// Función para formatear hora sin ceros iniciales (07:30 -> 7:30)
+function formatearHora(hora: string): string {
+  const [horas, minutos] = hora.split(':');
+  return `${parseInt(horas)}:${minutos}`;
+}
+
+// Test endpoint simple
+router.get('/test', (req, res) => {
+  console.log('✅ Test endpoint llamado');
+  res.json({
+    success: true,
+    message: 'Backend funcionando correctamente',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// GET /api/horarios/alumno/:personaId - Horario de un alumno por persona_id
+router.get('/alumno/:personaId', async (req, res) => {
   try {
-    const { alumnoId } = req.params;
+    const { personaId } = req.params;
+    const { fecha } = req.query; // Parámetro de fecha opcional
+
+    console.log(`Petición recibida - Persona: ${personaId}, Fecha: ${fecha}`);
+
+    // Obtener alumno por persona_id
+    const { data: alumno, error: alumnoError } = await supabase
+      .from('alumnos')
+      .select('id')
+      .eq('persona_id', personaId)
+      .eq('estado', 'activo')
+      .single();
+
+    if (alumnoError || !alumno) {
+      console.log('No se encontró alumno para persona_id:', personaId);
+      return res.status(404).json({
+        success: false,
+        message: 'Alumno no encontrado'
+      });
+    }
+
+    console.log(`Alumno encontrado: ${alumno.id}`);
 
     // Obtener sección del alumno
     const { data: matricula, error: matriculaError } = await supabase
       .from('matriculas')
       .select('seccion_id')
-      .eq('alumno_id', alumnoId)
+      .eq('alumno_id', alumno.id)
       .eq('estado', 'activo')
       .single();
 
     if (matriculaError) throw matriculaError;
 
-    // Obtener horarios de la sección
+    console.log(`Sección del alumno: ${matricula.seccion_id}`);
+
+    // Obtener día de la semana de la fecha (si se proporciona)
+    let diaSemana = 1; // Por defecto lunes
+    if (fecha) {
+      const fechaObj = new Date(fecha + 'T00:00:00');
+      const jsDay = fechaObj.getDay(); // 0=domingo, 1=lunes, etc.
+      
+      // Convertir de JavaScript getDay() a nuestra convención escolar
+      // JavaScript: 0=Dom, 1=Lun, 2=Mar, 3=Mie, 4=Jue, 5=Vie, 6=Sab
+      // Nuestra BD: 1=Lun, 2=Mar, 3=Mie, 4=Jue, 5=Vie
+      
+      if (jsDay === 0 || jsDay === 6) {
+        // Domingo (0) o Sábado (6) - no hay clases
+        console.log(`Día ${jsDay} es fin de semana - no hay clases`);
+        return res.json({
+          success: true,
+          data: [],
+          message: 'No hay clases los fines de semana'
+        });
+      }
+      
+      // Para lunes a viernes, el número coincide (1-5)
+      diaSemana = jsDay;
+      console.log(`Fecha recibida: ${fecha}, JS Day: ${jsDay}, Día escolar: ${diaSemana}`);
+    } else {
+      console.log('No se proporcionó fecha, mostrando lunes por defecto');
+    }
+
+    // Obtener horarios de la sección para el día específico
     const { data, error } = await supabase
       .from('horarios')
       .select(`
@@ -49,17 +115,22 @@ router.get('/alumno/:alumnoId', async (req, res) => {
       `)
       .eq('asignaciones.seccion_id', matricula.seccion_id)
       .eq('activo', true)
-      .order('dia_semana')
+      .eq('dia_semana', diaSemana)
       .order('hora_inicio');
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error en query:', error);
+      throw error;
+    }
 
-    const horariosFormateados = data?.map((horario: any) => ({
+    console.log(`Horarios encontrados para día ${diaSemana}: ${data?.length || 0}`);
+
+    let horariosFormateados = data?.map((horario: any) => ({
       id: horario.id,
       dia_semana: horario.dia_semana,
-      hora_inicio: horario.hora_inicio,
-      hora_fin: horario.hora_fin,
-      salon: horario.salon,
+      hora_inicio: formatearHora(horario.hora_inicio.substring(0, 5)), // 07:30:00 -> 7:30
+      hora_fin: formatearHora(horario.hora_fin.substring(0, 5)), // 08:15:00 -> 8:15
+      aula: horario.salon || '1A',
       curso: horario.asignaciones.cursos.nombre,
       color: horario.asignaciones.cursos.color,
       icono: horario.asignaciones.cursos.icono,
@@ -67,11 +138,35 @@ router.get('/alumno/:alumnoId', async (req, res) => {
       seccion: `${horario.asignaciones.secciones.grados.nombre}${horario.asignaciones.secciones.nombre}`
     })) || [];
 
+    // Insertar el recreo entre 10:30 y 10:50 (después de la 4ta hora)
+    // Buscar el índice donde empieza la 5ta hora (10:50 o después)
+    const indexRecreo = horariosFormateados.findIndex(h => {
+      const [hora, minuto] = h.hora_inicio.split(':').map(Number);
+      return hora > 10 || (hora === 10 && minuto >= 50);
+    });
+    
+    // Si encontramos horarios después de las 10:50, insertar el recreo antes
+    if (indexRecreo >= 0) {
+      horariosFormateados.splice(indexRecreo, 0, {
+        id: 'recreo',
+        dia_semana: diaSemana,
+        hora_inicio: '10:30',
+        hora_fin: '10:50',
+        aula: '',
+        curso: 'RECREO',
+        color: '#4CAF50',
+        icono: '☕',
+        profesor: '',
+        seccion: ''
+      });
+    }
+
     res.json({
       success: true,
       data: horariosFormateados
     });
   } catch (error: any) {
+    console.error('Error en endpoint:', error);
     res.status(500).json({
       success: false,
       message: 'Error al obtener horario del alumno',
@@ -80,10 +175,53 @@ router.get('/alumno/:alumnoId', async (req, res) => {
   }
 });
 
-// GET /api/horarios/profesor/:docenteId - Horario de un profesor
-router.get('/profesor/:docenteId', async (req, res) => {
+// GET /api/horarios/profesor/:personaId - Horario de un profesor por persona_id
+router.get('/profesor/:personaId', async (req, res) => {
   try {
-    const { docenteId } = req.params;
+    const { personaId } = req.params;
+    const { fecha } = req.query; // Parámetro de fecha opcional
+
+    console.log(`Petición recibida - Persona Profesor: ${personaId}, Fecha: ${fecha}`);
+
+    // Obtener docente por persona_id
+    const { data: docente, error: docenteError } = await supabase
+      .from('docentes')
+      .select('id')
+      .eq('persona_id', personaId)
+      .single();
+
+    if (docenteError || !docente) {
+      console.log('No se encontró docente para persona_id:', personaId);
+      return res.status(404).json({
+        success: false,
+        message: 'Docente no encontrado'
+      });
+    }
+
+    console.log(`Docente encontrado: ${docente.id}`);
+
+    // Obtener día de la semana de la fecha (si se proporciona)
+    let diaSemana = 1; // Por defecto lunes
+    if (fecha) {
+      const fechaObj = new Date(fecha + 'T00:00:00');
+      const jsDay = fechaObj.getDay(); // 0=domingo, 1=lunes, etc.
+      
+      if (jsDay === 0 || jsDay === 6) {
+        // Domingo (0) o Sábado (6) - no hay clases
+        console.log(`Día ${jsDay} es fin de semana - no hay clases`);
+        return res.json({
+          success: true,
+          data: [],
+          message: 'No hay clases los fines de semana'
+        });
+      }
+      
+      // Para lunes a viernes, el número coincide (1-5)
+      diaSemana = jsDay;
+      console.log(`Fecha recibida: ${fecha}, JS Day: ${jsDay}, Día escolar: ${diaSemana}`);
+    } else {
+      console.log('No se proporcionó fecha, mostrando lunes por defecto');
+    }
 
     const { data, error } = await supabase
       .from('horarios')
@@ -107,30 +245,57 @@ router.get('/profesor/:docenteId', async (req, res) => {
           )
         )
       `)
-      .eq('asignaciones.docente_id', docenteId)
+      .eq('asignaciones.docente_id', docente.id)
       .eq('activo', true)
-      .order('dia_semana')
+      .eq('dia_semana', diaSemana)
       .order('hora_inicio');
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error en query:', error);
+      throw error;
+    }
 
-    const horariosFormateados = data?.map((horario: any) => ({
+    console.log(`Horarios encontrados para día ${diaSemana}: ${data?.length || 0}`);
+
+    let horariosFormateados = data?.map((horario: any) => ({
       id: horario.id,
       dia_semana: horario.dia_semana,
-      hora_inicio: horario.hora_inicio,
-      hora_fin: horario.hora_fin,
-      salon: horario.salon,
+      hora_inicio: formatearHora(horario.hora_inicio.substring(0, 5)), // 07:30:00 -> 7:30
+      hora_fin: formatearHora(horario.hora_fin.substring(0, 5)), // 08:15:00 -> 8:15
+      aula: horario.salon || '1A',
       curso: horario.asignaciones.cursos.nombre,
       color: horario.asignaciones.cursos.color,
       icono: horario.asignaciones.cursos.icono,
       seccion: `${horario.asignaciones.secciones.grados.nombre}${horario.asignaciones.secciones.nombre}`
     })) || [];
 
+    // Insertar el recreo entre 10:30 y 10:50 (después de la 4ta hora)
+    const indexRecreo = horariosFormateados.findIndex(h => {
+      const [hora, minuto] = h.hora_inicio.split(':').map(Number);
+      return hora > 10 || (hora === 10 && minuto >= 50);
+    });
+    
+    // Si encontramos horarios después de las 10:50, insertar el recreo antes
+    if (indexRecreo >= 0) {
+      horariosFormateados.splice(indexRecreo, 0, {
+        id: 'recreo',
+        dia_semana: diaSemana,
+        hora_inicio: '10:30',
+        hora_fin: '10:50',
+        aula: '',
+        curso: 'RECREO',
+        color: '#4CAF50',
+        icono: '☕',
+        seccion: ''
+      });
+    }
+
     res.json({
       success: true,
       data: horariosFormateados
     });
   } catch (error: any) {
+    console.error('Error en endpoint:', error);
     res.status(500).json({
       success: false,
       message: 'Error al obtener horario del profesor',

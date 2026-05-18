@@ -2,14 +2,14 @@ package com.example.ieperuanosuizoapp.api;
 
 public class ApiConfig {
     // MODO DE DESARROLLO: true para usar backend local
-    private static final boolean USE_LOCAL = false;
+    private static final boolean USE_LOCAL = true;
     
     // URL del backend en producción (Render)
     private static final String PRODUCTION_URL = "https://colegiosuizo-yl5x.onrender.com/api/";
     
     // URL del backend local (tu PC en la red local)
     // Tu celular debe estar en la misma red WiFi (192.168.101.x)
-    private static final String LOCAL_URL = "http://192.168.101.7:8000/api/";
+    private static final String LOCAL_URL = "http://192.168.101.7:3000/api/";
     
     // URL activa según el modo
     public static final String BASE_URL = USE_LOCAL ? LOCAL_URL : PRODUCTION_URL;

@@ -18,6 +18,7 @@ import com.google.android.material.tabs.TabLayoutMediator;
 
 public class CursoDetalleProfesorActivity extends AppCompatActivity {
 
+    private String cursoId;
     private String nombreCurso;
     private String salon;
 
@@ -27,6 +28,7 @@ public class CursoDetalleProfesorActivity extends AppCompatActivity {
         setContentView(R.layout.activity_curso_detalle_profesor);
 
         // Obtener datos del intent
+        cursoId = getIntent().getStringExtra("curso_id");
         nombreCurso = getIntent().getStringExtra("nombre_curso");
         salon = getIntent().getStringExtra("salon");
 
@@ -107,7 +109,7 @@ public class CursoDetalleProfesorActivity extends AppCompatActivity {
         });
     }
 
-    private static class SectionsPagerAdapter extends FragmentStateAdapter {
+    private class SectionsPagerAdapter extends FragmentStateAdapter {
         public SectionsPagerAdapter(@NonNull FragmentActivity fragmentActivity) {
             super(fragmentActivity);
         }
@@ -116,7 +118,7 @@ public class CursoDetalleProfesorActivity extends AppCompatActivity {
         @Override
         public Fragment createFragment(int position) {
             if (position == 1) {
-                return ContainerEstudiantesFragment.newInstance();
+                return ContainerEstudiantesFragment.newInstance(cursoId, salon);
             } else if (position == 2) {
                 return EvaluacionesFragment.newInstance();
             }

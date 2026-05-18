@@ -293,23 +293,23 @@
                                 android:orientation="horizontal">
                                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
                                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="L" android:textSize="12sp" android:textColor="?android:attr/textColorPrimary" android:fontFamily="@font/poppinsmedium"/>
-                                    <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/checkcircleassist" android:layout_marginTop="4dp"/>
+                                    <ImageView android:id="@+id/check_lunes" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/checkcircleassist" android:layout_marginTop="4dp" android:visibility="invisible"/>
                                 </LinearLayout>
                                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
                                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="M" android:textSize="12sp" android:textColor="?android:attr/textColorPrimary" android:fontFamily="@font/poppinsmedium"/>
-                                    <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/checkcircleassist" android:layout_marginTop="4dp"/>
+                                    <ImageView android:id="@+id/check_martes" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/checkcircleassist" android:layout_marginTop="4dp" android:visibility="invisible"/>
                                 </LinearLayout>
                                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
                                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Mi" android:textSize="12sp" android:textColor="?android:attr/textColorPrimary" android:fontFamily="@font/poppinsmedium"/>
-                                    <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/checkcircleassist" android:layout_marginTop="4dp"/>
+                                    <ImageView android:id="@+id/check_miercoles" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/checkcircleassist" android:layout_marginTop="4dp" android:visibility="invisible"/>
                                 </LinearLayout>
                                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
                                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="J" android:textSize="12sp" android:textColor="?android:attr/textColorPrimary" android:fontFamily="@font/poppinsmedium"/>
-                                    <View android:layout_width="24dp" android:layout_height="24dp" android:background="@drawable/bg_notification_circle" android:layout_marginTop="4dp"/>
+                                    <ImageView android:id="@+id/check_jueves" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/checkcircleassist" android:layout_marginTop="4dp" android:visibility="invisible"/>
                                 </LinearLayout>
                                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
                                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="V" android:textSize="12sp" android:textColor="?android:attr/textColorPrimary" android:fontFamily="@font/poppinsmedium"/>
-                                    <View android:layout_width="24dp" android:layout_height="24dp" android:background="@drawable/bg_notification_circle" android:layout_marginTop="4dp"/>
+                                    <ImageView android:id="@+id/check_viernes" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/checkcircleassist" android:layout_marginTop="4dp" android:visibility="invisible"/>
                                 </LinearLayout>
                             </LinearLayout>
                     </LinearLayout>

@@ -10,8 +10,16 @@ import androidx.fragment.app.Fragment;
 
 public class ContainerEstudiantesFragment extends Fragment {
 
-    public static ContainerEstudiantesFragment newInstance() {
-        return new ContainerEstudiantesFragment();
+    private static final String ARG_CURSO_ID = "curso_id";
+    private static final String ARG_SALON = "salon";
+
+    public static ContainerEstudiantesFragment newInstance(String cursoId, String salon) {
+        ContainerEstudiantesFragment fragment = new ContainerEstudiantesFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_CURSO_ID, cursoId);
+        args.putString(ARG_SALON, salon);
+        fragment.setArguments(args);
+        return fragment;
     }
 
     @Nullable
@@ -24,8 +32,11 @@ public class ContainerEstudiantesFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         if (savedInstanceState == null) {
+            String cursoId = getArguments() != null ? getArguments().getString(ARG_CURSO_ID) : null;
+            String salon = getArguments() != null ? getArguments().getString(ARG_SALON) : null;
+            
             getChildFragmentManager().beginTransaction()
-                    .replace(R.id.container_estudiantes_root, EstudiantesFragment.newInstance())
+                    .replace(R.id.container_estudiantes_root, EstudiantesFragment.newInstance(cursoId, salon))
                     .commit();
         }
     }

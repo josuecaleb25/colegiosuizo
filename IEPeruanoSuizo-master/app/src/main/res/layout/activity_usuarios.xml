@@ -41,19 +41,21 @@
 
         <TextView
             android:id="@+id/tv_title_usuarios"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
             android:fontFamily="@font/potanosansbold"
             android:text="Usuarios"
             android:textColor="#141A1E"
             android:textSize="18sp"
-            app:layout_constraintBottom_toBottomOf="@+id/btn_back"
-            app:layout_constraintStart_toEndOf="@+id/btn_back"
-            app:layout_constraintTop_toTopOf="@+id/btn_back" />
+            android:gravity="center"
+            android:layout_marginHorizontal="70dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/tv_total_usuarios"
+            android:id="@+id/tv_total_usuarios_old"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
@@ -61,6 +63,7 @@
             android:text="0 estudiantes"
             android:textColor="#666666"
             android:textSize="14sp"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@+id/tv_title_usuarios"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/tv_title_usuarios" />
@@ -70,7 +73,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="#F8F9FA"
+        android:background="@android:color/white"
         app:layout_constraintBottom_toTopOf="@+id/bottom_navigation"
         app:layout_constraintTop_toBottomOf="@+id/header_usuarios">
 
@@ -80,136 +83,116 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="20dp"
-            android:layout_marginTop="16dp"
-            android:orientation="vertical"
+            android:layout_marginTop="20dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             app:layout_constraintTop_toTopOf="parent">
 
             <!-- Search Bar -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/search_layout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:boxBackgroundColor="@color/white"
-                app:boxCornerRadiusBottomEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxStrokeWidth="0dp"
-                app:boxStrokeWidthFocused="2dp"
-                app:boxStrokeColor="#BA1924"
-                app:hintEnabled="false"
-                app:startIconDrawable="@drawable/ic_buscador"
-                app:startIconTint="#BA1924">
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="0dp"
+                android:layout_height="55dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_card_white"
+                android:backgroundTint="#F5F5F5"
+                android:paddingHorizontal="16dp">
+
+                <ImageView
+                    android:id="@+id/iv_search"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_buscador"
+                    app:tint="#858585"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/search_edit_text"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="12dp"
+                    android:background="@null"
                     android:fontFamily="@font/poppinsregular"
-                    android:hint="Buscar por nombre, código o sección..."
+                    android:hint="Buscar un alumno"
                     android:inputType="text"
-                    android:paddingVertical="14dp"
-                    android:textColor="#333333"
+                    android:textColor="#141A1E"
                     android:textColorHint="#9BA8AB"
-                    android:textSize="11sp" />
+                    android:textSize="14sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/iv_search" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Dropdown Filter (Searchable) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_filter_salon"
+                style="@style/Widget.Material3.TextInputLayout.FilledBox.ExposedDropdownMenu"
+                android:layout_width="100dp"
+                android:layout_height="55dp"
+                android:layout_marginStart="8dp"
+                app:boxBackgroundColor="#BA1924"
+                app:boxCornerRadiusBottomEnd="16dp"
+                app:boxCornerRadiusBottomStart="16dp"
+                app:boxCornerRadiusTopEnd="16dp"
+                app:boxCornerRadiusTopStart="16dp"
+                app:boxStrokeWidth="0dp"
+                app:boxStrokeWidthFocused="0dp"
+                app:endIconTint="@android:color/white"
+                app:hintEnabled="false">
+
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/auto_complete_salon_filter"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:inputType="text"
+                    android:text="Todos"
+                    android:paddingHorizontal="8dp"
+                    android:paddingTop="0dp"
+                    android:paddingBottom="0dp"
+                    android:textColor="@android:color/white"
+                    android:fontFamily="@font/poppinsregular"
+                    android:textSize="12sp"
+                    android:dropDownHeight="160dp"
+                    android:popupBackground="@android:color/white" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Filter Chips -->
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:scrollbars="none">
+            <!-- Student Counter (Compact) -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="65dp"
+                android:layout_height="55dp"
+                android:layout_marginStart="8dp"
+                app:cardBackgroundColor="#BCC1CD"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
 
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chip_group_filters"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:chipSpacingHorizontal="8dp"
-                    app:singleSelection="true">
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_all"
-                        style="@style/Widget.MaterialComponents.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:text="Todos"
-                        android:textColor="@color/chip_text_color"
-                        app:chipBackgroundColor="@color/chip_background_color"
-                        app:chipStrokeColor="#BA1924"
-                        app:chipStrokeWidth="1dp" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_1a"
-                        style="@style/Widget.MaterialComponents.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="1ro A"
-                        android:textColor="@color/chip_text_color"
-                        app:chipBackgroundColor="@color/chip_background_color"
-                        app:chipStrokeColor="#BA1924"
-                        app:chipStrokeWidth="1dp" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_1b"
-                        style="@style/Widget.MaterialComponents.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="1ro B"
-                        android:textColor="@color/chip_text_color"
-                        app:chipBackgroundColor="@color/chip_background_color"
-                        app:chipStrokeColor="#BA1924"
-                        app:chipStrokeWidth="1dp" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_1c"
-                        style="@style/Widget.MaterialComponents.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="1ro C"
-                        android:textColor="@color/chip_text_color"
-                        app:chipBackgroundColor="@color/chip_background_color"
-                        app:chipStrokeColor="#BA1924"
-                        app:chipStrokeWidth="1dp" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_1d"
-                        style="@style/Widget.MaterialComponents.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="1ro D"
-                        android:textColor="@color/chip_text_color"
-                        app:chipBackgroundColor="@color/chip_background_color"
-                        app:chipStrokeColor="#BA1924"
-                        app:chipStrokeWidth="1dp" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_1e"
-                        style="@style/Widget.MaterialComponents.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="1ro E"
-                        android:textColor="@color/chip_text_color"
-                        app:chipBackgroundColor="@color/chip_background_color"
-                        app:chipStrokeColor="#BA1924"
-                        app:chipStrokeWidth="1dp" />
-                </com.google.android.material.chip.ChipGroup>
-            </HorizontalScrollView>
+                <TextView
+                    android:id="@+id/tv_total_usuarios"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:fontFamily="@font/poppinssemibold"
+                    android:text="0"
+                    android:textColor="@android:color/white"
+                    android:textSize="18sp"
+                    android:includeFontPadding="false" />
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <!-- Loading Indicator -->
-        <ProgressBar
-            android:id="@+id/progress_loading"
+        <!-- Loader de Material Design -->
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/loading_indicator"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:indeterminateTint="#BA1924"
+            android:indeterminate="true"
             android:visibility="gone"
+            app:indicatorColor="#BA1924"
+            app:trackColor="#E0E0E0"
+            app:trackThickness="4dp"
+            app:indicatorSize="48dp"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/search_filter_section" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <!-- RecyclerView -->
         <androidx.recyclerview.widget.RecyclerView
