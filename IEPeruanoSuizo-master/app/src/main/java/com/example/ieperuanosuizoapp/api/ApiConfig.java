@@ -1,8 +1,7 @@
 package com.example.ieperuanosuizoapp.api;
 
 public class ApiConfig {
-    // MODO DE DESARROLLO: true para usar backend local
-    private static final boolean USE_LOCAL = true;
+    private static final boolean USE_LOCAL = false;
     
     // URL del backend en producción (Render)
     private static final String PRODUCTION_URL = "https://colegiosuizo-yl5x.onrender.com/api/";
