@@ -26,7 +26,20 @@ router.post('/login', async (req, res) => {
         nombres,
         apellidos,
         correo,
-        alumnos (id, codigo_alumno, estado),
+        alumnos (
+          id, 
+          codigo_alumno, 
+          estado,
+          matriculas (
+            seccion_id,
+            secciones (
+              nombre,
+              grados (
+                nombre
+              )
+            )
+          )
+        ),
         docentes (id, codigo_docente, estado)
       `)
       .eq('correo', email)
@@ -80,6 +93,29 @@ router.post('/login', async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    // Obtener sección si es alumno/padre
+    let seccion = '';
+    if (persona.alumnos && persona.alumnos.length > 0) {
+      const alumno = persona.alumnos[0];
+      if (alumno.matriculas && alumno.matriculas.length > 0) {
+        const matricula = alumno.matriculas[0];
+        
+        // Manejar secciones como objeto o array
+        const seccionData = Array.isArray(matricula.secciones) 
+          ? matricula.secciones[0] 
+          : matricula.secciones;
+        
+        // Manejar grados como objeto o array
+        const gradoData = seccionData?.grados 
+          ? (Array.isArray(seccionData.grados) ? seccionData.grados[0] : seccionData.grados)
+          : null;
+        
+        const gradoNombre = gradoData?.nombre || '';
+        const seccionNombre = seccionData?.nombre || '';
+        seccion = `${gradoNombre} ${seccionNombre}`.trim();
+      }
+    }
+
     res.json({
       success: true,
       message: 'Login exitoso',
@@ -90,7 +126,8 @@ router.post('/login', async (req, res) => {
           nombres: persona.nombres,
           apellidos: persona.apellidos,
           rol: rol,
-          nombre_completo: `${persona.nombres} ${persona.apellidos}`
+          nombre_completo: `${persona.nombres} ${persona.apellidos}`,
+          seccion: seccion
         },
         tokens: {
           access: token,

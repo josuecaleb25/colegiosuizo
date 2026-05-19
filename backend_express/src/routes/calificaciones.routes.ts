@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import supabase from '../config/database';
+import notificationService from '../services/notification.service';
 
 const router = Router();
 
@@ -189,6 +190,62 @@ router.post('/', async (req, res) => {
     }
 
     if (result.error) throw result.error;
+
+    // ========================================
+    // ENVIAR NOTIFICACIÓN PUSH
+    // ========================================
+    try {
+      // Obtener información de la evaluación y curso
+      const { data: evaluacion } = await supabase
+        .from('evaluaciones')
+        .select(`
+          nombre,
+          asignaciones!inner (
+            asistencia_curso!inner (
+              nombre
+            ),
+            docentes!inner (
+              personas!inner (
+                nombres,
+                apellidos
+              )
+            )
+          )
+        `)
+        .eq('id', evaluacion_id)
+        .single();
+
+      if (evaluacion) {
+        const asignacion = Array.isArray(evaluacion.asignaciones) 
+          ? evaluacion.asignaciones[0] 
+          : evaluacion.asignaciones;
+        
+        const curso = asignacion?.asistencia_curso;
+        const docente = asignacion?.docentes?.personas;
+        
+        const nombreProfesor = docente 
+          ? `${docente.nombres} ${docente.apellidos}` 
+          : 'El profesor';
+        
+        const nombreCurso = curso?.nombre || 'el curso';
+
+        await notificationService.enviarAEstudiante(alumno_id, {
+          tipo: 'calificacion',
+          titulo: '📝 Nueva Calificación',
+          mensaje: `${nombreProfesor} calificó ${nombreCurso}: ${nota}`,
+          datos: {
+            alumno_id: alumno_id.toString(),
+            evaluacion_id: evaluacion_id.toString(),
+            nota: nota.toString(),
+            curso: nombreCurso
+          }
+        });
+      }
+    } catch (notifError: any) {
+      // No fallar el registro si falla la notificación
+      console.error('Error al enviar notificación:', notifError.message);
+    }
+    // ========================================
 
     res.json({
       success: true,

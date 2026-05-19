@@ -131,6 +131,14 @@ public interface ApiService {
         @Query("semana") String semana
     );
     
+    // Asistencia - Registrar múltiples ausentes en batch
+    @POST("asistencia/registrar-ausentes-batch")
+    Call<ApiResponse<Object>> registrarAusentesBatch(@Body Map<String, Object> body);
+    
+    // Asistencia - Eliminar múltiples asistencias en batch
+    @POST("asistencia/eliminar-batch")
+    Call<ApiResponse<Object>> eliminarAsistenciasBatch(@Body Map<String, Object> body);
+    
     // ============================================
     // EVALUACIONES Y CALIFICACIONES
     // ============================================

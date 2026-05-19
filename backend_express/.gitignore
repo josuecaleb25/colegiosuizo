@@ -8,6 +8,10 @@ dist/
 .env
 .env.local
 .env.production
+.env.example
+
+# Firebase credentials (NEVER commit this file)
+serviceAccountKey.json
 
 # Logs
 logs/
@@ -30,3 +34,14 @@ Thumbs.db
 # Testing
 coverage/
 .nyc_output/
+
+# SQL scripts and credentials (development only)
+*.sql
+*.txt
+ALUMNOS_CREDENCIALES.txt
+VERIFICAR_ENDPOINTS.txt
+
+# Development documentation (keep only essential)
+INSTRUCCIONES_*.md
+SUPABASE_SETUP.md
+test-*.json

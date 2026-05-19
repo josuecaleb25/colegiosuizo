@@ -59,11 +59,21 @@ public class MiInformacionActivity extends AppCompatActivity {
 
     private void cargarDatosLocales() {
         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
-        String name = prefs.getString("user_name", "Usuario");
+        String nombres = prefs.getString("user_nombres", "");
+        String apellidos = prefs.getString("user_apellidos", "");
         String email = prefs.getString("user_email", "");
         String rol = prefs.getString("user_mode", "Alumno");
 
-        if (tvNombres != null) tvNombres.setText(name);
+        // Si no hay nombres/apellidos separados, intentar separar del nombre completo
+        if (nombres.isEmpty() && apellidos.isEmpty()) {
+            String nombreCompleto = prefs.getString("user_name", "Usuario");
+            String[] partes = nombreCompleto.split(" ", 2);
+            nombres = partes.length > 0 ? partes[0] : nombreCompleto;
+            apellidos = partes.length > 1 ? partes[1] : "";
+        }
+
+        if (tvNombres != null) tvNombres.setText(nombres);
+        if (tvApellidos != null) tvApellidos.setText(apellidos);
         if (tvEmail != null) tvEmail.setText(email);
         if (tvRol != null) tvRol.setText(rol);
     }
@@ -98,7 +108,9 @@ public class MiInformacionActivity extends AppCompatActivity {
                 JsonObject persona = jsonObj.getAsJsonObject("persona");
                 String nombres = persona.has("nombres") ? persona.get("nombres").getAsString() : "";
                 String apellidos = persona.has("apellidos") ? persona.get("apellidos").getAsString() : "";
-                String fechaNac = persona.has("fecha_nacimiento") ? persona.get("fecha_nacimiento").getAsString() : "No registrada";
+                String fechaNac = persona.has("fecha_nacimiento") && !persona.get("fecha_nacimiento").isJsonNull() 
+                    ? formatearFecha(persona.get("fecha_nacimiento").getAsString()) 
+                    : "No registrada";
 
                 if (tvNombres != null) tvNombres.setText(nombres);
                 if (tvApellidos != null) tvApellidos.setText(apellidos);
@@ -116,6 +128,34 @@ public class MiInformacionActivity extends AppCompatActivity {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Formatear fecha de YYYY-MM-DD a "15 de Mayo, 2008"
+     */
+    private String formatearFecha(String fechaISO) {
+        try {
+            if (fechaISO == null || fechaISO.isEmpty()) {
+                return "No registrada";
+            }
+
+            // Parsear fecha ISO (YYYY-MM-DD)
+            String[] partes = fechaISO.split("T")[0].split("-");
+            if (partes.length < 3) return fechaISO;
+
+            int año = Integer.parseInt(partes[0]);
+            int mes = Integer.parseInt(partes[1]);
+            int dia = Integer.parseInt(partes[2]);
+
+            String[] meses = {
+                "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+            };
+
+            return dia + " de " + meses[mes - 1] + ", " + año;
+        } catch (Exception e) {
+            return fechaISO;
         }
     }
 }

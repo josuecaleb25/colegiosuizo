@@ -21,3 +21,5 @@ services:
         value: 7d
       - key: ALLOWED_ORIGINS
         value: "*"
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false

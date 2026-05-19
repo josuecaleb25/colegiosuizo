@@ -142,6 +142,9 @@ public class PanelAsistencia extends AppCompatActivity {
         rvAlumnos.setLayoutManager(new LinearLayoutManager(this));
         rvAlumnosSearch.setLayoutManager(new LinearLayoutManager(this));
 
+        // LIMPIEZA TOTAL AL INICIAR
+        limpiarTodosDatos();
+
         generarDatosMaestros();
 
         adapter = new AlumnoAdapter(new ArrayList<>());
@@ -186,13 +189,63 @@ public class PanelAsistencia extends AppCompatActivity {
 
         setupBottomNavigation(findViewById(R.id.bottom_navigation));
 
-        // Verificar si la asistencia ya fue confirmada hoy en este dispositivo
-        String fechaHoy = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Calendar.getInstance().getTime());
-        if (AsistenciaLocalStore.cargarTodas(this).containsKey(fechaHoy)) {
-            mostrarDialogoAsistenciaYaCompletada();
-        } else {
-            mostrarDialogoInicioAsistencia();
-        }
+        // Verificar si ya existe asistencia HOY antes de permitir nueva sesión
+        verificarAsistenciaExistenteHoy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // LIMPIEZA TOTAL cada vez que vuelves a esta pantalla
+        limpiarTodosDatos();
+        
+        // Verificar si ya existe asistencia HOY
+        verificarAsistenciaExistenteHoy();
+    }
+
+    private void limpiarTodosDatos() {
+        listaCompleta.clear();
+        listaActiva.clear();
+        listaFiltrada.clear();
+        registrosEnSesion = 0;
+        sesionComenzada = false;
+        ultimoCodigoLeido = null;
+        ultimoScanMs = 0;
+        procesandoQr = false;
+    }
+
+    private void verificarAsistenciaExistenteHoy() {
+        String hoy = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
+        
+        RetrofitClient.getApiService().getAsistenciaPorFecha(hoy).enqueue(new retrofit2.Callback<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<com.example.ieperuanosuizoapp.api.models.AsistenciaAlumno>>>() {
+            @Override
+            public void onResponse(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<com.example.ieperuanosuizoapp.api.models.AsistenciaAlumno>>> call, retrofit2.Response<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<com.example.ieperuanosuizoapp.api.models.AsistenciaAlumno>>> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    List<com.example.ieperuanosuizoapp.api.models.AsistenciaAlumno> asistencias = response.body().getData();
+                    
+                    if (asistencias != null && !asistencias.isEmpty()) {
+                        // Ya existe asistencia HOY, mostrar diálogo y bloquear
+                        mostrarDialogoAsistenciaYaCompletada();
+                    } else {
+                        // No hay asistencia HOY, cargar alumnos y permitir iniciar nueva sesión
+                        cargarAlumnosDesdeBackend();
+                        mostrarDialogoInicioAsistencia();
+                    }
+                } else {
+                    // Error o no hay datos, cargar alumnos y permitir iniciar sesión
+                    cargarAlumnosDesdeBackend();
+                    mostrarDialogoInicioAsistencia();
+                }
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<com.example.ieperuanosuizoapp.api.models.AsistenciaAlumno>>> call, Throwable t) {
+                // Error de conexión, cargar alumnos y permitir iniciar sesión de todas formas
+                Toast.makeText(PanelAsistencia.this, "No se pudo verificar asistencia previa", Toast.LENGTH_SHORT).show();
+                cargarAlumnosDesdeBackend();
+                mostrarDialogoInicioAsistencia();
+            }
+        });
     }
 
     private void mostrarDialogoAsistenciaYaCompletada() {
@@ -304,8 +357,20 @@ public class PanelAsistencia extends AppCompatActivity {
                 if (res != null && res.isSuccess() && res.getData() != null) {
                     registrosEnSesion++;
                     String nombre = res.getData().getAlumno();
-                    cargarAlumnosDesdeBackend();
-                    if (nombre != null && !nombre.isEmpty()) {
+                    String hora = res.getData().getHora();
+                    
+                    // Actualizar la lista local con la hora del escaneo
+                    if (nombre != null && hora != null) {
+                        for (Alumno alumno : listaCompleta) {
+                            if (alumno.nombre.equals(nombre)) {
+                                alumno.hora = hora;
+                                if (!listaActiva.contains(alumno)) {
+                                    listaActiva.add(alumno);
+                                }
+                                break;
+                            }
+                        }
+                        actualizarVistaTabla();
                         mostrarModalExito(nombre);
                     }
                 } else {
@@ -433,21 +498,16 @@ public class PanelAsistencia extends AppCompatActivity {
                     listaActiva.clear();
 
                     for (com.example.ieperuanosuizoapp.api.models.AsistenciaAlumno a : alumnosApi) {
-                        // Limpieza Absoluta de Datos: Solo mostramos la hora si la sesión ya comenzó.
-                        // Esto evita ver registros previos "pegados" antes de iniciar formalmente.
-                        String horaVisual = sesionComenzada ? a.getHora_registro() : null;
-
+                        // NUNCA mostrar hora_registro de asistencias previas
+                        // Solo mostrar si fue escaneado EN ESTA SESIÓN
+                        // IMPORTANTE: Guardar persona_id para usarlo al culminar
                         Alumno alumno = new Alumno(
                             a.getNombre_completo(),
                             a.getSalon(),
-                            horaVisual
+                            null,  // Siempre null, la hora se actualiza solo cuando se escanea QR
+                            a.getPersona_id()  // Guardar persona_id
                         );
                         listaCompleta.add(alumno);
-
-                        // Si ya tiene asistencia registrada en esta visualización, agregarlo a listaActiva
-                        if (horaVisual != null && !horaVisual.isEmpty()) {
-                            listaActiva.add(alumno);
-                        }
                     }
 
                     actualizarVistaTabla();
@@ -576,6 +636,7 @@ public class PanelAsistencia extends AppCompatActivity {
         for (Alumno al : listaCompleta) {
             AsistenciaAlumno m = new AsistenciaAlumno();
             m.setId("local-" + (i++));
+            m.setPersona_id(al.persona_id);  // IMPORTANTE: Setear persona_id
             m.setNombre_completo(al.nombre);
             m.setSalon(al.fecha);
             boolean tiene = al.hora != null && !al.hora.isEmpty();
@@ -622,12 +683,15 @@ public class PanelAsistencia extends AppCompatActivity {
         ad.setCancelable(false);
         MaterialButton btn = v.findViewById(R.id.btn_confirm_aceptar);
         btn.setOnClickListener(x -> {
-            AsistenciaLocalStore.guardar(PanelAsistencia.this, fechaIso, snapshot);
             ad.dismiss();
-            // Navegar a Gestión de Asistencia al culminar
-            Intent intent = new Intent(PanelAsistencia.this, GestionAsistenciaActivity.class);
-            startActivity(intent);
-            finish(); // Cerramos el panel ya que la sesión terminó
+            
+            // Guardar los ausentes en el backend antes de navegar
+            guardarAusentesEnBackend(snapshot, () -> {
+                // Navegar a Gestión de Asistencia al culminar
+                Intent intent = new Intent(PanelAsistencia.this, GestionAsistenciaActivity.class);
+                startActivity(intent);
+                finish();
+            });
         });
         ad.show();
     }
@@ -700,8 +764,13 @@ public class PanelAsistencia extends AppCompatActivity {
     }
 
     static class Alumno {
-        String nombre, fecha, hora;
-        Alumno(String nombre, String fecha, String hora) { this.nombre = nombre; this.fecha = fecha; this.hora = hora; }
+        String nombre, fecha, hora, persona_id;
+        Alumno(String nombre, String fecha, String hora, String persona_id) { 
+            this.nombre = nombre; 
+            this.fecha = fecha; 
+            this.hora = hora; 
+            this.persona_id = persona_id;
+        }
     }
 
     class AlumnoAdapter extends RecyclerView.Adapter<AlumnoAdapter.ViewHolder> {
@@ -745,5 +814,118 @@ public class PanelAsistencia extends AppCompatActivity {
         super.onDestroy();
         cameraExecutor.shutdown();
         barcodeScanner.close();
+    }
+
+    /**
+     * Guardar alumnos ausentes en el backend al culminar
+     */
+    private void guardarAusentesEnBackend(List<AsistenciaAlumno> snapshot, Runnable onComplete) {
+        // Filtrar solo los ausentes (los que no tienen hora_registro)
+        List<AsistenciaAlumno> ausentes = new ArrayList<>();
+        for (AsistenciaAlumno alumno : snapshot) {
+            if (alumno.getHora_registro() == null || alumno.getHora_registro().isEmpty()) {
+                ausentes.add(alumno);
+            }
+        }
+
+        if (ausentes.isEmpty()) {
+            // No hay ausentes, continuar
+            onComplete.run();
+            return;
+        }
+
+        // Mostrar progreso
+        android.app.ProgressDialog progress = new android.app.ProgressDialog(this);
+        progress.setMessage("Guardando registro de asistencia...");
+        progress.setCancelable(false);
+        progress.show();
+
+        // Preparar array de ausentes para envío batch
+        org.json.JSONArray ausentesArray = new org.json.JSONArray();
+        for (AsistenciaAlumno alumno : ausentes) {
+            try {
+                org.json.JSONObject ausenteObj = new org.json.JSONObject();
+                ausenteObj.put("persona_id", alumno.getPersona_id());
+                ausentesArray.put(ausenteObj);
+            } catch (org.json.JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // Crear body con array de ausentes y fecha
+        org.json.JSONObject jsonBody = new org.json.JSONObject();
+        try {
+            jsonBody.put("ausentes", ausentesArray);
+            jsonBody.put("fecha", new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date()));
+
+            okhttp3.RequestBody body = okhttp3.RequestBody.create(
+                    jsonBody.toString(),
+                    okhttp3.MediaType.parse("application/json")
+            );
+
+            okhttp3.Request request = new okhttp3.Request.Builder()
+                    .url(com.example.ieperuanosuizoapp.api.ApiConfig.BASE_URL + "asistencia/registrar-ausentes-batch")
+                    .post(body)
+                    .build();
+
+            // Crear cliente con timeout más largo para batch grande
+            okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
+                    .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                    .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                    .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                    .build();
+
+            // UNA SOLA petición para todos los ausentes
+            client.newCall(request).enqueue(new okhttp3.Callback() {
+                @Override
+                public void onFailure(okhttp3.Call call, java.io.IOException e) {
+                    runOnUiThread(() -> {
+                        progress.dismiss();
+                        Toast.makeText(PanelAsistencia.this, 
+                            "Error al guardar ausentes: " + e.getMessage(), 
+                            Toast.LENGTH_LONG).show();
+                        // NO llamar onComplete aquí - el guardado falló
+                    });
+                }
+
+                @Override
+                public void onResponse(okhttp3.Call call, okhttp3.Response response) {
+                    try {
+                        String responseBody = response.body() != null ? response.body().string() : "";
+                        
+                        runOnUiThread(() -> {
+                            progress.dismiss();
+                            
+                            if (response.isSuccessful()) {
+                                Toast.makeText(PanelAsistencia.this, 
+                                    "Registro guardado exitosamente", 
+                                    Toast.LENGTH_SHORT).show();
+                                // Solo llamar onComplete cuando el guardado fue exitoso
+                                onComplete.run();
+                            } else {
+                                Toast.makeText(PanelAsistencia.this, 
+                                    "Error al guardar: " + response.code(), 
+                                    Toast.LENGTH_LONG).show();
+                                // NO llamar onComplete - el guardado falló
+                            }
+                        });
+                    } catch (Exception e) {
+                        runOnUiThread(() -> {
+                            progress.dismiss();
+                            Toast.makeText(PanelAsistencia.this, 
+                                "Error procesando respuesta", 
+                                Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                }
+            });
+
+        } catch (org.json.JSONException e) {
+            runOnUiThread(() -> {
+                progress.dismiss();
+                Toast.makeText(this, "Error al preparar datos", Toast.LENGTH_SHORT).show();
+                // NO llamar onComplete - hubo error
+            });
+        }
     }
 }

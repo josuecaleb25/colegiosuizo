@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import supabase from '../config/database';
+import notificationService from '../services/notification.service';
 
 const router = Router();
 
@@ -135,8 +136,6 @@ router.post('/', async (req, res) => {
       grado_id 
     } = req.body;
 
-    console.log('📝 Crear comunicado - Body recibido:', req.body);
-
     // Usar usuario_id como persona_id (la app envía persona_id con el nombre usuario_id)
     const persona_id = usuario_id;
 
@@ -181,7 +180,33 @@ router.post('/', async (req, res) => {
       throw error;
     }
 
-    console.log('✅ Comunicado creado exitosamente:', data.id);
+    // ========================================
+    // ENVIAR NOTIFICACIÓN PUSH
+    // ========================================
+    try {
+      const notificacion = {
+        tipo: 'comunicado' as const,
+        titulo: '📢 Nuevo Comunicado',
+        mensaje: titulo,
+        datos: {
+          comunicado_id: data.id.toString(),
+          tipo: tipo || 'general'
+        }
+      };
+
+      if (destinatario_tipo === 'global') {
+        // Enviar a TODOS
+        await notificationService.enviarATodos(notificacion);
+        
+      } else if (destinatario_tipo === 'seccion' && seccion_id) {
+        // Enviar a una sección específica
+        await notificationService.enviarASeccion(seccion_id, notificacion);
+      }
+    } catch (notifError: any) {
+      // No fallar la creación del comunicado si falla la notificación
+      console.error('Error al enviar notificación:', notifError.message);
+    }
+    // ========================================
 
     res.json({
       success: true,
@@ -259,8 +284,6 @@ router.get('/historial/enviados', async (req, res) => {
         message: 'usuario_id es requerido'
       });
     }
-
-    console.log('📋 Obteniendo historial para persona_id:', usuario_id);
 
     const { data, error } = await supabase
       .from('comunicados_nuevos')

@@ -38,6 +38,10 @@ public final class AsistenciaLocalStore {
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_MAP, json).apply();
     }
 
+    public static void limpiarTodo(Context ctx) {
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply();
+    }
+
     public static Map<String, List<AsistenciaAlumno>> cargarTodas(Context ctx) {
         String json = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_MAP, null);
         if (json == null || json.isEmpty()) {

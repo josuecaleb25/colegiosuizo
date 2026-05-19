@@ -269,8 +269,8 @@ public class HorariosActivity extends AppCompatActivity {
             
             View itemView = inflater.inflate(R.layout.item_horario, coursesContainer, false);
 
-            ((TextView) itemView.findViewById(R.id.tv_start_time)).setText(horaInicio);
-            ((TextView) itemView.findViewById(R.id.tv_end_time)).setText(horaFin);
+            ((TextView) itemView.findViewById(R.id.tv_start_time)).setText(convertirHoraAMPM(horaInicio));
+            ((TextView) itemView.findViewById(R.id.tv_end_time)).setText(convertirHoraAMPM(horaFin));
             ((TextView) itemView.findViewById(R.id.tv_course_name)).setText(curso);
             
             View layoutLocation = (View) itemView.findViewById(R.id.iv_loc_icon).getParent();
@@ -373,5 +373,27 @@ public class HorariosActivity extends AppCompatActivity {
             }
             return id == R.id.nav_horarios;
         });
+    }
+    
+    // Función auxiliar para convertir hora de 24h a formato 12h AM/PM
+    private String convertirHoraAMPM(String hora24) {
+        if (hora24 == null || hora24.isEmpty()) {
+            return "";
+        }
+        
+        try {
+            // Formato esperado: "14:30:00" o "14:30"
+            String[] partes = hora24.split(":");
+            int hora = Integer.parseInt(partes[0]);
+            int minuto = Integer.parseInt(partes[1]);
+            
+            String ampm = hora >= 12 ? "PM" : "AM";
+            if (hora > 12) hora -= 12;
+            if (hora == 0) hora = 12;
+            
+            return String.format("%d:%02d %s", hora, minuto, ampm);
+        } catch (Exception e) {
+            return hora24; // Si falla, devolver la hora original
+        }
     }
 }

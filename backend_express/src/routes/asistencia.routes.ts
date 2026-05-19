@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import supabase from '../config/database';
+import notificationService from '../services/notification.service';
 
 const router = Router();
 
@@ -134,6 +135,66 @@ router.post('/', async (req, res) => {
 
     if (error) throw error;
 
+    console.log('✅ Asistencia registrada, ID:', nuevaAsistencia.id);
+    console.log('📤 Intentando enviar notificación al alumno_id:', alumno_id);
+
+    // ========================================
+    // ENVIAR NOTIFICACIÓN PUSH
+    // ========================================
+    try {
+      // Obtener información del alumno
+      const { data: alumno, error: alumnoError } = await supabase
+        .from('alumnos')
+        .select('personas!inner(nombres, apellidos)')
+        .eq('id', alumno_id)
+        .single();
+
+      if (alumnoError) {
+        console.error('❌ Error al obtener datos del alumno:', alumnoError);
+        throw alumnoError;
+      }
+
+      console.log('👤 Datos del alumno obtenidos:', JSON.stringify(alumno, null, 2));
+
+      // Construir nombre completo
+      const persona = Array.isArray(alumno?.personas) ? alumno.personas[0] : alumno?.personas;
+      const nombreCompleto = persona 
+        ? `${persona.nombres} ${persona.apellidos}`
+        : 'El estudiante';
+
+      console.log('📝 Nombre completo:', nombreCompleto);
+
+      // Mapear estado a texto legible
+      const estadoTexto = {
+        'presente': 'PRESENTE',
+        'tardanza': 'TARDANZA',
+        'falta': 'FALTA',
+        'justificado': 'JUSTIFICADO'
+      }[estado] || estado.toUpperCase();
+
+      console.log('📊 Estado:', estadoTexto);
+      console.log('🔔 Enviando notificación...');
+
+      // Enviar notificación
+      const resultado = await notificationService.enviarAEstudiante(alumno_id, {
+        tipo: 'asistencia',
+        titulo: '📋 Asistencia Registrada',
+        mensaje: `${nombreCompleto} fue marcado como ${estadoTexto}`,
+        datos: {
+          alumno_id: alumno_id.toString(),
+          estado: estado,
+          fecha: new Date().toISOString()
+        }
+      });
+
+      console.log('📬 Resultado del envío:', resultado);
+    } catch (notifError: any) {
+      // No fallar el registro si falla la notificación
+      console.error('❌ Error al enviar notificación:', notifError.message);
+      console.error('Stack:', notifError.stack);
+    }
+    // ========================================
+
     res.status(201).json({
       success: true,
       message: 'Asistencia registrada exitosamente',
@@ -143,6 +204,337 @@ router.post('/', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error al registrar asistencia',
+      error: error.message
+    });
+  }
+});
+
+// POST /api/asistencia/registrar-ausentes-batch - Registrar múltiples ausentes de una vez
+router.post('/registrar-ausentes-batch', async (req, res) => {
+  try {
+    const { ausentes, fecha } = req.body;
+
+    console.log('📦 Batch ausentes recibido:', { total: ausentes?.length, fecha });
+
+    if (!ausentes || !Array.isArray(ausentes) || ausentes.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere un array de ausentes'
+      });
+    }
+
+    if (!fecha) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere fecha'
+      });
+    }
+
+    const resultados = {
+      guardados: 0,
+      errores: 0,
+      notificaciones: 0,
+      detalles: [] as string[]
+    };
+
+    // Procesar todos los ausentes
+    for (const ausente of ausentes) {
+      try {
+        const { persona_id } = ausente;
+
+        if (!persona_id) {
+          resultados.errores++;
+          resultados.detalles.push('persona_id faltante');
+          continue;
+        }
+
+        // Buscar el alumno_id
+        const { data: alumno, error: alumnoError } = await supabase
+          .from('alumnos')
+          .select('id, personas!inner(nombres, apellidos)')
+          .eq('persona_id', persona_id)
+          .single();
+
+        if (alumnoError || !alumno) {
+          resultados.errores++;
+          resultados.detalles.push(`Alumno no encontrado: ${persona_id}`);
+          continue;
+        }
+
+        const alumno_id = alumno.id;
+
+        // Verificar si ya existe asistencia HOY
+        const { data: existente } = await supabase
+          .from('asistencias')
+          .select('id, estado')
+          .eq('persona_id', persona_id)
+          .eq('fecha', fecha)
+          .limit(1);
+
+        if (existente && existente.length > 0) {
+          // Ya tiene asistencia registrada hoy, no hacer nada
+          resultados.guardados++;
+          resultados.detalles.push(`Ya registrado: ${persona_id} (${existente[0].estado})`);
+          continue;
+        }
+
+        // Registrar como ausente
+        const { error: insertError } = await supabase
+          .from('asistencias')
+          .insert({
+            persona_id,
+            fecha,
+            estado: 'falta',
+            tipo_persona: 'alumno',
+            hora_entrada: null
+          });
+
+        if (insertError) {
+          console.error('Error insertando ausente:', insertError);
+          resultados.errores++;
+          resultados.detalles.push(`Error DB: ${persona_id}`);
+          continue;
+        }
+
+        resultados.guardados++;
+        resultados.detalles.push(`Guardado: ${persona_id}`);
+
+        // Enviar notificación (sin esperar)
+        const persona = Array.isArray(alumno?.personas) ? alumno.personas[0] : alumno?.personas;
+        const nombreCompleto = persona ? `${persona.nombres} ${persona.apellidos}` : 'Su hijo/a';
+
+        notificationService.enviarAEstudiante(alumno_id, {
+          tipo: 'asistencia',
+          titulo: '⚠️ Ausencia Registrada',
+          mensaje: `${nombreCompleto} no registró asistencia hoy`,
+          datos: {
+            alumno_id: alumno_id.toString(),
+            estado: 'falta',
+            fecha: fecha
+          }
+        }).then(() => {
+          resultados.notificaciones++;
+        }).catch(err => {
+          console.error('Error enviando notificación:', err.message);
+        });
+
+      } catch (error: any) {
+        console.error('Error procesando ausente:', error);
+        resultados.errores++;
+        resultados.detalles.push(`Excepción: ${error.message}`);
+      }
+    }
+
+    console.log('✅ Batch completado:', resultados);
+
+    res.json({
+      success: true,
+      message: `Procesados: ${resultados.guardados} guardados, ${resultados.errores} errores`,
+      data: resultados
+    });
+  } catch (error: any) {
+    console.error('❌ Error en batch ausentes:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al registrar ausentes',
+      error: error.message
+    });
+  }
+});
+
+// POST /api/asistencia/registrar-ausente - Registrar alumno ausente al culminar
+router.post('/registrar-ausente', async (req, res) => {
+  try {
+    const { persona_id, estado, fecha } = req.body;
+
+    if (!persona_id || !fecha) {
+      return res.status(400).json({
+        success: false,
+        message: 'persona_id y fecha son requeridos'
+      });
+    }
+
+    // Buscar el alumno_id usando persona_id
+    const { data: alumno, error: alumnoError } = await supabase
+      .from('alumnos')
+      .select('id')
+      .eq('persona_id', persona_id)
+      .single();
+
+    if (alumnoError || !alumno) {
+      return res.status(404).json({
+        success: false,
+        message: 'Alumno no encontrado'
+      });
+    }
+
+    const alumno_id = alumno.id;
+
+    // Verificar si ya existe asistencia para este alumno hoy
+    const { data: existente } = await supabase
+      .from('asistencias')
+      .select('id')
+      .eq('persona_id', persona_id)
+      .eq('fecha', fecha)
+      .limit(1);
+
+    if (existente && existente.length > 0) {
+      return res.json({
+        success: true,
+        message: 'Ya existe asistencia para este alumno'
+      });
+    }
+
+    // Registrar como ausente
+    const { data, error } = await supabase
+      .from('asistencias')
+      .insert({
+        persona_id,
+        fecha,
+        estado: estado || 'falta',
+        tipo_persona: 'alumno',
+        hora_entrada: null
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // ========================================
+    // ENVIAR NOTIFICACIÓN PUSH AL PADRE
+    // ========================================
+    try {
+      // Obtener información del alumno
+      const { data: alumnoInfo } = await supabase
+        .from('alumnos')
+        .select('personas!inner(nombres, apellidos)')
+        .eq('id', alumno_id)
+        .single();
+
+      const persona = Array.isArray(alumnoInfo?.personas) ? alumnoInfo.personas[0] : alumnoInfo?.personas;
+      const nombreCompleto = persona 
+        ? `${persona.nombres} ${persona.apellidos}`
+        : 'Su hijo/a';
+
+      // Enviar notificación
+      await notificationService.enviarAEstudiante(alumno_id, {
+        tipo: 'asistencia',
+        titulo: '⚠️ Ausencia Registrada',
+        mensaje: `${nombreCompleto} no registró asistencia hoy`,
+        datos: {
+          alumno_id: alumno_id.toString(),
+          estado: 'falta',
+          fecha: fecha
+        }
+      });
+
+      console.log(`📤 Notificación de ausencia enviada para alumno ${alumno_id}`);
+    } catch (notifError: any) {
+      console.error('Error al enviar notificación de ausencia:', notifError.message);
+    }
+    // ========================================
+
+    res.json({
+      success: true,
+      message: 'Ausente registrado',
+      data
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: 'Error al registrar ausente',
+      error: error.message
+    });
+  }
+});
+
+// POST /api/asistencia/device-token - Guardar token FCM del dispositivo
+router.post('/device-token', async (req, res) => {
+  try {
+    console.log('📱 Petición de registro de token FCM recibida');
+    console.log('📋 Body:', JSON.stringify(req.body, null, 2));
+    
+    const { token, user_id, estudiante_id, device_info } = req.body;
+
+    if (!token || !estudiante_id) {
+      console.log('❌ Faltan campos requeridos');
+      return res.status(400).json({
+        success: false,
+        message: 'Token y estudiante_id son requeridos'
+      });
+    }
+
+    console.log('🔍 Buscando alumno con persona_id:', estudiante_id);
+
+    // Buscar el ID real del alumno usando el persona_id
+    const { data: alumno, error: alumnoError } = await supabase
+      .from('alumnos')
+      .select('id')
+      .eq('persona_id', estudiante_id)
+      .single();
+
+    if (alumnoError || !alumno) {
+      console.error('❌ No se encontró alumno con persona_id:', estudiante_id);
+      return res.status(404).json({
+        success: false,
+        message: 'Alumno no encontrado'
+      });
+    }
+
+    const alumnoId = alumno.id;
+    console.log('✅ Alumno encontrado, alumno_id:', alumnoId);
+
+    // Verificar si user_id existe en la tabla usuarios
+    let validUserId = null;
+    if (user_id) {
+      const { data: usuario } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('id', user_id)
+        .single();
+      
+      if (usuario) {
+        validUserId = user_id;
+        console.log('✅ user_id válido encontrado en tabla usuarios');
+      } else {
+        console.log('⚠️  user_id no existe en tabla usuarios, se guardará como null');
+      }
+    }
+
+    console.log('💾 Guardando token para alumno_id:', alumnoId);
+
+    const { data, error } = await supabase
+      .from('device_tokens')
+      .upsert({
+        user_id: validUserId,
+        estudiante_id: alumnoId,
+        token,
+        device_info: device_info || '',
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'estudiante_id,token'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Error de Supabase:', error);
+      throw error;
+    }
+
+    console.log('✅ Token FCM guardado exitosamente para alumno_id:', alumnoId);
+    console.log('📊 Datos guardados:', data);
+
+    res.json({
+      success: true,
+      message: 'Token guardado exitosamente',
+      data
+    });
+  } catch (error: any) {
+    console.error('❌ Error al guardar token:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error al guardar token',
       error: error.message
     });
   }
@@ -187,19 +579,71 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Eliminar asistencia
+// POST /api/asistencia/eliminar-batch - Eliminar múltiples asistencias de una vez
+router.post('/eliminar-batch', async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    console.log('🗑️  Batch delete recibido:', { total: ids?.length });
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere un array de IDs'
+      });
+    }
+
+    // Eliminar todos los IDs en una sola query
+    const { data: eliminadas, error } = await supabase
+      .from('asistencias')
+      .delete()
+      .in('id', ids)
+      .select('id');
+
+    if (error) {
+      console.error('Error eliminando asistencias batch:', error);
+      throw error;
+    }
+
+    const totalEliminadas = eliminadas?.length || 0;
+    console.log(`✅ ${totalEliminadas} asistencias eliminadas`);
+
+    res.json({
+      success: true,
+      message: `${totalEliminadas} asistencias eliminadas exitosamente`,
+      data: {
+        eliminadas: totalEliminadas,
+        solicitadas: ids.length
+      }
+    });
+  } catch (error: any) {
+    console.error('❌ Error en batch delete:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al eliminar asistencias',
+      error: error.message
+    });
+  }
+});
+
+// Eliminar asistencia individual
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
+    console.log('🗑️  Eliminando asistencia ID:', id);
+
     const { data: asistenciaEliminada, error } = await supabase
-      .from('asistencia_asistencia')
+      .from('asistencias')
       .delete()
       .eq('id', id)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error eliminando asistencia:', error);
+      throw error;
+    }
 
     if (!asistenciaEliminada) {
       return res.status(404).json({
@@ -208,11 +652,14 @@ router.delete('/:id', async (req, res) => {
       });
     }
 
+    console.log('✅ Asistencia eliminada');
+
     res.json({
       success: true,
       message: 'Asistencia eliminada exitosamente'
     });
   } catch (error: any) {
+    console.error('❌ Error eliminando asistencia:', error);
     res.status(500).json({
       success: false,
       message: 'Error al eliminar asistencia',

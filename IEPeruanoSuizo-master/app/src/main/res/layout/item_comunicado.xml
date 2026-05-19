@@ -1,17 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="330dp"
-    android:layout_height="200dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     app:cardCornerRadius="20dp"
     app:cardElevation="0dp"
+    android:layout_marginStart="16dp"
     android:layout_marginEnd="16dp"
-    android:layout_marginBottom="16dp"
-    app:cardBackgroundColor="@color/white">
+    android:layout_marginBottom="14dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:background="@drawable/bg_comunicado_border"
+    app:cardBackgroundColor="@android:color/transparent">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="@android:color/white">
 
         <!-- Banner: Ocupa TODO el card si está visible -->
         <ImageView
@@ -33,47 +39,53 @@
             android:paddingTop="16dp"
             android:paddingStart="20dp"
             android:paddingEnd="20dp"
-            android:paddingBottom="44dp"
+            android:paddingBottom="16dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent">
 
-            <ImageView
-                android:id="@+id/iv_logo_ieps"
-                android:layout_width="45dp"
-                android:layout_height="28dp"
-                android:src="@drawable/logoie"
-                android:scaleType="fitCenter"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
+            <!-- Título del comunicado en ROJO -->
             <TextView
                 android:id="@+id/tv_titulo_comunicado"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:layout_marginEnd="12dp"
-                android:text="Título"
+                android:text="Título del Comunicado"
                 android:textColor="#BA1924"
-                android:textSize="14sp"
+                android:textSize="15sp"
                 android:maxLines="2"
                 android:ellipsize="end"
                 android:fontFamily="@font/poppinssemibold"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/iv_logo_ieps"/>
+                app:layout_constraintEnd_toStartOf="@+id/tv_hora_comunicado"/>
 
-            <!-- Hora del comunicado -->
+            <!-- Hora del comunicado (arriba a la derecha) -->
             <TextView
                 android:id="@+id/tv_hora_comunicado"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginStart="8dp"
                 android:text="10:30 AM"
-                android:textColor="#BA1924"
-                android:textSize="10sp"
+                android:textColor="#9BA8AB"
+                android:textSize="11sp"
+                android:fontFamily="@font/poppinsmedium"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Emisor del comunicado (pequeño, debajo del título) -->
+            <TextView
+                android:id="@+id/tv_emisor_comunicado"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Administración"
+                android:textColor="#9BA8AB"
+                android:textSize="11sp"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:fontFamily="@font/poppinsmedium"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tv_titulo_comunicado" />
+                app:layout_constraintTop_toBottomOf="@+id/tv_titulo_comunicado"
+                app:layout_constraintEnd_toEndOf="parent"/>
 
             <!-- Fecha y destinatario (usado en historial) -->
             <TextView
@@ -87,7 +99,7 @@
                 android:fontFamily="@font/poppinsregular"
                 android:visibility="gone"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tv_hora_comunicado"
+                app:layout_constraintTop_toBottomOf="@+id/tv_emisor_comunicado"
                 app:layout_constraintEnd_toEndOf="parent" />
 
             <TextView
@@ -97,9 +109,9 @@
                 android:layout_marginTop="10dp"
                 android:text="Cuerpo del mensaje..."
                 android:textColor="#5E5F60"
-                android:textSize="12sp"
+                android:textSize="13sp"
                 android:lineSpacingExtra="2dp"
-                android:maxLines="4"
+                android:maxLines="3"
                 android:ellipsize="end"
                 android:fontFamily="@font/poppinsregular"
                 app:layout_constraintTop_toBottomOf="@+id/tv_fecha_destinatario"
@@ -112,28 +124,28 @@
                 android:layout_height="wrap_content"
                 android:text="Ver más"
                 android:textColor="#BA1924"
-                android:textSize="11sp"
-                android:fontFamily="@font/poppinsmedium"
+                android:textSize="12sp"
+                android:fontFamily="@font/poppinssemibold"
                 android:layout_marginTop="6dp"
                 android:visibility="gone"
                 app:layout_constraintTop_toBottomOf="@+id/tv_contenido_comunicado"
                 app:layout_constraintStart_toStartOf="parent" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            <!-- Tag de Salón -->
+            <TextView
+                android:id="@+id/tv_tag_salon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Salón: 4to A"
+                android:textColor="#BCC1CD"
+                android:textSize="10sp"
+                android:fontFamily="@font/poppinsmedium"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@+id/btn_ver_mas_comunicado"
+                app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Tag de Salón (Anclado al fondo derecho) -->
-        <TextView
-            android:id="@+id/tv_tag_salon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="20dp"
-            android:layout_marginBottom="14dp"
-            android:text="Salón: 4to A"
-            android:textColor="#BCC1CD"
-            android:textSize="10sp"
-            android:fontFamily="@font/poppinsmedium"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <!-- Estado (solo visible en historial, anclado al fondo izquierdo) -->
         <TextView

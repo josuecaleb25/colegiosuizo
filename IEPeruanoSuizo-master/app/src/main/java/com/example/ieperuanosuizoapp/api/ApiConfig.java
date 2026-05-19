@@ -8,8 +8,8 @@ public class ApiConfig {
     private static final String PRODUCTION_URL = "https://colegiosuizo-yl5x.onrender.com/api/";
     
     // URL del backend local (tu PC en la red local)
-    // Tu celular debe estar en la misma red WiFi (192.168.101.x)
-    private static final String LOCAL_URL = "http://192.168.101.7:3000/api/";
+    // Tu celular debe estar en la misma red WiFi (192.168.100.x)
+    private static final String LOCAL_URL = "http://192.168.100.85:5000/api/";
     
     // URL activa según el modo
     public static final String BASE_URL = USE_LOCAL ? LOCAL_URL : PRODUCTION_URL;

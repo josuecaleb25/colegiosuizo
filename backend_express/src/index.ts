@@ -30,6 +30,15 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Middleware para loggear todas las peticiones
+app.use((req, res, next) => {
+  console.log(`📨 ${req.method} ${req.path}`);
+  if (req.method === 'POST' && req.path.includes('device-token')) {
+    console.log('🔍 Body de device-token:', req.body);
+  }
+  next();
+});
+
 // Rutas
 app.get('/', (req, res) => {
   res.json({ 
@@ -66,6 +75,13 @@ app.use('/api/comunicados', comunicadosRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/secciones', seccionesRoutes);
+
+// Endpoint de prueba para FCM
+app.post('/api/test-fcm', (req, res) => {
+  console.log('🧪 Test FCM endpoint llamado');
+  console.log('📋 Body recibido:', req.body);
+  res.json({ success: true, message: 'Test FCM OK', received: req.body });
+});
 
 // Manejo de errores
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

@@ -8,17 +8,24 @@ router.get('/', async (req, res) => {
   try {
     const { usuario_id, rol } = req.query;
 
+    if (!usuario_id || !rol) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere usuario_id y rol'
+      });
+    }
+
     let secciones: any[] = [];
 
-    if (rol === 'administrador' || rol === 'auxiliar') {
-      // Admin y auxiliar ven todas las secciones
+    // Si es ADMIN o AUXILIAR, devolver todas las secciones
+    if (rol === 'admin' || rol === 'auxiliar' || rol === 'administrador') {
+      
       const { data, error } = await supabase
         .from('secciones')
         .select(`
           id,
           nombre,
           grados!inner (
-            id,
             nombre
           )
         `)
@@ -26,64 +33,83 @@ router.get('/', async (req, res) => {
 
       if (error) throw error;
 
-      secciones = data?.map((sec: any) => {
-        const grado = Array.isArray(sec.grados) ? sec.grados[0] : sec.grados;
-        return {
-          id: sec.id,
-          nombre: `${grado.nombre} ${sec.nombre}`,
-          grado_id: grado.id,
-          seccion_nombre: sec.nombre,
-          grado_nombre: grado.nombre
-        };
-      }) || [];
+      secciones = data?.map((s: any) => ({
+        id: s.id,
+        nombre: `${s.grados.nombre} ${s.nombre}`, // "1ro A"
+        grado: s.grados.nombre,
+        seccion: s.nombre
+      })) || [];
 
-    } else if (rol === 'profesor' || rol === 'docente') {
-      // Profesor solo ve las secciones donde dicta clases
-      const { data, error } = await supabase
-        .from('asignaciones_docentes')
+    } 
+    // Si es PROFESOR, devolver solo sus secciones asignadas
+    else if (rol === 'profesor' || rol === 'docente') {
+
+      // 1. Buscar el docente_id usando usuario_id (que es persona_id)
+      const { data: docente, error: docenteError } = await supabase
+        .from('docentes')
+        .select('id')
+        .eq('persona_id', usuario_id)
+        .single();
+
+      if (docenteError || !docente) {
+        return res.json({
+          success: true,
+          data: [],
+          message: 'No se encontraron secciones asignadas'
+        });
+      }
+
+      // 2. Obtener las secciones asignadas al docente
+      const { data: asignaciones, error: asignError } = await supabase
+        .from('asignaciones')
         .select(`
+          seccion_id,
           secciones!inner (
             id,
             nombre,
             grados!inner (
-              id,
               nombre
-            )
-          ),
-          docentes!inner (
-            usuarios!inner (
-              id
             )
           )
         `)
-        .eq('docentes.usuarios.id', usuario_id);
+        .eq('docente_id', docente.id);
 
-      if (error) throw error;
+      if (asignError) throw asignError;
 
+      // Eliminar duplicados por seccion_id
       const seccionesUnicas = new Map();
-      data?.forEach((asig: any) => {
-        const seccion = Array.isArray(asig.secciones) ? asig.secciones[0] : asig.secciones;
-        const grado = Array.isArray(seccion.grados) ? seccion.grados[0] : seccion.grados;
-        
-        if (!seccionesUnicas.has(seccion.id)) {
-          seccionesUnicas.set(seccion.id, {
-            id: seccion.id,
-            nombre: `${grado.nombre} ${seccion.nombre}`,
-            grado_id: grado.id,
-            seccion_nombre: seccion.nombre,
-            grado_nombre: grado.nombre
+      asignaciones?.forEach((a: any) => {
+        const seccionId = a.secciones.id;
+        if (!seccionesUnicas.has(seccionId)) {
+          seccionesUnicas.set(seccionId, {
+            id: a.secciones.id,
+            nombre: `${a.secciones.grados.nombre} ${a.secciones.nombre}`, // "1ro A"
+            grado: a.secciones.grados.nombre,
+            seccion: a.secciones.nombre
           });
         }
       });
 
       secciones = Array.from(seccionesUnicas.values());
+
+    } else {
+      // Otros roles no tienen acceso a secciones
+      return res.json({
+        success: true,
+        data: [],
+        message: 'Rol no autorizado para ver secciones'
+      });
     }
 
     res.json({
       success: true,
-      data: secciones
+      data: secciones,
+      total: secciones.length,
+      message: `Se encontraron ${secciones.length} secciones`
     });
+
   } catch (error: any) {
+    console.error('❌ Error al obtener secciones:', error);
     res.status(500).json({
       success: false,
       message: 'Error al obtener secciones',

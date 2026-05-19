@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import supabase from '../config/database';
+import QRCode from 'qrcode';
 
 const router = Router();
 
@@ -40,7 +41,7 @@ router.get('/perfil/:id', async (req, res) => {
 
     const usuario = usuarios[0];
     const persona = Array.isArray(usuario.personas) ? usuario.personas[0] : usuario.personas;
-    
+
     let perfilCompleto: any = {
       id: usuario.id,
       email: usuario.email,
@@ -89,13 +90,31 @@ router.get('/perfil/:id', async (req, res) => {
         const secciones = Array.isArray(matriculaActiva.secciones) ? matriculaActiva.secciones[0] : matriculaActiva.secciones;
         const grados = Array.isArray(secciones.grados) ? secciones.grados[0] : secciones.grados;
         const codigoQR = alumno[0].codigos_qr?.find((qr: any) => qr.activo);
+        const qrCodeString = codigoQR?.codigo || null;
         
+        let qrImage = null;
+        if (qrCodeString) {
+          try {
+            qrImage = await QRCode.toDataURL(qrCodeString, {
+              width: 300,
+              margin: 2,
+              color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+              }
+            });
+          } catch (qrError) {
+            console.error('Error generando QR image en perfil:', qrError);
+          }
+        }
+
         perfilCompleto.alumno = {
           id: alumno[0].id,
           codigo: alumno[0].codigo,
           seccion: `${grados.nombre} ${secciones.nombre}`,
           seccion_id: secciones.id,
-          codigo_qr: codigoQR?.codigo || null
+          codigo_qr: qrCodeString,
+          qr_image: qrImage
         };
       }
     }
@@ -124,13 +143,13 @@ router.get('/perfil/:id', async (req, res) => {
       if (docente && docente.length > 0) {
         const tutorSeccion = docente[0].tutor_seccion && docente[0].tutor_seccion.length > 0 ? docente[0].tutor_seccion[0] : null;
         let seccionTutoria = null;
-        
+
         if (tutorSeccion) {
           const secciones = Array.isArray(tutorSeccion.secciones) ? tutorSeccion.secciones[0] : tutorSeccion.secciones;
           const grados = Array.isArray(secciones.grados) ? secciones.grados[0] : secciones.grados;
           seccionTutoria = `${grados.nombre} ${secciones.nombre}`;
         }
-        
+
         perfilCompleto.docente = {
           id: docente[0].id,
           especialidad: docente[0].especialidad,
@@ -235,7 +254,7 @@ router.get('/', async (req, res) => {
     }
 
     query = query.order('personas(apellidos)', { ascending: true })
-                 .limit(Number(limit));
+      .limit(Number(limit));
 
     const { data: usuarios, error } = await query;
 

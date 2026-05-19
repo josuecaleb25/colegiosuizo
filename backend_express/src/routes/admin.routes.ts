@@ -176,4 +176,118 @@ router.get('/alumnos/estadisticas', async (req, res) => {
   }
 });
 
+// GET /api/admin/asistencia/fecha - Obtener asistencias por fecha
+router.get('/asistencia/fecha', async (req, res) => {
+  try {
+    const { fecha } = req.query;
+
+    if (!fecha) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere el parámetro fecha'
+      });
+    }
+
+    console.log('📅 Consultando asistencias para fecha:', fecha);
+
+    // Obtener asistencias de la fecha especificada
+    const { data: asistencias, error } = await supabase
+      .from('asistencias')
+      .select(`
+        id,
+        persona_id,
+        fecha,
+        hora_entrada,
+        estado,
+        tipo_persona
+      `)
+      .eq('fecha', fecha)
+      .eq('tipo_persona', 'alumno');
+
+    if (error) {
+      console.error('Error consultando asistencias:', error);
+      throw error;
+    }
+
+    console.log(`✅ Encontradas ${asistencias?.length || 0} asistencias`);
+
+    if (!asistencias || asistencias.length === 0) {
+      return res.json({
+        success: true,
+        data: [],
+        total: 0,
+        message: 'No hay asistencias para esta fecha'
+      });
+    }
+
+    // Obtener información de los alumnos
+    const personaIds = asistencias.map(a => a.persona_id);
+    
+    const { data: alumnos, error: alumnosError } = await supabase
+      .from('alumnos')
+      .select(`
+        id,
+        persona_id,
+        personas!inner (
+          id,
+          nombres,
+          apellidos
+        ),
+        matriculas!inner (
+          secciones!inner (
+            nombre,
+            grados!inner (
+              nombre
+            )
+          )
+        )
+      `)
+      .in('persona_id', personaIds);
+
+    if (alumnosError) {
+      console.error('Error consultando alumnos:', alumnosError);
+      throw alumnosError;
+    }
+
+    // Mapear asistencias con información de alumnos
+    const asistenciasFormateadas = asistencias.map(asist => {
+      const alumno = alumnos?.find(a => a.persona_id === asist.persona_id);
+      
+      if (!alumno) {
+        return null;
+      }
+
+      const persona = Array.isArray(alumno.personas) ? alumno.personas[0] : alumno.personas;
+      const matricula = Array.isArray(alumno.matriculas) ? alumno.matriculas[0] : alumno.matriculas;
+      const seccion = Array.isArray(matricula?.secciones) ? matricula.secciones[0] : matricula?.secciones;
+      const grado = Array.isArray(seccion?.grados) ? seccion.grados[0] : seccion?.grados;
+
+      return {
+        id: asist.id,
+        persona_id: asist.persona_id,
+        nombre_completo: `${persona.nombres} ${persona.apellidos}`,
+        salon: `${grado?.nombre || ''} ${seccion?.nombre || ''}`.trim(),
+        hora_registro: asist.hora_entrada,
+        estado_entrada: asist.estado,
+        fecha: asist.fecha
+      };
+    }).filter(a => a !== null);
+
+    console.log(`📊 Formateadas ${asistenciasFormateadas.length} asistencias`);
+
+    res.json({
+      success: true,
+      data: asistenciasFormateadas,
+      total: asistenciasFormateadas.length
+    });
+  } catch (error: any) {
+    console.error('❌ Error en /admin/asistencia/fecha:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener asistencias',
+      error: error.message
+    });
+  }
+});
+
 export default router;

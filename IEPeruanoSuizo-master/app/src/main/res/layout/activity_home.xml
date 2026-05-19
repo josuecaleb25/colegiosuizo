@@ -344,20 +344,34 @@
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" app:cardBackgroundColor="?attr/homeHeaderBackground" app:cardCornerRadius="20dp" app:cardElevation="0dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_agenda_header" android:fontFamily="@font/londrinasolidregular" android:gravity="center" android:padding="8dp" android:text="Miercoles, 22 de Abril" android:textColor="#FFFFFF" android:textSize="16sp" />
+                        <TextView 
+                            android:id="@+id/tv_fecha_agenda"
+                            android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_agenda_header" android:fontFamily="@font/londrinasolidregular" android:gravity="center" android:padding="8dp" android:text="Miercoles, 22 de Abril" android:textColor="#FFFFFF" android:textSize="16sp" />
                         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:orientation="horizontal">
                             <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
                                 <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
                                     <View android:layout_width="8dp" android:layout_height="8dp" android:background="@drawable/bg_notification_badge" />
-                                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:fontFamily="@font/leaguespartanbold" android:text="11:30 am" android:textColor="#BA1924" android:textSize="20sp" />
+                                    <TextView 
+                                        android:id="@+id/tv_hora_inicio_agenda"
+                                        android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:fontFamily="@font/leaguespartanbold" android:text="11:30 am" android:textColor="#BA1924" android:textSize="20sp" />
                                 </LinearLayout>
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:fontFamily="@font/leaguespartanregular" android:text="1:00 pm" android:textColor="?attr/homeTextColorCardLabel" android:textSize="16sp" />
+                                <TextView 
+                                    android:id="@+id/tv_hora_fin_agenda"
+                                    android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:fontFamily="@font/leaguespartanregular" android:text="1:00 pm" android:textColor="?attr/homeTextColorCardLabel" android:textSize="16sp" />
                             </LinearLayout>
-                            <View android:layout_width="2dp" android:layout_height="match_parent" android:layout_marginHorizontal="16dp" android:background="#5E5F60" />
+                            <View 
+                                android:id="@+id/divider_agenda"
+                                android:layout_width="2dp" android:layout_height="match_parent" android:layout_marginHorizontal="16dp" android:background="#5E5F60" />
                             <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.5" android:orientation="vertical">
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@font/londrinasolidregular" android:text="Computacion" android:textColor="?android:attr/textColorPrimary" android:textSize="18sp" />
-                                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:gravity="center_vertical"><ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/mapubication" app:tint="?android:attr/textColorPrimary"/><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="Salon de computo" android:textSize="13sp" android:textColor="?android:attr/textColorSecondary" android:fontFamily="@font/londrinasolidlight"/></LinearLayout>
-                                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:gravity="center_vertical"><ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/profileiconuser" app:tint="?android:attr/textColorPrimary"/><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="Prof. Ricardo Huaman" android:textSize="13sp" android:textColor="?android:attr/textColorSecondary" android:fontFamily="@font/londrinasolidlight"/></LinearLayout>
+                                <TextView 
+                                    android:id="@+id/tv_curso_agenda"
+                                    android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@font/londrinasolidregular" android:text="Computacion" android:textColor="?android:attr/textColorPrimary" android:textSize="18sp" />
+                                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:gravity="center_vertical"><ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/mapubication" app:tint="?android:attr/textColorPrimary"/><TextView 
+                                    android:id="@+id/tv_salon_agenda"
+                                    android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="Salon de computo" android:textSize="13sp" android:textColor="?android:attr/textColorSecondary" android:fontFamily="@font/londrinasolidlight"/></LinearLayout>
+                                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:gravity="center_vertical"><ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/profileiconuser" app:tint="?android:attr/textColorPrimary"/><TextView 
+                                    android:id="@+id/tv_profesor_agenda"
+                                    android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="Prof. Ricardo Huaman" android:textSize="13sp" android:textColor="?android:attr/textColorSecondary" android:fontFamily="@font/londrinasolidlight"/></LinearLayout>
                             </LinearLayout>
                         </LinearLayout>
                     </LinearLayout>
@@ -375,23 +389,14 @@
                     </LinearLayout>
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <!-- Contenedor de Comunicados Globales (CARRUSEL HORIZONTAL) -->
-                <HorizontalScrollView
+                <!-- Contenedor de Comunicados Globales (UN SOLO CARD) -->
+                <include
+                    android:id="@+id/card_comunicado_global"
+                    layout="@layout/item_comunicado"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:scrollbars="none"
-                    android:clipToPadding="false"
-                    android:paddingStart="20dp"
-                    android:paddingEnd="20dp">
-                    <LinearLayout
-                        android:id="@+id/container_comunicados_globales"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="16dp">
-                        <!-- Dinámico: Máximo 3 -->
-                    </LinearLayout>
-                </HorizontalScrollView>
+                    android:layout_marginTop="16dp"
+                    android:visibility="gone" />
 
                 <!-- Mensaje cuando no hay comunicados globales -->
                 <LinearLayout
@@ -407,40 +412,113 @@
                 </LinearLayout>
 
                 <!-- Título Comunicados por Salón -->
-                <TextView
-                    android:id="@+id/tv_title_salon"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginStart="8dp"
-                    android:fontFamily="@font/londrinasolidregular"
-                    android:text="Comunicados de mi Salón"
-                    android:textColor="?attr/homeTextColorTitles"
-                    android:textSize="18sp"
-                    android:visibility="gone"
-                    tools:visibility="visible" />
-
-                <!-- Contenedor de Comunicados por Salón (CARRUSEL HORIZONTAL) -->
-                <HorizontalScrollView
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/header_comunicados_salon"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:scrollbars="none"
-                    android:clipToPadding="false"
-                    android:paddingStart="20dp"
-                    android:paddingEnd="20dp">
-                    <LinearLayout
-                        android:id="@+id/container_comunicados_salon"
+                    android:layout_marginTop="24dp"
+                    android:visibility="gone">
+                    <TextView
+                        android:id="@+id/tv_title_salon"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:fontFamily="@font/londrinasolidregular"
+                        android:text="Comunicados de mi Salón"
+                        android:textColor="?attr/homeTextColorTitles"
+                        android:textSize="18sp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"/>
+                    <LinearLayout
+                        android:id="@+id/btn_ver_mas_salon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:layout_marginTop="12dp">
-                        <!-- Dinámico: Máximo 3 -->
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="8dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@font/londrinasolidlight" android:text="Ver todos" android:textColor="#BA1924" android:textSize="15sp" />
+                        <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_marginStart="4dp" android:src="@drawable/flechaie" />
                     </LinearLayout>
-                </HorizontalScrollView>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <!-- Contenedor de Comunicados por Salón (UN SOLO CARD) -->
+                <include
+                    android:id="@+id/card_comunicado_salon"
+                    layout="@layout/item_comunicado"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:visibility="gone" />
 
                 <!-- Mensaje cuando no hay comunicados de salón -->
                 <LinearLayout
                     android:id="@+id/layout_no_comunicados_salon"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:layout_marginTop="12dp"
+                    android:visibility="gone">
+                    <ImageView android:layout_width="60dp" android:layout_height="60dp" android:src="@drawable/buhope" android:alpha="0.3" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="No hay comunicados por ahora" android:textColor="#BCC1CD" android:fontFamily="@font/poppinsmedium" android:textSize="13sp" android:layout_marginTop="4dp" />
+                </LinearLayout>
+
+                <!-- Título Comunicados de Salones (para Profesores/Admin) -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/header_comunicados_salones"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:visibility="gone">
+                    <TextView
+                        android:id="@+id/tv_title_salones"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:fontFamily="@font/londrinasolidregular"
+                        android:text="Comunicados de Salones"
+                        android:textColor="?attr/homeTextColorTitles"
+                        android:textSize="18sp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"/>
+                    <LinearLayout
+                        android:id="@+id/btn_ver_mas_salones"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="8dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@font/londrinasolidlight" android:text="Ver todos" android:textColor="#BA1924" android:textSize="15sp" />
+                        <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_marginStart="4dp" android:src="@drawable/flechaie" />
+                    </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <!-- Contenedor de Comunicados de Salones (UN SOLO CARD) -->
+                <include
+                    android:id="@+id/card_comunicado_salones"
+                    layout="@layout/item_comunicado"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:visibility="gone" />
+
+                <!-- Mensaje cuando no hay comunicados de salones -->
+                <LinearLayout
+                    android:id="@+id/layout_no_comunicados_salones"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"

@@ -69,6 +69,13 @@ public class GestionComunicadosActivity extends AppCompatActivity {
         setupBottomNavigation();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Recargar comunicados cada vez que volvemos a esta actividad
+        cargarHistorialDesdeBackend();
+    }
+
     private void setupBottomNavigation() {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
 

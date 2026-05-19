@@ -175,20 +175,10 @@ public class GestionAsistenciaActivity extends AppCompatActivity {
             pool.shutdown();
 
             List<AsistenciaDiaResumen> ordenados = new ArrayList<>(acumulado);
-            Set<String> fechasSet = new HashSet<>(fechas);
-            Map<String, List<AsistenciaAlumno>> localMap = AsistenciaLocalStore.cargarTodas(GestionAsistenciaActivity.this);
-            for (Map.Entry<String, List<AsistenciaAlumno>> e : localMap.entrySet()) {
-                if (!fechasSet.contains(e.getKey())) {
-                    continue;
-                }
-                List<AsistenciaAlumno> datosLocal = e.getValue();
-                if (datosLocal == null || datosLocal.isEmpty()) {
-                    continue;
-                }
-                ordenados.removeIf(r -> r.fechaIso.equals(e.getKey()));
-                ordenados.add(new AsistenciaDiaResumen(e.getKey(), new ArrayList<>(datosLocal), true));
-            }
+            
+            // Ya no usamos caché local, todo viene del backend
             ordenados.sort((a, b) -> b.fechaIso.compareTo(a.fechaIso));
+            
             List<Object> filas = construirFilasAgrupadas(ordenados);
 
             runOnUiThread(() -> {
@@ -258,19 +248,111 @@ public class GestionAsistenciaActivity extends AppCompatActivity {
 
     private void confirmarEliminarRegistroLocal(AsistenciaDiaResumen resumen) {
         new MaterialAlertDialogBuilder(this)
-                .setTitle("Eliminar registro")
-                .setMessage("¿Eliminar esta asistencia guardada en el dispositivo para el "
-                        + formatTituloLargo(resumen.fechaIso)
-                        + "? No se borran datos del servidor, solo la copia local.")
+                .setTitle("Eliminar asistencias")
+                .setMessage("¿Eliminar TODAS las asistencias del " + formatTituloLargo(resumen.fechaIso) + "? Esta acción no se puede deshacer.")
                 .setNegativeButton("Cancelar", (d, w) -> d.dismiss())
                 .setPositiveButton("Eliminar", (d, w) -> {
-                    AsistenciaLocalStore.eliminar(this, resumen.fechaIso);
-                    Toast.makeText(this, "Registro eliminado", Toast.LENGTH_SHORT).show();
+                    eliminarAsistenciasDelBackend(resumen);
                     d.dismiss();
-                    cargarHistorial();
                 })
                 .show();
     }
+
+    private void eliminarAsistenciasDelBackend(AsistenciaDiaResumen resumen) {
+        // Mostrar progreso
+        android.app.ProgressDialog progress = new android.app.ProgressDialog(this);
+        progress.setMessage("Eliminando asistencias...");
+        progress.setCancelable(false);
+        progress.show();
+
+        // Recolectar todos los IDs válidos
+        List<String> idsParaEliminar = new ArrayList<>();
+        for (AsistenciaAlumno alumno : resumen.alumnos) {
+            if (alumno.getId() != null && !alumno.getId().isEmpty() && !alumno.getId().startsWith("local-")) {
+                idsParaEliminar.add(alumno.getId());
+            }
+        }
+
+        if (idsParaEliminar.isEmpty()) {
+            progress.dismiss();
+            Toast.makeText(this, "No hay asistencias válidas para eliminar", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Preparar body con array de IDs
+        org.json.JSONObject jsonBody = new org.json.JSONObject();
+        try {
+            org.json.JSONArray idsArray = new org.json.JSONArray();
+            for (String id : idsParaEliminar) {
+                idsArray.put(id);
+            }
+            jsonBody.put("ids", idsArray);
+
+            okhttp3.RequestBody body = okhttp3.RequestBody.create(
+                    jsonBody.toString(),
+                    okhttp3.MediaType.parse("application/json")
+            );
+
+            okhttp3.Request request = new okhttp3.Request.Builder()
+                    .url(com.example.ieperuanosuizoapp.api.ApiConfig.BASE_URL + "asistencia/eliminar-batch")
+                    .post(body)
+                    .build();
+
+            // Crear cliente con timeout adecuado
+            okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
+                    .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                    .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                    .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                    .build();
+
+            // UNA SOLA petición para eliminar todas las asistencias
+            client.newCall(request).enqueue(new okhttp3.Callback() {
+                @Override
+                public void onFailure(okhttp3.Call call, java.io.IOException e) {
+                    runOnUiThread(() -> {
+                        progress.dismiss();
+                        Toast.makeText(GestionAsistenciaActivity.this, 
+                            "Error al eliminar: " + e.getMessage(), 
+                            Toast.LENGTH_LONG).show();
+                    });
+                }
+
+                @Override
+                public void onResponse(okhttp3.Call call, okhttp3.Response response) {
+                    try {
+                        String responseBody = response.body() != null ? response.body().string() : "";
+                        
+                        runOnUiThread(() -> {
+                            progress.dismiss();
+                            
+                            if (response.isSuccessful()) {
+                                Toast.makeText(GestionAsistenciaActivity.this, 
+                                    "Asistencias eliminadas exitosamente", 
+                                    Toast.LENGTH_SHORT).show();
+                                cargarHistorial();
+                            } else {
+                                Toast.makeText(GestionAsistenciaActivity.this, 
+                                    "Error al eliminar: " + response.code(), 
+                                    Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    } catch (Exception e) {
+                        runOnUiThread(() -> {
+                            progress.dismiss();
+                            Toast.makeText(GestionAsistenciaActivity.this, 
+                                "Error procesando respuesta", 
+                                Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                }
+            });
+
+        } catch (org.json.JSONException e) {
+            progress.dismiss();
+            Toast.makeText(this, "Error al preparar datos", Toast.LENGTH_SHORT).show();
+        }
+    }
+
 
     private String formatTituloLargo(String fechaIso) {
         try {
@@ -504,7 +586,8 @@ public class GestionAsistenciaActivity extends AppCompatActivity {
                 tvTitulo.setText("Asistencia del " + act.formatTituloLargo(r.fechaIso));
                 tvResumen.setText(
                     r.presentesAtiempo + " a tiempo · " + r.tardanzas + " tardanza · " + r.ausentes + " ausentes");
-                btnEliminar.setVisibility(r.desdeLocal ? View.VISIBLE : View.GONE);
+                // SIEMPRE mostrar botón eliminar
+                btnEliminar.setVisibility(View.VISIBLE);
                 btnEliminar.setOnClickListener(v -> eliminarListener.onEliminarDia(r));
                 card.setOnClickListener(v -> listener.onDiaClick(r));
             }

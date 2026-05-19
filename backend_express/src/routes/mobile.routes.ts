@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import supabase from '../config/database';
 import { optionalAuthMiddleware, AuthRequest } from '../middleware/auth';
+import notificationService from '../services/notification.service';
 
 const router = Router();
 
@@ -183,35 +184,21 @@ router.get('/asistencia/alumnos', optionalAuthMiddleware, async (req: AuthReques
       });
     }
 
-    // Obtener asistencias de hoy
-    const hoy = new Date().toISOString().split('T')[0];
-    const { data: asistenciasHoy } = await supabase
-      .from('asistencias')
-      .select('persona_id, hora_entrada, estado')
-      .eq('fecha', hoy)
-      .eq('tipo_persona', 'alumno');
-
-    const asistenciasMap: any = {};
-    asistenciasHoy?.forEach((a: any) => {
-      asistenciasMap[a.persona_id] = {
-        hora_entrada: a.hora_entrada,
-        estado: a.estado
-      };
-    });
+    // NO devolver asistencias del día, solo la lista de alumnos
+    // El panel de asistencia debe empezar siempre desde cero
 
     const alumnosFormateados = alumnosFiltrados.map((a: any) => {
       const matricula = a.matriculas?.[0];
       const seccionNombre = matricula?.secciones?.nombre || '';
       const gradoNombre = matricula?.secciones?.grados?.nombre || '';
-      const asistencia = asistenciasMap[a.personas.id];
       
       return {
         id: a.id,
         persona_id: a.personas.id,
         nombre_completo: `${a.personas.nombres} ${a.personas.apellidos}`,
         salon: `${gradoNombre} ${seccionNombre}`,
-        hora_registro: asistencia?.hora_entrada || null,
-        estado_entrada: asistencia?.estado || 'ausente'
+        hora_registro: null,  // Siempre null
+        estado_entrada: 'ausente'  // Siempre ausente
       };
     });
 
@@ -234,6 +221,8 @@ router.get('/asistencia/alumnos', optionalAuthMiddleware, async (req: AuthReques
 router.post('/asistencia/escanear-qr', async (req, res) => {
   try {
     const { qr_token } = req.body;
+
+    console.log('🔍 Escaneando QR:', qr_token);
 
     if (!qr_token) {
       return res.status(400).json({
@@ -258,6 +247,7 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
       .limit(1);
 
     if (qrError || !codigosQr || codigosQr.length === 0) {
+      console.log('❌ QR no válido');
       return res.status(404).json({
         success: false,
         message: 'QR no válido'
@@ -271,20 +261,30 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
     const minutos = ahora.getMinutes();
     const estado = (hora < 7 || (hora === 7 && minutos <= 31)) ? 'presente' : 'tardanza';
 
-    // Verificar si ya tiene asistencia hoy
-    const { data: asistenciaExistente } = await supabase
+    console.log('👤 Persona encontrada:', personaData?.nombres, personaData?.apellidos);
+    console.log('📅 Fecha:', hoy);
+
+    // Verificar si ya tiene asistencia HOY (no días anteriores)
+    const { data: asistenciaExistente, error: asistError } = await supabase
       .from('asistencias')
-      .select('hora_entrada')
+      .select('hora_entrada, estado')
       .eq('persona_id', personaData?.id)
-      .eq('fecha', hoy)
+      .eq('fecha', hoy)  // SOLO HOY
       .limit(1);
 
+    if (asistError) {
+      console.error('Error verificando asistencia:', asistError);
+    }
+
     if (asistenciaExistente && asistenciaExistente.length > 0) {
+      console.log('⚠️ Ya tiene asistencia hoy:', asistenciaExistente[0]);
       return res.status(400).json({
         success: false,
-        message: `Asistencia ya registrada a las ${asistenciaExistente[0].hora_entrada}`
+        message: `Este QR ya fue escaneado hoy a las ${asistenciaExistente[0].hora_entrada}`
       });
     }
+
+    console.log('✅ No tiene asistencia hoy, registrando...');
 
     // Registrar asistencia
     const { error: insertError } = await supabase
@@ -297,7 +297,55 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
         estado
       });
 
-    if (insertError) throw insertError;
+    if (insertError) {
+      console.error('❌ Error insertando asistencia:', insertError);
+      throw insertError;
+    }
+
+    const horaFormateada = ahora.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+    
+    console.log('✅ Asistencia registrada exitosamente');
+
+    // ========================================
+    // ENVIAR NOTIFICACIÓN PUSH AL ALUMNO
+    // ========================================
+    try {
+      console.log('📤 Enviando notificación al alumno...');
+      
+      // Buscar el alumno_id usando persona_id
+      const { data: alumno, error: alumnoError } = await supabase
+        .from('alumnos')
+        .select('id')
+        .eq('persona_id', personaData?.id)
+        .single();
+
+      if (alumnoError || !alumno) {
+        console.log('⚠️ No se encontró alumno');
+      } else {
+        console.log('✅ Alumno encontrado, ID:', alumno.id);
+        
+        const nombreCompleto = `${personaData?.nombres} ${personaData?.apellidos}`;
+        const estadoTexto = estado === 'presente' ? 'a tiempo' : 'con tardanza';
+        
+        // Enviar notificación usando el servicio
+        await notificationService.enviarAEstudiante(alumno.id, {
+          tipo: 'asistencia',
+          titulo: '✅ Asistencia Registrada',
+          mensaje: `Buenos días, su hijo/a ${nombreCompleto} llegó ${estadoTexto} a las ${horaFormateada}`,
+          datos: {
+            alumno_id: alumno.id.toString(),
+            estado: estado,
+            hora: horaFormateada,
+            fecha: hoy
+          }
+        });
+        
+        console.log('✅ Notificación enviada al alumno');
+      }
+    } catch (notifError: any) {
+      console.error('❌ Error enviando notificación:', notifError.message);
+    }
+    // ========================================
 
     res.json({
       success: true,
@@ -305,10 +353,11 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
       data: {
         alumno: `${personaData?.nombres} ${personaData?.apellidos}`,
         estado,
-        hora: ahora.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })
+        hora: horaFormateada
       }
     });
   } catch (error: any) {
+    console.error('❌ Error en escanear-qr:', error);
     res.status(500).json({
       success: false,
       message: 'Error al registrar asistencia',

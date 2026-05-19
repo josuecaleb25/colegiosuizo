@@ -26,6 +26,7 @@ import com.google.android.material.navigation.NavigationView;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -38,9 +39,11 @@ public class HomeActivity extends AppCompatActivity {
     private View mainContent;
     
     // Vistas de Comunicados
-    private LinearLayout containerGlobales, containerSalon, layoutNoComunicados;
-    private LinearLayout layoutNoComunicadosGlobales, layoutNoComunicadosSalon;
-    private TextView tvTitleSalon;
+    private View cardComunicadoGlobal, cardComunicadoSalon, cardComunicadoSalones;
+    private LinearLayout layoutNoComunicados;
+    private LinearLayout layoutNoComunicadosGlobales, layoutNoComunicadosSalon, layoutNoComunicadosSalones;
+    private View headerComunicadosSalon, headerComunicadosSalones;
+    private TextView tvTitleSalon, tvTitleSalones;
     private String userMode;
     private boolean comunicadosCargados = false; // Bandera para evitar duplicados
     private boolean esPrimeraVez = true; // Bandera para detectar primera carga
@@ -66,6 +69,9 @@ public class HomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
+        // Solicitar permiso de notificaciones (Android 13+)
+        NotificationPermissionHelper.requestNotificationPermission(this);
+
         // Obtener el modo de usuario
         SharedPreferences userPrefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         userMode = userPrefs.getString("user_mode", "ALUMNO");
@@ -81,12 +87,17 @@ public class HomeActivity extends AppCompatActivity {
         ivMenuIcon.setTag("closed");
 
         // Inicializar vistas de comunicados
-        containerGlobales = findViewById(R.id.container_comunicados_globales);
-        containerSalon = findViewById(R.id.container_comunicados_salon);
+        cardComunicadoGlobal = findViewById(R.id.card_comunicado_global);
+        cardComunicadoSalon = findViewById(R.id.card_comunicado_salon);
+        cardComunicadoSalones = findViewById(R.id.card_comunicado_salones);
         layoutNoComunicados = findViewById(R.id.layout_no_comunicados);
         layoutNoComunicadosGlobales = findViewById(R.id.layout_no_comunicados_globales);
         layoutNoComunicadosSalon = findViewById(R.id.layout_no_comunicados_salon);
+        layoutNoComunicadosSalones = findViewById(R.id.layout_no_comunicados_salones);
+        headerComunicadosSalon = findViewById(R.id.header_comunicados_salon);
+        headerComunicadosSalones = findViewById(R.id.header_comunicados_salones);
         tvTitleSalon = findViewById(R.id.tv_title_salon);
+        tvTitleSalones = findViewById(R.id.tv_title_salones);
 
         findViewById(R.id.btn_menu).setOnClickListener(v -> {
             drawerLayout.openDrawer(GravityCompat.START);
@@ -106,10 +117,38 @@ public class HomeActivity extends AppCompatActivity {
             startActivity(intent);
             overridePendingTransition(0, 0);
         });
+        
+        // Botón "Ver todos" para Comunicados Globales
+        findViewById(R.id.btn_ver_mas_comunicados).setOnClickListener(v -> {
+            Intent intent = new Intent(HomeActivity.this, ViewComunicadosActivity.class);
+            intent.putExtra("tipo", "GLOBAL");
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+            startActivity(intent);
+            overridePendingTransition(0, 0);
+        });
+        
+        // Botón "Ver todos" para Comunicados de mi Salón
+        findViewById(R.id.btn_ver_mas_salon).setOnClickListener(v -> {
+            Intent intent = new Intent(HomeActivity.this, ViewComunicadosActivity.class);
+            intent.putExtra("tipo", "MI_SALON");
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+            startActivity(intent);
+            overridePendingTransition(0, 0);
+        });
+        
+        // Botón "Ver todos" para Comunicados de Salones
+        findViewById(R.id.btn_ver_mas_salones).setOnClickListener(v -> {
+            Intent intent = new Intent(HomeActivity.this, ViewComunicadosActivity.class);
+            intent.putExtra("tipo", "SALONES");
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+            startActivity(intent);
+            overridePendingTransition(0, 0);
+        });
 
         setupPerspectiveDrawer();
         setupComunicadosLogic();
         cargarDiasAsistidos(); // Cargar días asistidos desde el backend
+        cargarHorarioActual(); // Cargar horario del día actual
 
         // Configurar navegación del Drawer
         navigationView.setNavigationItemSelectedListener(item -> {
@@ -275,7 +314,6 @@ public class HomeActivity extends AppCompatActivity {
     private void actualizarDatosUsuario() {
         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         String name = prefs.getString("user_name", "Usuario");
-        String role = prefs.getString("user_mode", "ALUMNO");
 
         // Obtener solo el primer nombre
         String primerNombre = name.split(" ")[0];
@@ -284,41 +322,39 @@ public class HomeActivity extends AppCompatActivity {
         if (tvUserName != null) {
             tvUserName.setText(primerNombre);
         }
-
-        // Actualizar Drawer Header con nombre completo
-        View headerView = navigationView.getHeaderView(0);
-        if (headerView != null) {
-            TextView tvNameDrawer = headerView.findViewById(R.id.tv_user_name_drawer);
-            TextView tvRoleDrawer = headerView.findViewById(R.id.tv_user_role_drawer);
-
-            if (tvNameDrawer != null) tvNameDrawer.setText(name); // Nombre completo en el drawer
-            if (tvRoleDrawer != null) tvRoleDrawer.setText(role);
-        }
     }
 
     private void setupComunicadosLogic() {
-        // Normalizar el rol
         String rolNormalizado = userMode != null ? userMode.toUpperCase().trim() : "ALUMNO";
-        
-        // Configurar título de la segunda sección según el rol
-        if ("ADMIN".equals(rolNormalizado) || "ADMINISTRADOR".equals(rolNormalizado)) {
-            tvTitleSalon.setText("Comunicados de Salones");
-            tvTitleSalon.setVisibility(View.VISIBLE);
-            
-        } else if ("PROFESOR".equals(rolNormalizado)) {
-            tvTitleSalon.setText("Comunicados de mis Salones");
-            tvTitleSalon.setVisibility(View.VISIBLE);
-            
-        } else if ("AUXILIAR".equals(rolNormalizado)) {
-            tvTitleSalon.setText("Comunicados de Auxiliar");
-            tvTitleSalon.setVisibility(View.VISIBLE);
-            
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        String seccionAlumno = prefs.getString("user_seccion", "");
+
+        android.util.Log.d("HomeActivity", "setupComunicadosLogic - rol: '" + rolNormalizado + "' seccion: '" + seccionAlumno + "'");
+
+        boolean esProfesor = "PROFESOR".equals(rolNormalizado);
+        boolean esAdmin    = "ADMIN".equals(rolNormalizado) || "ADMINISTRADOR".equals(rolNormalizado);
+        // Todo lo que NO es profesor ni admin se trata como alumno
+        boolean esAlumno   = !esProfesor && !esAdmin;
+
+        if (esAlumno) {
+            // ALUMNO / ESTUDIANTE / cualquier otro rol
+            String tituloSalon = (seccionAlumno != null && !seccionAlumno.isEmpty())
+                ? "Comunicados de mi Salón (" + seccionAlumno + ")"
+                : "Comunicados de mi Salón";
+            tvTitleSalon.setText(tituloSalon);
+            headerComunicadosSalon.setVisibility(View.VISIBLE);
+            headerComunicadosSalones.setVisibility(View.GONE);
+
+        } else if (esProfesor) {
+            tvTitleSalones.setText("Comunicados de mis Salones");
+            headerComunicadosSalon.setVisibility(View.GONE);
+            headerComunicadosSalones.setVisibility(View.VISIBLE);
+
         } else {
-            // ALUMNO - Obtener la sección del usuario desde SharedPreferences
-            SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
-            String seccionAlumno = prefs.getString("user_seccion", "4to A");
-            tvTitleSalon.setText("Comunicados de mi Salón (" + seccionAlumno + ")");
-            tvTitleSalon.setVisibility(View.VISIBLE);
+            // Admin
+            tvTitleSalones.setText("Comunicados por Salón");
+            headerComunicadosSalon.setVisibility(View.GONE);
+            headerComunicadosSalones.setVisibility(View.VISIBLE);
         }
 
         cargarComunicados();
@@ -404,10 +440,6 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void cargarComunicados() {
-        // Limpiar siempre antes de cargar
-        containerGlobales.removeAllViews();
-        containerSalon.removeAllViews();
-        
         // Evitar cargar múltiples veces en la misma sesión
         if (comunicadosCargados) {
             android.util.Log.d("HomeActivity", "Comunicados ya cargados, saltando...");
@@ -417,11 +449,20 @@ public class HomeActivity extends AppCompatActivity {
         // Cargar comunicados desde el backend
         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         String userId = prefs.getString("user_id", null);
-        
+        String miSeccion = prefs.getString("user_seccion", "");
+        String rolNormalizado = userMode != null ? userMode.toUpperCase().trim() : "ALUMNO";
+
+        boolean esProfesor = "PROFESOR".equals(rolNormalizado);
+        boolean esAdmin    = "ADMIN".equals(rolNormalizado) || "ADMINISTRADOR".equals(rolNormalizado);
+        boolean esAlumno   = !esProfesor && !esAdmin;
+
+        android.util.Log.d("HomeActivity", "cargarComunicados - rol: '" + rolNormalizado + "' esAlumno: " + esAlumno);
+
         if (userId == null) {
             layoutNoComunicados.setVisibility(View.VISIBLE);
             layoutNoComunicadosGlobales.setVisibility(View.GONE);
             layoutNoComunicadosSalon.setVisibility(View.GONE);
+            layoutNoComunicadosSalones.setVisibility(View.GONE);
             return;
         }
 
@@ -435,7 +476,8 @@ public class HomeActivity extends AppCompatActivity {
                         List<Object> comunicadosData = response.body().getData();
                         
                         List<Comunicado> globales = new ArrayList<>();
-                        List<Comunicado> salon = new ArrayList<>();
+                        List<Comunicado> miSalon = new ArrayList<>();
+                        List<Comunicado> otrosSalones = new ArrayList<>();
                         
                         // Parsear comunicados del backend
                         com.google.gson.Gson gson = new com.google.gson.Gson();
@@ -445,36 +487,31 @@ public class HomeActivity extends AppCompatActivity {
                             String titulo = jsonObj.has("titulo") ? jsonObj.get("titulo").getAsString() : "";
                             String contenido = jsonObj.has("contenido") ? jsonObj.get("contenido").getAsString() : "";
                             String emisor = jsonObj.has("emisor") ? jsonObj.get("emisor").getAsString() : "Administración";
-                            
-                            // Obtener información del salón si existe
                             String salonInfo = jsonObj.has("seccion") ? jsonObj.get("seccion").getAsString() : null;
-                            
-                            // Obtener fecha de publicación
                             String fechaPublicacion = jsonObj.has("fecha_publicacion") ? jsonObj.get("fecha_publicacion").getAsString() : "";
-                            
-                            // Usar destinatario_tipo para clasificar correctamente
                             String destinatarioTipo = jsonObj.has("destinatario_tipo") ? 
                                 jsonObj.get("destinatario_tipo").getAsString() : "";
                             
-                            // Normalizar el destinatario_tipo
                             destinatarioTipo = destinatarioTipo.toUpperCase().trim();
-                            
-                            // Clasificar según destinatario_tipo
                             boolean esGlobal = "GLOBAL".equals(destinatarioTipo);
-                            
-                            // Log para debug
-                            android.util.Log.d("HomeActivity", "Comunicado: " + titulo + 
-                                " | Destinatario: '" + destinatarioTipo + "' | Emisor: '" + emisor + "'");
                             
                             Comunicado comunicado = new Comunicado(titulo, contenido, null, salonInfo, emisor);
                             comunicado.fechaPublicacion = fechaPublicacion;
                             
                             if (esGlobal) {
                                 globales.add(comunicado);
-                                android.util.Log.d("HomeActivity", "  -> Agregado a GLOBALES");
                             } else {
-                                salon.add(comunicado);
-                                android.util.Log.d("HomeActivity", "  -> Agregado a SALÓN");
+                                if (esAlumno) {
+                                    // Para alumnos/estudiantes: comunicados de SU salón
+                                    // Si no tiene sección definida, agregar todos los de salón
+                                    // Normalizar espacios antes de comparar
+                                    if (miSeccion.isEmpty() || (salonInfo != null && 
+                                        salonInfo.replaceAll("\\s+", "").equalsIgnoreCase(miSeccion.replaceAll("\\s+", "")))) {
+                                        miSalon.add(comunicado);
+                                    }
+                                } else {
+                                    otrosSalones.add(comunicado);
+                                }
                             }
                         }
                         
@@ -485,7 +522,13 @@ public class HomeActivity extends AppCompatActivity {
                             return c2.fechaPublicacion.compareTo(c1.fechaPublicacion);
                         });
                         
-                        salon.sort((c1, c2) -> {
+                        miSalon.sort((c1, c2) -> {
+                            if (c1.fechaPublicacion == null) return 1;
+                            if (c2.fechaPublicacion == null) return -1;
+                            return c2.fechaPublicacion.compareTo(c1.fechaPublicacion);
+                        });
+                        
+                        otrosSalones.sort((c1, c2) -> {
                             if (c1.fechaPublicacion == null) return 1;
                             if (c2.fechaPublicacion == null) return -1;
                             return c2.fechaPublicacion.compareTo(c1.fechaPublicacion);
@@ -494,46 +537,60 @@ public class HomeActivity extends AppCompatActivity {
                         // Ocultar el mensaje general de "no hay comunicados"
                         layoutNoComunicados.setVisibility(View.GONE);
                         
-                        // Manejar comunicados globales
+                        // SECCIÓN 1: Comunicados Globales
                         if (globales.isEmpty()) {
                             layoutNoComunicadosGlobales.setVisibility(View.VISIBLE);
+                            cardComunicadoGlobal.setVisibility(View.GONE);
                         } else {
                             layoutNoComunicadosGlobales.setVisibility(View.GONE);
-                            for (Comunicado c : globales) {
-                                containerGlobales.addView(crearTarjetaComunicado(c, containerGlobales));
-                            }
-                            // Deshabilitar scroll si solo hay una tarjeta
-                            View scrollGlobales = containerGlobales.getParent() instanceof View ? 
-                                (View) containerGlobales.getParent() : null;
-                            if (scrollGlobales instanceof android.widget.HorizontalScrollView) {
-                                if (globales.size() == 1) {
-                                    scrollGlobales.setEnabled(false);
-                                    scrollGlobales.setHorizontalScrollBarEnabled(false);
-                                } else {
-                                    scrollGlobales.setEnabled(true);
-                                }
-                            }
+                            cardComunicadoGlobal.setVisibility(View.VISIBLE);
+                            llenarCardComunicado(cardComunicadoGlobal, globales.get(0));
                         }
                         
-                        // Manejar comunicados de salón
-                        if (salon.isEmpty()) {
-                            layoutNoComunicadosSalon.setVisibility(View.VISIBLE);
+                        // SECCIÓN 2: Comunicados de mi Salón (solo para ALUMNO/ESTUDIANTE)
+                        if (esAlumno) {
+                            headerComunicadosSalon.setVisibility(View.VISIBLE);
+                            SharedPreferences up = getSharedPreferences("user_prefs", MODE_PRIVATE);
+                            String sec = up.getString("user_seccion", "");
+                            tvTitleSalon.setText((sec != null && !sec.isEmpty())
+                                ? "Comunicados de mi Salón (" + sec + ")"
+                                : "Comunicados de mi Salón");
+                            if (miSalon.isEmpty()) {
+                                layoutNoComunicadosSalon.setVisibility(View.VISIBLE);
+                                cardComunicadoSalon.setVisibility(View.GONE);
+                            } else {
+                                layoutNoComunicadosSalon.setVisibility(View.GONE);
+                                cardComunicadoSalon.setVisibility(View.VISIBLE);
+                                llenarCardComunicado(cardComunicadoSalon, miSalon.get(0));
+                                cardComunicadoSalon.setOnClickListener(v -> mostrarModalComunicado(miSalon.get(0)));
+                            }
                         } else {
+                            headerComunicadosSalon.setVisibility(View.GONE);
                             layoutNoComunicadosSalon.setVisibility(View.GONE);
-                            for (Comunicado c : salon) {
-                                containerSalon.addView(crearTarjetaComunicado(c, containerSalon));
+                            cardComunicadoSalon.setVisibility(View.GONE);
+                        }
+
+                        // SECCIÓN 3: Comunicados de Salones (solo para PROFESOR/ADMIN)
+                        if (esProfesor || esAdmin) {
+                            headerComunicadosSalones.setVisibility(View.VISIBLE);
+                            if (otrosSalones.isEmpty()) {
+                                layoutNoComunicadosSalones.setVisibility(View.VISIBLE);
+                                cardComunicadoSalones.setVisibility(View.GONE);
+                            } else {
+                                layoutNoComunicadosSalones.setVisibility(View.GONE);
+                                cardComunicadoSalones.setVisibility(View.VISIBLE);
+                                llenarCardComunicado(cardComunicadoSalones, otrosSalones.get(0));
+                                cardComunicadoSalones.setOnClickListener(v -> mostrarModalComunicado(otrosSalones.get(0)));
                             }
-                            // Deshabilitar scroll si solo hay una tarjeta
-                            View scrollSalon = containerSalon.getParent() instanceof View ? 
-                                (View) containerSalon.getParent() : null;
-                            if (scrollSalon instanceof android.widget.HorizontalScrollView) {
-                                if (salon.size() == 1) {
-                                    scrollSalon.setEnabled(false);
-                                    scrollSalon.setHorizontalScrollBarEnabled(false);
-                                } else {
-                                    scrollSalon.setEnabled(true);
-                                }
-                            }
+                        } else {
+                            headerComunicadosSalones.setVisibility(View.GONE);
+                            layoutNoComunicadosSalones.setVisibility(View.GONE);
+                            cardComunicadoSalones.setVisibility(View.GONE);
+                        }
+
+                        // Global card también clickeable
+                        if (!globales.isEmpty()) {
+                            cardComunicadoGlobal.setOnClickListener(v -> mostrarModalComunicado(globales.get(0)));
                         }
                         
                         // Marcar como cargados
@@ -544,6 +601,7 @@ public class HomeActivity extends AppCompatActivity {
                         layoutNoComunicados.setVisibility(View.VISIBLE);
                         layoutNoComunicadosGlobales.setVisibility(View.GONE);
                         layoutNoComunicadosSalon.setVisibility(View.GONE);
+                        layoutNoComunicadosSalones.setVisibility(View.GONE);
                     }
                 }
 
@@ -553,8 +611,67 @@ public class HomeActivity extends AppCompatActivity {
                     layoutNoComunicados.setVisibility(View.VISIBLE);
                     layoutNoComunicadosGlobales.setVisibility(View.GONE);
                     layoutNoComunicadosSalon.setVisibility(View.GONE);
+                    layoutNoComunicadosSalones.setVisibility(View.GONE);
                 }
             });
+    }
+    
+    private void llenarCardComunicado(View cardView, Comunicado comunicado) {
+        // Configurar emisor
+        TextView tvEmisor = cardView.findViewById(R.id.tv_emisor_comunicado);
+        if (tvEmisor != null) {
+            tvEmisor.setText(comunicado.emisor != null ? comunicado.emisor : "Administración");
+        }
+        
+        // Configurar título
+        ((TextView) cardView.findViewById(R.id.tv_titulo_comunicado)).setText(comunicado.titulo);
+        
+        // Configurar hora del comunicado
+        TextView tvHora = cardView.findViewById(R.id.tv_hora_comunicado);
+        if (comunicado.fechaPublicacion != null && !comunicado.fechaPublicacion.isEmpty()) {
+            try {
+                // Formato del backend: "2024-05-14T10:30:00"
+                String[] partes = comunicado.fechaPublicacion.split("T");
+                if (partes.length > 1) {
+                    String[] horaPartes = partes[1].split(":");
+                    int hora = Integer.parseInt(horaPartes[0]);
+                    int minuto = Integer.parseInt(horaPartes[1]);
+                    String ampm = hora >= 12 ? "PM" : "AM";
+                    if (hora > 12) hora -= 12;
+                    if (hora == 0) hora = 12;
+                    tvHora.setText(String.format("%d:%02d %s", hora, minuto, ampm));
+                } else {
+                    tvHora.setVisibility(View.GONE);
+                }
+            } catch (Exception e) {
+                tvHora.setVisibility(View.GONE);
+            }
+        } else {
+            tvHora.setVisibility(View.GONE);
+        }
+        
+        // Configurar contenido
+        TextView tvContenido = cardView.findViewById(R.id.tv_contenido_comunicado);
+        TextView btnVerMas = cardView.findViewById(R.id.btn_ver_mas_comunicado);
+        
+        tvContenido.setText(comunicado.contenido);
+        tvContenido.setVisibility(View.VISIBLE);
+
+        // Si el texto es largo (más de 150 caracteres), mostrar "Ver más"
+        if (comunicado.contenido != null && comunicado.contenido.length() > 150) {
+            btnVerMas.setVisibility(View.VISIBLE);
+        } else {
+            btnVerMas.setVisibility(View.GONE);
+        }
+        
+        // Configurar tag de salón
+        TextView tvTagSalon = cardView.findViewById(R.id.tv_tag_salon);
+        if (comunicado.salon != null && !comunicado.salon.isEmpty()) {
+            tvTagSalon.setText("Salón: " + comunicado.salon);
+            tvTagSalon.setVisibility(View.VISIBLE);
+        } else {
+            tvTagSalon.setVisibility(View.GONE);
+        }
     }
 
     private View crearTarjetaComunicado(Comunicado comunicado, android.view.ViewGroup parent) {
@@ -625,14 +742,24 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void mostrarModalComunicado(Comunicado comunicado) {
-        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this, R.style.CustomDialogTheme);
         View modalView = LayoutInflater.from(this).inflate(R.layout.dialog_comunicado_detalle, null);
-        
-        // Configurar contenido del diálogo
+
+        // Título
         ((TextView) modalView.findViewById(R.id.tv_titulo_detalle)).setText(comunicado.titulo);
+
+        // Contenido completo
         ((TextView) modalView.findViewById(R.id.tv_contenido_detalle)).setText(comunicado.contenido);
-        
-        // Configurar hora
+
+        // Fecha formateada
+        TextView tvFecha = modalView.findViewById(R.id.tv_fecha_detalle);
+        if (comunicado.fechaPublicacion != null && !comunicado.fechaPublicacion.isEmpty()) {
+            tvFecha.setText(obtenerFechaFormateada(comunicado.fechaPublicacion));
+            tvFecha.setVisibility(View.VISIBLE);
+        } else {
+            tvFecha.setVisibility(View.GONE);
+        }
+
+        // Hora
         TextView tvHoraDetalle = modalView.findViewById(R.id.tv_hora_detalle);
         if (comunicado.fechaPublicacion != null && !comunicado.fechaPublicacion.isEmpty()) {
             try {
@@ -645,6 +772,7 @@ public class HomeActivity extends AppCompatActivity {
                     if (hora > 12) hora -= 12;
                     if (hora == 0) hora = 12;
                     tvHoraDetalle.setText(String.format("%d:%02d %s", hora, minuto, ampm));
+                    tvHoraDetalle.setVisibility(View.VISIBLE);
                 } else {
                     tvHoraDetalle.setVisibility(View.GONE);
                 }
@@ -654,23 +782,66 @@ public class HomeActivity extends AppCompatActivity {
         } else {
             tvHoraDetalle.setVisibility(View.GONE);
         }
-        
-        // Configurar tag
+
+        // Tag salón
         TextView tvTagDetalle = modalView.findViewById(R.id.tv_tag_detalle);
         if (comunicado.salon != null && !comunicado.salon.isEmpty()) {
             tvTagDetalle.setText("Salón: " + comunicado.salon);
-        } else {
+            tvTagDetalle.setVisibility(View.VISIBLE);
+        } else if (comunicado.emisor != null && !comunicado.emisor.isEmpty()) {
             tvTagDetalle.setText("Enviado por: " + comunicado.emisor);
+            tvTagDetalle.setVisibility(View.VISIBLE);
+        } else {
+            tvTagDetalle.setVisibility(View.GONE);
         }
 
-        builder.setView(modalView);
-        android.app.AlertDialog dialog = builder.create();
-        dialog.show();
-        
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this)
+            .setView(modalView)
+            .create();
+
         if (dialog.getWindow() != null) {
-            dialog.getWindow().setLayout((int) (getResources().getDisplayMetrics().widthPixels * 0.95),
-                                       android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
-            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+            dialog.getWindow().setBackgroundDrawable(
+                new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+        }
+
+        // Se cierra al presionar fuera
+        dialog.setCanceledOnTouchOutside(true);
+        dialog.show();
+
+        if (dialog.getWindow() != null) {
+            int width = (int) (getResources().getDisplayMetrics().widthPixels * 0.90);
+            dialog.getWindow().setLayout(width, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+    }
+
+    private String obtenerFechaFormateada(String fechaPublicacion) {
+        if (fechaPublicacion == null || fechaPublicacion.isEmpty()) return "";
+        try {
+            String[] partes = fechaPublicacion.split("T");
+            String[] fechaPartes = partes[0].split("-");
+            int año = Integer.parseInt(fechaPartes[0]);
+            int mes = Integer.parseInt(fechaPartes[1]) - 1;
+            int dia = Integer.parseInt(fechaPartes[2]);
+            Calendar fechaCom = Calendar.getInstance();
+            fechaCom.set(año, mes, dia);
+            Calendar hoy = Calendar.getInstance();
+            Calendar ayer = Calendar.getInstance();
+            ayer.add(Calendar.DAY_OF_YEAR, -1);
+            String[] meses = {"Enero","Febrero","Marzo","Abril","Mayo","Junio",
+                              "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"};
+            if (fechaCom.get(Calendar.YEAR) == hoy.get(Calendar.YEAR) &&
+                fechaCom.get(Calendar.DAY_OF_YEAR) == hoy.get(Calendar.DAY_OF_YEAR)) {
+                return "Hoy, " + dia + " de " + meses[mes];
+            } else if (fechaCom.get(Calendar.YEAR) == ayer.get(Calendar.YEAR) &&
+                       fechaCom.get(Calendar.DAY_OF_YEAR) == ayer.get(Calendar.DAY_OF_YEAR)) {
+                return "Ayer, " + dia + " de " + meses[mes];
+            } else {
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("EEEE, d 'de' MMMM", new Locale("es", "ES"));
+                String r = sdf.format(fechaCom.getTime());
+                return r.substring(0, 1).toUpperCase() + r.substring(1);
+            }
+        } catch (Exception e) {
+            return "";
         }
     }
 
@@ -707,6 +878,28 @@ public class HomeActivity extends AppCompatActivity {
             dialog.getWindow().setLayout((int) (getResources().getDisplayMetrics().widthPixels * 0.95),
                                        android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
             dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+        }
+    }
+    
+    // Función auxiliar para convertir hora de 24h a formato 12h AM/PM
+    private String convertirHoraAMPM(String hora24) {
+        if (hora24 == null || hora24.isEmpty()) {
+            return "";
+        }
+        
+        try {
+            // Formato esperado: "14:30:00" o "14:30"
+            String[] partes = hora24.split(":");
+            int hora = Integer.parseInt(partes[0]);
+            int minuto = Integer.parseInt(partes[1]);
+            
+            String ampm = hora >= 12 ? "PM" : "AM";
+            if (hora > 12) hora -= 12;
+            if (hora == 0) hora = 12;
+            
+            return String.format("%d:%02d %s", hora, minuto, ampm);
+        } catch (Exception e) {
+            return hora24; // Si falla, devolver la hora original
         }
     }
 
@@ -897,6 +1090,276 @@ public class HomeActivity extends AppCompatActivity {
         if (checkJueves != null) checkJueves.setVisibility(jueves ? View.VISIBLE : View.INVISIBLE);
         if (checkViernes != null) checkViernes.setVisibility(viernes ? View.VISIBLE : View.INVISIBLE);
     }
+    
+    private void cargarHorarioActual() {
+        // Obtener fecha de hoy
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String fechaHoy = sdf.format(new Date());
+        
+        // Obtener user_id de SharedPreferences
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        String userId = prefs.getString("user_id", null);
+        
+        if (userId == null) {
+            android.util.Log.w("HomeActivity", "No se encontró user_id para cargar horario");
+            mostrarSinActividad();
+            return;
+        }
+        
+        // Llamar al backend según el rol
+        retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>> call;
+        
+        if ("PROFESOR".equals(userMode)) {
+            call = com.example.ieperuanosuizoapp.api.RetrofitClient.getApiService()
+                .getHorariosProfesor(userId, fechaHoy);
+        } else {
+            call = com.example.ieperuanosuizoapp.api.RetrofitClient.getApiService()
+                .getHorariosAlumno(userId, fechaHoy);
+        }
+        
+        call.enqueue(new retrofit2.Callback<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>>() {
+            @Override
+            public void onResponse(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>> call,
+                                 retrofit2.Response<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    List<Object> horariosData = response.body().getData();
+                    
+                    if (!horariosData.isEmpty()) {
+                        // Encontrar el curso actual según la hora
+                        Object cursoActual = encontrarCursoActual(horariosData);
+                        if (cursoActual != null) {
+                            actualizarUIHorario(cursoActual);
+                        } else {
+                            mostrarSinActividad();
+                        }
+                    } else {
+                        mostrarSinActividad();
+                    }
+                } else {
+                    mostrarSinActividad();
+                }
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>> call, Throwable t) {
+                android.util.Log.e("HomeActivity", "Error al cargar horario: " + t.getMessage());
+                mostrarSinActividad();
+            }
+        });
+    }
+    
+    private Object encontrarCursoActual(List<Object> horarios) {
+        // Obtener hora actual
+        Calendar ahora = Calendar.getInstance();
+        int horaActual = ahora.get(Calendar.HOUR_OF_DAY);
+        int minutoActual = ahora.get(Calendar.MINUTE);
+        int tiempoActualEnMinutos = horaActual * 60 + minutoActual;
+        
+        com.google.gson.Gson gson = new com.google.gson.Gson();
+        
+        // Buscar el curso que está en progreso AHORA
+        for (Object obj : horarios) {
+            com.google.gson.JsonObject jsonObj = gson.toJsonTree(obj).getAsJsonObject();
+            
+            String horaInicio = jsonObj.has("hora_inicio") ? jsonObj.get("hora_inicio").getAsString() : "";
+            String horaFin = jsonObj.has("hora_fin") ? jsonObj.get("hora_fin").getAsString() : "";
+            String curso = jsonObj.has("curso") ? jsonObj.get("curso").getAsString() : "";
+            
+            // Saltar recreos
+            if ("RECREO".equals(curso)) {
+                continue;
+            }
+            
+            try {
+                // Parsear hora inicio (formato: "08:00" o "08:00:00")
+                String[] partesInicio = horaInicio.split(":");
+                int horaIni = Integer.parseInt(partesInicio[0]);
+                int minIni = Integer.parseInt(partesInicio[1]);
+                int tiempoInicioEnMinutos = horaIni * 60 + minIni;
+                
+                // Parsear hora fin
+                String[] partesFin = horaFin.split(":");
+                int horaF = Integer.parseInt(partesFin[0]);
+                int minF = Integer.parseInt(partesFin[1]);
+                int tiempoFinEnMinutos = horaF * 60 + minF;
+                
+                // Verificar si estamos dentro del rango de este curso
+                if (tiempoActualEnMinutos >= tiempoInicioEnMinutos && tiempoActualEnMinutos < tiempoFinEnMinutos) {
+                    return obj; // Este es el curso actual
+                }
+            } catch (Exception e) {
+                android.util.Log.e("HomeActivity", "Error parseando horas: " + e.getMessage());
+            }
+        }
+        
+        // Si no hay curso en progreso, devolver el próximo curso
+        for (Object obj : horarios) {
+            com.google.gson.Gson gson2 = new com.google.gson.Gson();
+            com.google.gson.JsonObject jsonObj = gson2.toJsonTree(obj).getAsJsonObject();
+            
+            String horaInicio = jsonObj.has("hora_inicio") ? jsonObj.get("hora_inicio").getAsString() : "";
+            String curso = jsonObj.has("curso") ? jsonObj.get("curso").getAsString() : "";
+            
+            if ("RECREO".equals(curso)) {
+                continue;
+            }
+            
+            try {
+                String[] partesInicio = horaInicio.split(":");
+                int horaIni = Integer.parseInt(partesInicio[0]);
+                int minIni = Integer.parseInt(partesInicio[1]);
+                int tiempoInicioEnMinutos = horaIni * 60 + minIni;
+                
+                if (tiempoActualEnMinutos < tiempoInicioEnMinutos) {
+                    return obj; // Este es el próximo curso
+                }
+            } catch (Exception e) {
+                android.util.Log.e("HomeActivity", "Error parseando horas: " + e.getMessage());
+            }
+        }
+        
+        // Si no hay próximo curso, devolver el primero
+        return horarios.isEmpty() ? null : horarios.get(0);
+    }
+    private void actualizarUIHorario(Object cursoData) {
+        com.google.gson.Gson gson = new com.google.gson.Gson();
+        com.google.gson.JsonObject jsonObj = gson.toJsonTree(cursoData).getAsJsonObject();
+        
+        String curso = jsonObj.has("curso") ? jsonObj.get("curso").getAsString() : "";
+        String horaInicio = jsonObj.has("hora_inicio") ? jsonObj.get("hora_inicio").getAsString() : "";
+        String horaFin = jsonObj.has("hora_fin") ? jsonObj.get("hora_fin").getAsString() : "";
+        String profesor = jsonObj.has("profesor") ? jsonObj.get("profesor").getAsString() : "";
+        String aula = jsonObj.has("aula") ? jsonObj.get("aula").getAsString() : "";
+        String seccion = jsonObj.has("seccion") ? jsonObj.get("seccion").getAsString() : "";
+        
+        // Actualizar fecha (día de hoy)
+        TextView tvFechaAgenda = findViewById(R.id.tv_fecha_agenda);
+        if (tvFechaAgenda != null) {
+            SimpleDateFormat sdf = new SimpleDateFormat("EEEE d 'de' MMMM, yyyy", new Locale("es", "ES"));
+            String fechaFormateada = sdf.format(new Date());
+            // Capitalizar primera letra
+            fechaFormateada = fechaFormateada.substring(0, 1).toUpperCase() + fechaFormateada.substring(1);
+            tvFechaAgenda.setText(fechaFormateada);
+        }
+        
+        // Actualizar hora inicio con formato AM/PM
+        TextView tvHoraInicioAgenda = findViewById(R.id.tv_hora_inicio_agenda);
+        if (tvHoraInicioAgenda != null) {
+            tvHoraInicioAgenda.setText(convertirHoraAMPM(horaInicio));
+            tvHoraInicioAgenda.setVisibility(View.VISIBLE);
+        }
+        
+        // Actualizar hora fin con formato AM/PM
+        TextView tvHoraFinAgenda = findViewById(R.id.tv_hora_fin_agenda);
+        if (tvHoraFinAgenda != null) {
+            tvHoraFinAgenda.setText(convertirHoraAMPM(horaFin));
+            tvHoraFinAgenda.setVisibility(View.VISIBLE);
+        }
+        
+        // Actualizar nombre del curso
+        TextView tvCursoAgenda = findViewById(R.id.tv_curso_agenda);
+        if (tvCursoAgenda != null) {
+            tvCursoAgenda.setText(curso);
+            tvCursoAgenda.setVisibility(View.VISIBLE);
+        }
+        
+        // Actualizar salón/sección
+        TextView tvSalonAgenda = findViewById(R.id.tv_salon_agenda);
+        if (tvSalonAgenda != null) {
+            if ("PROFESOR".equals(userMode)) {
+                tvSalonAgenda.setText(aula + " - " + seccion);
+            } else {
+                tvSalonAgenda.setText(aula);
+            }
+            tvSalonAgenda.setVisibility(View.VISIBLE);
+        }
+        
+        // Actualizar profesor
+        TextView tvProfesorAgenda = findViewById(R.id.tv_profesor_agenda);
+        if (tvProfesorAgenda != null) {
+            if ("PROFESOR".equals(userMode)) {
+                tvProfesorAgenda.setVisibility(View.GONE); // Profesores no ven su propio nombre
+            } else {
+                tvProfesorAgenda.setText(profesor);
+                tvProfesorAgenda.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+    /**
+     * Mostrar mensaje cuando no hay actividades programadas
+     */
+    private void mostrarSinActividad() {
+        // Actualizar fecha (día de hoy)
+        TextView tvFechaAgenda = findViewById(R.id.tv_fecha_agenda);
+        if (tvFechaAgenda != null) {
+            SimpleDateFormat sdf = new SimpleDateFormat("EEEE d 'de' MMMM, yyyy", new Locale("es", "ES"));
+            String fechaFormateada = sdf.format(new Date());
+            // Capitalizar primera letra
+            fechaFormateada = fechaFormateada.substring(0, 1).toUpperCase() + fechaFormateada.substring(1);
+            tvFechaAgenda.setText(fechaFormateada);
+        }
+        
+        // Ocultar la columna de horas (izquierda)
+        TextView tvHoraInicio = findViewById(R.id.tv_hora_inicio_agenda);
+        if (tvHoraInicio != null) {
+            android.view.ViewParent parent = tvHoraInicio.getParent();
+            if (parent instanceof android.view.ViewGroup) {
+                android.view.ViewParent grandParent = parent.getParent();
+                if (grandParent instanceof android.view.ViewGroup) {
+                    ((android.view.ViewGroup) grandParent).setVisibility(View.GONE);
+                }
+            }
+        }
+        
+        // Ocultar la línea divisoria vertical
+        View divider = findViewById(R.id.divider_agenda);
+        if (divider != null) {
+            divider.setVisibility(View.GONE);
+        }
+        
+        // Buscar el LinearLayout horizontal principal y agregar padding
+        TextView tvCursoAgenda = findViewById(R.id.tv_curso_agenda);
+        if (tvCursoAgenda != null) {
+            android.view.ViewParent parent = tvCursoAgenda.getParent();
+            if (parent instanceof android.view.ViewGroup) {
+                android.view.ViewParent grandParent = parent.getParent();
+                if (grandParent instanceof android.widget.LinearLayout) {
+                    android.widget.LinearLayout layoutHorizontal = (android.widget.LinearLayout) grandParent;
+                    // Agregar padding para mantener altura del card
+                    layoutHorizontal.setPadding(
+                        layoutHorizontal.getPaddingLeft(),
+                        (int) (40 * getResources().getDisplayMetrics().density),
+                        layoutHorizontal.getPaddingRight(),
+                        (int) (40 * getResources().getDisplayMetrics().density)
+                    );
+                }
+            }
+            
+            // Mostrar mensaje centrado en gris
+            tvCursoAgenda.setText("Ninguna actividad programada");
+            tvCursoAgenda.setTextColor(0xFF9E9E9E); // Gris
+            tvCursoAgenda.setGravity(android.view.Gravity.CENTER);
+            tvCursoAgenda.setVisibility(View.VISIBLE);
+            
+            // Centrar el contenedor del texto
+            if (tvCursoAgenda.getParent() instanceof android.widget.LinearLayout) {
+                android.widget.LinearLayout parentLayout = (android.widget.LinearLayout) tvCursoAgenda.getParent();
+                parentLayout.setGravity(android.view.Gravity.CENTER);
+            }
+        }
+        
+        // Ocultar los LinearLayouts con iconos (salón y profesor)
+        TextView tvSalonAgenda = findViewById(R.id.tv_salon_agenda);
+        if (tvSalonAgenda != null && tvSalonAgenda.getParent() instanceof android.view.ViewGroup) {
+            ((android.view.ViewGroup) tvSalonAgenda.getParent()).setVisibility(View.GONE);
+        }
+        
+        TextView tvProfesorAgenda = findViewById(R.id.tv_profesor_agenda);
+        if (tvProfesorAgenda != null && tvProfesorAgenda.getParent() instanceof android.view.ViewGroup) {
+            ((android.view.ViewGroup) tvProfesorAgenda.getParent()).setVisibility(View.GONE);
+        }
+    }
 
     @Override
     protected void onResume() {
@@ -919,5 +1382,11 @@ public class HomeActivity extends AppCompatActivity {
         } else {
             esPrimeraVez = false;
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        NotificationPermissionHelper.handlePermissionResult(requestCode, permissions, grantResults);
     }
 }

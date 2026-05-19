@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "187919911984",
+    "project_id": "ie-notification-suizo",
+    "storage_bucket": "ie-notification-suizo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:187919911984:android:b04cad1ed54a629160b1f5",
+        "android_client_info": {
+          "package_name": "com.example.ieperuanosuizoapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDD0aRjGOhOtszvTgbrWjatoufgvDp3zfo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
