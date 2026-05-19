@@ -221,23 +221,34 @@ router.post('/', async (req, res) => {
           : evaluacion.asignaciones;
         
         const curso = asignacion?.asistencia_curso;
-        const docente = asignacion?.docentes?.personas;
         
-        const nombreProfesor = docente 
-          ? `${docente.nombres} ${docente.apellidos}` 
+        // Manejar docentes como objeto o array
+        const docenteData = asignacion?.docentes 
+          ? (Array.isArray(asignacion.docentes) ? asignacion.docentes[0] : asignacion.docentes)
+          : null;
+        
+        // Manejar personas como objeto o array
+        const personaData = docenteData?.personas 
+          ? (Array.isArray(docenteData.personas) ? docenteData.personas[0] : docenteData.personas)
+          : null;
+        
+        const nombreProfesor = personaData 
+          ? `${personaData.nombres} ${personaData.apellidos}` 
           : 'El profesor';
         
-        const nombreCurso = curso?.nombre || 'el curso';
+        // Manejar curso como objeto o array
+        const cursoData = Array.isArray(curso) ? curso[0] : curso;
+        const cursoNombre = cursoData?.nombre || 'el curso';
 
         await notificationService.enviarAEstudiante(alumno_id, {
           tipo: 'calificacion',
           titulo: '📝 Nueva Calificación',
-          mensaje: `${nombreProfesor} calificó ${nombreCurso}: ${nota}`,
+          mensaje: `${nombreProfesor} calificó ${cursoNombre}: ${nota}`,
           datos: {
             alumno_id: alumno_id.toString(),
             evaluacion_id: evaluacion_id.toString(),
             nota: nota.toString(),
-            curso: nombreCurso
+            curso: cursoNombre
           }
         });
       }
