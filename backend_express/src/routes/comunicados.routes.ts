@@ -314,7 +314,7 @@ router.get('/historial/enviados', async (req, res) => {
 
     // Si es ADMIN o AUXILIAR, mostrar TODOS los comunicados
     // Si es PROFESOR, solo mostrar los suyos
-    if (rol !== 'admin' && rol !== 'auxiliar') {
+    if (rol !== 'admin' && rol !== 'administrador' && rol !== 'auxiliar') {
       query = query.eq('persona_id', usuario_id);
     }
 
