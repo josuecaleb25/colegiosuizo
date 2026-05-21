@@ -244,7 +244,7 @@ public class GestionComunicadosActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         String userId = prefs.getString("user_id", null);
         String userRol = prefs.getString("user_mode", "ALUMNO").toLowerCase();
-        String rol = prefs.getString("user_role", "profesor");  // Obtener el rol del usuario
+        String rol = prefs.getString("user_mode", "PROFESOR").toLowerCase();  // Obtener el rol del usuario (user_mode, no user_role)
         
         // Cargar secciones
         cargarSeccionesDisponibles(spinner, userId, userRol);
@@ -365,7 +365,7 @@ public class GestionComunicadosActivity extends AppCompatActivity {
     private void cargarHistorialDesdeBackend() {
         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         String userId = prefs.getString("user_id", null);
-        String rol = prefs.getString("user_role", "profesor");  // Obtener el rol del usuario
+        String rol = prefs.getString("user_mode", "PROFESOR").toLowerCase();  // Obtener el rol del usuario (user_mode, no user_role)
         
         if (userId == null) {
             layoutEmptyHistory.setVisibility(View.VISIBLE);
