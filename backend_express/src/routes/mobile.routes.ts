@@ -222,7 +222,6 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
   try {
     const { qr_token } = req.body;
 
-    console.log('🔍 Escaneando QR:', qr_token);
 
     if (!qr_token) {
       return res.status(400).json({
@@ -247,7 +246,6 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
       .limit(1);
 
     if (qrError || !codigosQr || codigosQr.length === 0) {
-      console.log('❌ QR no válido');
       return res.status(404).json({
         success: false,
         message: 'QR no válido'
@@ -261,8 +259,6 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
     const minutos = ahora.getMinutes();
     const estado = (hora < 7 || (hora === 7 && minutos <= 31)) ? 'presente' : 'tardanza';
 
-    console.log('👤 Persona encontrada:', personaData?.nombres, personaData?.apellidos);
-    console.log('📅 Fecha:', hoy);
 
     // Verificar si ya tiene asistencia HOY (no días anteriores)
     const { data: asistenciaExistente, error: asistError } = await supabase
@@ -277,14 +273,12 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
     }
 
     if (asistenciaExistente && asistenciaExistente.length > 0) {
-      console.log('⚠️ Ya tiene asistencia hoy:', asistenciaExistente[0]);
       return res.status(400).json({
         success: false,
         message: `Este QR ya fue escaneado hoy a las ${asistenciaExistente[0].hora_entrada}`
       });
     }
 
-    console.log('✅ No tiene asistencia hoy, registrando...');
 
     // Registrar asistencia
     const { error: insertError } = await supabase
@@ -304,13 +298,11 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
 
     const horaFormateada = ahora.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
     
-    console.log('✅ Asistencia registrada exitosamente');
 
     // ========================================
     // ENVIAR NOTIFICACIÓN PUSH AL ALUMNO
     // ========================================
     try {
-      console.log('📤 Enviando notificación al alumno...');
       
       // Buscar el alumno_id usando persona_id
       const { data: alumno, error: alumnoError } = await supabase
@@ -320,9 +312,7 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
         .single();
 
       if (alumnoError || !alumno) {
-        console.log('⚠️ No se encontró alumno');
       } else {
-        console.log('✅ Alumno encontrado, ID:', alumno.id);
         
         const nombreCompleto = `${personaData?.nombres} ${personaData?.apellidos}`;
         const estadoTexto = estado === 'presente' ? 'a tiempo' : 'con tardanza';
@@ -340,7 +330,6 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
           }
         });
         
-        console.log('✅ Notificación enviada al alumno');
       }
     } catch (notifError: any) {
       console.error('❌ Error enviando notificación:', notifError.message);

@@ -47,8 +47,6 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { asignacion_id, nombre, peso, orden, activo } = req.body;
 
-    console.log('📝 Creando evaluación:', { asignacion_id, nombre, peso, orden, activo });
-
     // Validaciones
     if (!asignacion_id || !nombre) {
       return res.status(400).json({
@@ -75,8 +73,6 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
       throw errorEvaluacion;
     }
 
-    console.log('✅ Evaluación creada:', evaluacion.id);
-
     // 2. Obtener el curso_id y seccion_id de la asignación
     const { data: asignacionDetalle, error: errorAsignacionDetalle } = await supabase
       .from('asignaciones')
@@ -88,8 +84,6 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
       console.error('❌ Error obteniendo asignación:', errorAsignacionDetalle);
       throw new Error('No se encontró la asignación');
     }
-
-    console.log('📚 Asignación encontrada:', asignacionDetalle);
 
     // 3. Obtener todos los alumnos del curso y sección a través de matrículas
     const { data: matriculas, error: errorAlumnos } = await supabase
@@ -104,7 +98,6 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
     }
 
     const alumnos = matriculas || [];
-    console.log(`👥 Alumnos encontrados: ${alumnos?.length || 0}`);
 
     // 3. Crear registros de calificaciones para cada alumno
     if (alumnos && alumnos.length > 0) {
@@ -120,9 +113,6 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
 
       if (errorCalificaciones) {
         console.error('❌ Error creando calificaciones:', errorCalificaciones);
-        // No lanzamos error, la evaluación ya fue creada
-      } else {
-        console.log(`✅ ${calificaciones.length} calificaciones creadas`);
       }
     }
 
@@ -188,8 +178,6 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
   try {
     const { id } = req.params;
 
-    console.log(`🗑️  Eliminando evaluación: ${id}`);
-
     // Primero eliminar las calificaciones asociadas
     const { error: errorCalificaciones } = await supabase
       .from('calificaciones')
@@ -201,8 +189,6 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
       throw errorCalificaciones;
     }
 
-    console.log('✅ Calificaciones eliminadas');
-
     // Luego eliminar la evaluación
     const { error } = await supabase
       .from('evaluaciones')
@@ -213,8 +199,6 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
       console.error('❌ Error eliminando evaluación:', error);
       throw error;
     }
-
-    console.log('✅ Evaluación eliminada exitosamente');
 
     res.json({
       success: true,
@@ -244,8 +228,6 @@ router.get('/calificaciones/alumno/:alumnoId/curso/:cursoId', authenticateToken,
   try {
     const { alumnoId, cursoId } = req.params;
 
-    console.log(`📊 Obteniendo calificaciones para alumno ${alumnoId} en curso ${cursoId}`);
-
     // Intentar convertir persona_id a alumno.id, o usar directamente si ya es alumno.id
     let alumnoIdReal = alumnoId;
     
@@ -259,7 +241,6 @@ router.get('/calificaciones/alumno/:alumnoId/curso/:cursoId', authenticateToken,
 
     if (alumnoPorPersona) {
       alumnoIdReal = alumnoPorPersona.id;
-      console.log(`✅ Alumno encontrado por persona_id: alumno.id=${alumnoIdReal}`);
     } else {
       // Si no se encuentra por persona_id, intentar como alumno.id directo
       const { data: alumnoPorId, error: errorId } = await supabase
@@ -271,7 +252,6 @@ router.get('/calificaciones/alumno/:alumnoId/curso/:cursoId', authenticateToken,
 
       if (alumnoPorId) {
         alumnoIdReal = alumnoPorId.id;
-        console.log(`✅ Alumno encontrado por alumno.id: ${alumnoIdReal}`);
       } else {
         console.error('❌ No se encontró alumno con persona_id ni alumno.id:', alumnoId);
         return res.status(404).json({
@@ -292,14 +272,11 @@ router.get('/calificaciones/alumno/:alumnoId/curso/:cursoId', authenticateToken,
     if (errorEval) throw errorEval;
 
     if (!evaluaciones || evaluaciones.length === 0) {
-      console.log('⚠️  No hay evaluaciones para este curso');
       return res.json({
         success: true,
         data: []
       });
     }
-
-    console.log(`📝 Evaluaciones encontradas: ${evaluaciones.length}`);
 
     const evaluacionIds = evaluaciones.map(e => e.id);
 
@@ -311,8 +288,6 @@ router.get('/calificaciones/alumno/:alumnoId/curso/:cursoId', authenticateToken,
       .in('evaluacion_id', evaluacionIds);
 
     if (errorCalif) throw errorCalif;
-
-    console.log(`✅ Calificaciones existentes: ${calificacionesExistentes?.length || 0}`);
 
     // Crear un mapa de calificaciones existentes por evaluacion_id
     const calificacionesMap = new Map();
@@ -327,8 +302,6 @@ router.get('/calificaciones/alumno/:alumnoId/curso/:cursoId', authenticateToken,
 
     // Crear calificaciones faltantes
     if (evaluacionesSinCalificacion.length > 0) {
-      console.log(`🔧 Creando ${evaluacionesSinCalificacion.length} calificaciones faltantes`);
-      
       const nuevasCalificaciones = evaluacionesSinCalificacion.map(ev => ({
         evaluacion_id: ev.id,
         alumno_id: alumnoIdReal, // Usar alumno.id, no persona_id
@@ -347,15 +320,12 @@ router.get('/calificaciones/alumno/:alumnoId/curso/:cursoId', authenticateToken,
         califCreadas?.forEach(calif => {
           calificacionesMap.set(calif.evaluacion_id, calif);
         });
-        console.log(`✅ Calificaciones creadas exitosamente`);
       }
     }
 
     // Construir respuesta con todas las evaluaciones y sus calificaciones
     const resultado = evaluaciones.map(evaluacion => {
       const calificacion = calificacionesMap.get(evaluacion.id);
-      
-      console.log(`📋 Evaluación: ${evaluacion.nombre}, tiene calificación: ${calificacion ? 'SÍ' : 'NO'}`);
       
       return {
         id: calificacion?.id || null,
@@ -372,8 +342,6 @@ router.get('/calificaciones/alumno/:alumnoId/curso/:cursoId', authenticateToken,
         }
       };
     });
-
-    console.log(`📤 Enviando ${resultado.length} evaluaciones con calificaciones`);
 
     res.json({
       success: true,
@@ -469,13 +437,8 @@ router.put('/calificaciones/:id', authenticateToken, async (req: Request, res: R
     const { id } = req.params;
     const { calificacion } = req.body;
 
-    console.log(`📝 Actualizando calificación ${id}`);
-    console.log(`   Body recibido:`, req.body);
-    console.log(`   Calificación extraída: ${calificacion} (tipo: ${typeof calificacion})`);
-
     // Validar que la calificación esté entre 0 y 20 (permitir null/undefined para borrar)
     if (calificacion !== null && calificacion !== undefined && (calificacion < 0 || calificacion > 20)) {
-      console.log(`❌ Nota fuera de rango: ${calificacion}`);
       return res.status(400).json({
         success: false,
         message: 'La calificación debe estar entre 0 y 20'
@@ -497,8 +460,6 @@ router.put('/calificaciones/:id', authenticateToken, async (req: Request, res: R
       });
     }
 
-    console.log(`✅ Calificación encontrada, actualizando con nota: ${calificacion}`);
-
     // Actualizar usando 'nota' en lugar de 'calificacion'
     const { data, error } = await supabase
       .from('calificaciones')
@@ -511,8 +472,6 @@ router.put('/calificaciones/:id', authenticateToken, async (req: Request, res: R
       console.error('❌ Error de Supabase:', error);
       throw error;
     }
-
-    console.log('✅ Calificación actualizada exitosamente');
 
     // Transformar 'nota' a 'calificacion' en la respuesta
     const dataTransformada = {

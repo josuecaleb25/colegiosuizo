@@ -11,7 +11,6 @@ function formatearHora(hora: string): string {
 
 // Test endpoint simple
 router.get('/test', (req, res) => {
-  console.log('✅ Test endpoint llamado');
   res.json({
     success: true,
     message: 'Backend funcionando correctamente',
@@ -25,7 +24,6 @@ router.get('/alumno/:personaId', async (req, res) => {
     const { personaId } = req.params;
     const { fecha } = req.query; // Parámetro de fecha opcional
 
-    console.log(`Petición recibida - Persona: ${personaId}, Fecha: ${fecha}`);
 
     // Obtener alumno por persona_id
     const { data: alumno, error: alumnoError } = await supabase
@@ -36,14 +34,12 @@ router.get('/alumno/:personaId', async (req, res) => {
       .single();
 
     if (alumnoError || !alumno) {
-      console.log('No se encontró alumno para persona_id:', personaId);
       return res.status(404).json({
         success: false,
         message: 'Alumno no encontrado'
       });
     }
 
-    console.log(`Alumno encontrado: ${alumno.id}`);
 
     // Obtener sección del alumno
     const { data: matricula, error: matriculaError } = await supabase
@@ -55,7 +51,6 @@ router.get('/alumno/:personaId', async (req, res) => {
 
     if (matriculaError) throw matriculaError;
 
-    console.log(`Sección del alumno: ${matricula.seccion_id}`);
 
     // Obtener día de la semana de la fecha (si se proporciona)
     let diaSemana = 1; // Por defecto lunes
@@ -69,7 +64,6 @@ router.get('/alumno/:personaId', async (req, res) => {
       
       if (jsDay === 0 || jsDay === 6) {
         // Domingo (0) o Sábado (6) - no hay clases
-        console.log(`Día ${jsDay} es fin de semana - no hay clases`);
         return res.json({
           success: true,
           data: [],
@@ -79,9 +73,7 @@ router.get('/alumno/:personaId', async (req, res) => {
       
       // Para lunes a viernes, el número coincide (1-5)
       diaSemana = jsDay;
-      console.log(`Fecha recibida: ${fecha}, JS Day: ${jsDay}, Día escolar: ${diaSemana}`);
     } else {
-      console.log('No se proporcionó fecha, mostrando lunes por defecto');
     }
 
     // Obtener horarios de la sección para el día específico
@@ -123,7 +115,6 @@ router.get('/alumno/:personaId', async (req, res) => {
       throw error;
     }
 
-    console.log(`Horarios encontrados para día ${diaSemana}: ${data?.length || 0}`);
 
     let horariosFormateados = data?.map((horario: any) => ({
       id: horario.id,
@@ -181,7 +172,6 @@ router.get('/profesor/:personaId', async (req, res) => {
     const { personaId } = req.params;
     const { fecha } = req.query; // Parámetro de fecha opcional
 
-    console.log(`Petición recibida - Persona Profesor: ${personaId}, Fecha: ${fecha}`);
 
     // Obtener docente por persona_id
     const { data: docente, error: docenteError } = await supabase
@@ -191,14 +181,12 @@ router.get('/profesor/:personaId', async (req, res) => {
       .single();
 
     if (docenteError || !docente) {
-      console.log('No se encontró docente para persona_id:', personaId);
       return res.status(404).json({
         success: false,
         message: 'Docente no encontrado'
       });
     }
 
-    console.log(`Docente encontrado: ${docente.id}`);
 
     // Obtener día de la semana de la fecha (si se proporciona)
     let diaSemana = 1; // Por defecto lunes
@@ -208,7 +196,6 @@ router.get('/profesor/:personaId', async (req, res) => {
       
       if (jsDay === 0 || jsDay === 6) {
         // Domingo (0) o Sábado (6) - no hay clases
-        console.log(`Día ${jsDay} es fin de semana - no hay clases`);
         return res.json({
           success: true,
           data: [],
@@ -218,9 +205,7 @@ router.get('/profesor/:personaId', async (req, res) => {
       
       // Para lunes a viernes, el número coincide (1-5)
       diaSemana = jsDay;
-      console.log(`Fecha recibida: ${fecha}, JS Day: ${jsDay}, Día escolar: ${diaSemana}`);
     } else {
-      console.log('No se proporcionó fecha, mostrando lunes por defecto');
     }
 
     const { data, error } = await supabase
@@ -255,7 +240,6 @@ router.get('/profesor/:personaId', async (req, res) => {
       throw error;
     }
 
-    console.log(`Horarios encontrados para día ${diaSemana}: ${data?.length || 0}`);
 
     let horariosFormateados = data?.map((horario: any) => ({
       id: horario.id,

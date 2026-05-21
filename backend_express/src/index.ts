@@ -32,10 +32,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Middleware para loggear todas las peticiones
 app.use((req, res, next) => {
-  console.log(`📨 ${req.method} ${req.path}`);
-  if (req.method === 'POST' && req.path.includes('device-token')) {
-    console.log('🔍 Body de device-token:', req.body);
-  }
   next();
 });
 
@@ -78,8 +74,6 @@ app.use('/api/secciones', seccionesRoutes);
 
 // Endpoint de prueba para FCM
 app.post('/api/test-fcm', (req, res) => {
-  console.log('🧪 Test FCM endpoint llamado');
-  console.log('📋 Body recibido:', req.body);
   res.json({ success: true, message: 'Test FCM OK', received: req.body });
 });
 
