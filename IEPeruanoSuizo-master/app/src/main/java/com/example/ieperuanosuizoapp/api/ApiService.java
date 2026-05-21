@@ -77,7 +77,8 @@ public interface ApiService {
     
     @GET("comunicados/historial/enviados")
     Call<ApiResponse<List<Object>>> getHistorialComunicadosEnviados(
-        @Query("usuario_id") String usuarioId
+        @Query("usuario_id") String usuarioId,
+        @Query("rol") String rol
     );
     
     @retrofit2.http.PUT("comunicados/{id}")

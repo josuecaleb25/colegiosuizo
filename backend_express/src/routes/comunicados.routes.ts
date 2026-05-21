@@ -276,7 +276,7 @@ router.post('/:id/leer', async (req, res) => {
 // GET /api/comunicados/historial/enviados - Obtener comunicados enviados por el usuario
 router.get('/historial/enviados', async (req, res) => {
   try {
-    const { usuario_id } = req.query;
+    const { usuario_id, rol } = req.query;
 
     if (!usuario_id) {
       return res.status(400).json({
@@ -285,7 +285,7 @@ router.get('/historial/enviados', async (req, res) => {
       });
     }
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('comunicados_nuevos')
       .select(`
         id,
@@ -295,6 +295,10 @@ router.get('/historial/enviados', async (req, res) => {
         destinatario_tipo,
         fecha_publicacion,
         activo,
+        personas!inner (
+          nombres,
+          apellidos
+        ),
         secciones (
           nombre,
           grados (
@@ -305,16 +309,21 @@ router.get('/historial/enviados', async (req, res) => {
           nombre
         )
       `)
-      .eq('persona_id', usuario_id)  // Cambio: usar persona_id
       .eq('activo', true)
       .order('fecha_publicacion', { ascending: false });
+
+    // Si es ADMIN o AUXILIAR, mostrar TODOS los comunicados
+    // Si es PROFESOR, solo mostrar los suyos
+    if (rol !== 'admin' && rol !== 'auxiliar') {
+      query = query.eq('persona_id', usuario_id);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('❌ Error al obtener historial:', error);
       throw error;
     }
-
-    console.log(`✅ Encontrados ${data?.length || 0} comunicados`);
 
     const comunicadosFormateados = data?.map((com: any) => {
       let destinatario = 'Todos';
@@ -328,6 +337,10 @@ router.get('/historial/enviados', async (req, res) => {
         destinatario = grado.nombre;
       }
 
+      // Obtener el nombre del emisor
+      const persona = Array.isArray(com.personas) ? com.personas[0] : com.personas;
+      const emisor = `${persona.nombres} ${persona.apellidos}`;
+
       return {
         id: com.id,
         titulo: com.titulo,
@@ -337,6 +350,7 @@ router.get('/historial/enviados', async (req, res) => {
         fecha_publicacion: com.fecha_publicacion,
         destinatario: destinatario,
         salon: destinatario,  // Alias para compatibilidad con la app
+        emisor: emisor,  // Agregar el nombre del emisor
         estado: 'Enviado'
       };
     }) || [];

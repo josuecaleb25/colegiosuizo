@@ -364,6 +364,7 @@ public class GestionComunicadosActivity extends AppCompatActivity {
     private void cargarHistorialDesdeBackend() {
         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         String userId = prefs.getString("user_id", null);
+        String rol = prefs.getString("user_role", "profesor");  // Obtener el rol del usuario
         
         if (userId == null) {
             layoutEmptyHistory.setVisibility(View.VISIBLE);
@@ -375,7 +376,7 @@ public class GestionComunicadosActivity extends AppCompatActivity {
         layoutEmptyHistory.setVisibility(View.GONE);
         
         com.example.ieperuanosuizoapp.api.RetrofitClient.getApiService()
-            .getHistorialComunicadosEnviados(userId)
+            .getHistorialComunicadosEnviados(userId, rol)  // Enviar el rol también
             .enqueue(new retrofit2.Callback<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>>() {
                 @Override
                 public void onResponse(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>> call,
