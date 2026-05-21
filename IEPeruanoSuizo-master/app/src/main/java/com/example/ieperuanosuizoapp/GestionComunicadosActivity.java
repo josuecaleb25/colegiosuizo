@@ -244,13 +244,14 @@ public class GestionComunicadosActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         String userId = prefs.getString("user_id", null);
         String userRol = prefs.getString("user_mode", "ALUMNO").toLowerCase();
+        String rol = prefs.getString("user_role", "profesor");  // Obtener el rol del usuario
         
         // Cargar secciones
         cargarSeccionesDisponibles(spinner, userId, userRol);
         
         // Obtener el comunicado completo
         com.example.ieperuanosuizoapp.api.RetrofitClient.getApiService()
-            .getHistorialComunicadosEnviados(userId)
+            .getHistorialComunicadosEnviados(userId, rol)  // Agregar el parámetro rol
             .enqueue(new retrofit2.Callback<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>>() {
                 @Override
                 public void onResponse(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>> call,
