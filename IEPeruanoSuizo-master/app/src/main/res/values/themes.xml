@@ -4,6 +4,9 @@
         <!-- Customize your light theme here. -->
         <item name="colorPrimary">@color/inputcolorgris</item>
 
+        <!-- Fix autofill background color -->
+        <item name="android:autofilledHighlight">@android:color/transparent</item>
+
         <!-- Atributos para Home -->
         <item name="homeHeaderBackground">@color/white</item>
         <item name="homeContentBackground">#F5F5F5</item>

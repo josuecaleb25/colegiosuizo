@@ -43,6 +43,9 @@ public class AuthLogin extends AppCompatActivity {
         etPassword = findViewById(R.id.inputTypePassword);
         btnLogin = findViewById(R.id.Login);
 
+        // Fix autofill background color
+        fixAutofillBackground();
+
         btnLogin.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
@@ -206,6 +209,25 @@ public class AuthLogin extends AppCompatActivity {
 
         } catch (org.json.JSONException e) {
             android.util.Log.e("FCM", "Error al crear JSON", e);
+        }
+    }
+
+    /**
+     * Fix autofill background color to match the input design
+     */
+    private void fixAutofillBackground() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            // Set autofill hints
+            etEmail.setAutofillHints(android.view.View.AUTOFILL_HINT_EMAIL_ADDRESS);
+            etPassword.setAutofillHints(android.view.View.AUTOFILL_HINT_PASSWORD);
+            
+            // Force white background on autofill
+            etEmail.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                android.graphics.Color.TRANSPARENT
+            ));
+            etPassword.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                android.graphics.Color.TRANSPARENT
+            ));
         }
     }
 }
