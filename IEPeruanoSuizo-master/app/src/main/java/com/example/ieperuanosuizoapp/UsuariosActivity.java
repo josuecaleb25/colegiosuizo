@@ -95,7 +95,12 @@ public class UsuariosActivity extends AppCompatActivity implements UsuariosAdapt
     }
 
     private void setupFilters() {
-        String[] salones = {"Todos", "1ro A", "1ro B", "1ro C", "1ro D", "1ro E", "2do A", "2do B", "2do C", "2do D"};
+        String[] salones = {
+            "Todos", 
+            "1ro A", "1ro B", "1ro C", "1ro D", "1ro E",
+            "4to A", "4to B", "4to C", "4to D",
+            "5to A", "5to B", "5to C", "5to D", "5to E"
+        };
         android.widget.ArrayAdapter<String> adapterSalones = new android.widget.ArrayAdapter<>(
                 this,
                 android.R.layout.simple_dropdown_item_1line, salones);

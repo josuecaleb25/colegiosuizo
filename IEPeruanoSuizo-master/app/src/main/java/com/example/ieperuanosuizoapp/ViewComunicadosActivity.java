@@ -468,18 +468,28 @@ public class ViewComunicadosActivity extends AppCompatActivity {
     private String obtenerFechaFormateada(String fechaPublicacion) {
         if (fechaPublicacion == null || fechaPublicacion.isEmpty()) return "Fecha desconocida";
         try {
-            String[] partes = fechaPublicacion.split("T");
-            if (partes.length == 0) return "Fecha desconocida";
-            String[] fechaPartes = partes[0].split("-");
-            int año = Integer.parseInt(fechaPartes[0]);
-            int mes = Integer.parseInt(fechaPartes[1]) - 1;
-            int dia = Integer.parseInt(fechaPartes[2]);
-
+            // Parsear fecha ISO 8601 con zona horaria UTC
+            SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+            isoFormat.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+            
+            // Remover la 'Z' y milisegundos si existen
+            String fechaLimpia = fechaPublicacion.replace("Z", "").split("\\.")[0];
+            Date fechaUTC = isoFormat.parse(fechaLimpia);
+            
+            // Convertir a zona horaria de Perú (UTC-5)
             Calendar fechaComunicado = Calendar.getInstance();
-            fechaComunicado.set(año, mes, dia);
+            fechaComunicado.setTime(fechaUTC);
+            fechaComunicado.setTimeZone(java.util.TimeZone.getTimeZone("America/Lima"));
+            
             Calendar hoy = Calendar.getInstance();
+            hoy.setTimeZone(java.util.TimeZone.getTimeZone("America/Lima"));
+            
             Calendar ayer = Calendar.getInstance();
+            ayer.setTimeZone(java.util.TimeZone.getTimeZone("America/Lima"));
             ayer.add(Calendar.DAY_OF_YEAR, -1);
+
+            int dia = fechaComunicado.get(Calendar.DAY_OF_MONTH);
+            int mes = fechaComunicado.get(Calendar.MONTH);
 
             if (esMismoDia(fechaComunicado, hoy)) {
                 return "Hoy, " + dia + " de " + obtenerNombreMes(mes);
@@ -487,10 +497,12 @@ public class ViewComunicadosActivity extends AppCompatActivity {
                 return "Ayer, " + dia + " de " + obtenerNombreMes(mes);
             } else {
                 SimpleDateFormat sdf = new SimpleDateFormat("EEEE, d 'de' MMMM", new Locale("es", "ES"));
+                sdf.setTimeZone(java.util.TimeZone.getTimeZone("America/Lima"));
                 String resultado = sdf.format(fechaComunicado.getTime());
                 return resultado.substring(0, 1).toUpperCase() + resultado.substring(1);
             }
         } catch (Exception e) {
+            android.util.Log.e("ViewComunicados", "Error parseando fecha: " + fechaPublicacion, e);
             return "Fecha desconocida";
         }
     }
