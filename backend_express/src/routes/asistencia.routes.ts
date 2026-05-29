@@ -237,92 +237,106 @@ router.post('/registrar-ausentes-batch', async (req, res) => {
       detalles: [] as string[]
     };
 
-    // Procesar todos los ausentes
-    for (const ausente of ausentes) {
-      try {
-        const { persona_id } = ausente;
+    const personaIds = ausentes.map(a => a.persona_id).filter(Boolean) as string[];
 
-        if (!persona_id) {
-          resultados.errores++;
-          resultados.detalles.push('persona_id faltante');
-          continue;
-        }
+    if (personaIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ningún persona_id válido'
+      });
+    }
 
-        // Buscar el alumno_id
-        const { data: alumno, error: alumnoError } = await supabase
-          .from('alumnos')
-          .select('id, personas!inner(nombres, apellidos)')
-          .eq('persona_id', persona_id)
-          .single();
+    // 1. Traer todos los alumnos de una sola vez
+    const { data: alumnos, error: alumnosError } = await supabase
+      .from('alumnos')
+      .select('id, persona_id, personas!inner(nombres, apellidos)')
+      .in('persona_id', personaIds);
 
-        if (alumnoError || !alumno) {
-          resultados.errores++;
-          resultados.detalles.push(`Alumno no encontrado: ${persona_id}`);
-          continue;
-        }
+    if (alumnosError) {
+      console.error('Error buscando alumnos:', alumnosError);
+      throw alumnosError;
+    }
 
-        const alumno_id = alumno.id;
+    const alumnosMap = new Map<string, { id: string, nombres: string, apellidos: string }>();
+    for (const a of alumnos || []) {
+      const p = Array.isArray(a.personas) ? a.personas[0] : a.personas;
+      alumnosMap.set(a.persona_id, { id: a.id, nombres: p?.nombres || '', apellidos: p?.apellidos || '' });
+    }
 
-        // Verificar si ya existe asistencia HOY
-        const { data: existente } = await supabase
-          .from('asistencias')
-          .select('id, estado')
-          .eq('persona_id', persona_id)
-          .eq('fecha', fecha)
-          .limit(1);
+    // 2. Verificar quiénes ya tienen asistencia hoy
+    const { data: existentes } = await supabase
+      .from('asistencias')
+      .select('persona_id')
+      .in('persona_id', personaIds)
+      .eq('fecha', fecha);
 
-        if (existente && existente.length > 0) {
-          // Ya tiene asistencia registrada hoy, no hacer nada
-          resultados.guardados++;
-          resultados.detalles.push(`Ya registrado: ${persona_id} (${existente[0].estado})`);
-          continue;
-        }
+    const existentesSet = new Set((existentes || []).map(e => e.persona_id));
 
-        // Registrar como ausente
-        const { error: insertError } = await supabase
-          .from('asistencias')
-          .insert({
-            persona_id,
-            fecha,
-            estado: 'falta',
-            tipo_persona: 'alumno',
-            hora_entrada: null
-          });
+    // 3. Filtrar los que ya existen y los que no se encontraron
+    const aInsertar: any[] = [];
+    const alumnosParaNotificar: { alumno_id: string, nombreCompleto: string }[] = [];
 
-        if (insertError) {
-          console.error('Error insertando ausente:', insertError);
-          resultados.errores++;
-          resultados.detalles.push(`Error DB: ${persona_id}`);
-          continue;
-        }
-
+    for (const persona_id of personaIds) {
+      if (existentesSet.has(persona_id)) {
         resultados.guardados++;
-        resultados.detalles.push(`Guardado: ${persona_id}`);
-
-        // Enviar notificación (sin esperar)
-        const persona = Array.isArray(alumno?.personas) ? alumno.personas[0] : alumno?.personas;
-        const nombreCompleto = persona ? `${persona.nombres} ${persona.apellidos}` : 'Su hijo/a';
-
-        notificationService.enviarAEstudiante(alumno_id, {
-          tipo: 'asistencia',
-          titulo: '⚠️ Ausencia Registrada',
-          mensaje: `${nombreCompleto} no registró asistencia hoy`,
-          datos: {
-            alumno_id: alumno_id.toString(),
-            estado: 'falta',
-            fecha: fecha
-          }
-        }).then(() => {
-          resultados.notificaciones++;
-        }).catch(err => {
-          console.error('Error enviando notificación:', err.message);
-        });
-
-      } catch (error: any) {
-        console.error('Error procesando ausente:', error);
-        resultados.errores++;
-        resultados.detalles.push(`Excepción: ${error.message}`);
+        resultados.detalles.push(`Ya registrado: ${persona_id}`);
+        continue;
       }
+
+      const alumno = alumnosMap.get(persona_id);
+      if (!alumno) {
+        resultados.errores++;
+        resultados.detalles.push(`Alumno no encontrado: ${persona_id}`);
+        continue;
+      }
+
+      aInsertar.push({
+        persona_id,
+        fecha,
+        estado: 'falta',
+        tipo_persona: 'alumno',
+        hora_entrada: null
+      });
+
+      alumnosParaNotificar.push({
+        alumno_id: alumno.id,
+        nombreCompleto: `${alumno.nombres} ${alumno.apellidos}`
+      });
+    }
+
+    // 4. Insertar todo en un solo INSERT bulk
+    if (aInsertar.length > 0) {
+      const { error: insertError } = await supabase
+        .from('asistencias')
+        .insert(aInsertar);
+
+      if (insertError) {
+        console.error('Error insertando ausentes batch:', insertError);
+        throw insertError;
+      }
+    }
+
+    resultados.guardados += aInsertar.length;
+    aInsertar.forEach(i => resultados.detalles.push(`Guardado: ${i.persona_id}`));
+
+    console.log(`✅ ${aInsertar.length} ausentes guardados en 1 insert`);
+
+    // 5. Enviar notificaciones sin esperar
+    for (const notif of alumnosParaNotificar) {
+      notificationService.enviarAEstudiante(notif.alumno_id, {
+        tipo: 'asistencia',
+        titulo: '⚠️ Ausencia Registrada',
+        mensaje: `${notif.nombreCompleto} no registró asistencia hoy`,
+        datos: {
+          alumno_id: notif.alumno_id.toString(),
+          estado: 'falta',
+          fecha: fecha
+        }
+      }).then(() => {
+        resultados.notificaciones++;
+      }).catch(err => {
+        console.error('Error enviando notificación:', err.message);
+      });
     }
 
     console.log('✅ Batch completado:', resultados);
