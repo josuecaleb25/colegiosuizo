@@ -220,9 +220,7 @@ router.get('/asistencia/fecha', async (req, res) => {
       });
     }
 
-    // Obtener información de los alumnos
-    const personaIds = asistencias.map(a => a.persona_id);
-    
+    // Obtener información de los alumnos (sin filtro IN para evitar headers overflow)
     const { data: alumnos, error: alumnosError } = await supabase
       .from('alumnos')
       .select(`
@@ -241,17 +239,19 @@ router.get('/asistencia/fecha', async (req, res) => {
             )
           )
         )
-      `)
-      .in('persona_id', personaIds);
+      `);
 
     if (alumnosError) {
       console.error('Error consultando alumnos:', alumnosError);
       throw alumnosError;
     }
 
+    // Indexar alumnos por persona_id para búsqueda rápida
+    const alumnosPorPersonaId = new Map((alumnos || []).map(a => [a.persona_id, a]));
+
     // Mapear asistencias con información de alumnos
     const asistenciasFormateadas = asistencias.map(asist => {
-      const alumno = alumnos?.find(a => a.persona_id === asist.persona_id);
+      const alumno = alumnosPorPersonaId.get(asist.persona_id);
       
       if (!alumno) {
         return null;
