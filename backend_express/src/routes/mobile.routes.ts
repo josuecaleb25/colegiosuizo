@@ -75,8 +75,7 @@ router.get('/usuarios', async (req, res) => {
         )
       `)
       .eq('estado', 'activo');
-
-    const { data: alumnos, error } = await query.limit(200);
+    const { data: alumnos, error } = await query;
 
     if (error) throw error;
 
@@ -171,7 +170,7 @@ router.get('/asistencia/alumnos', optionalAuthMiddleware, async (req: AuthReques
       `)
       .eq('estado', 'activo');
 
-    const { data: alumnos, error } = await query.limit(200);
+    const { data: alumnos, error } = await query;
 
     if (error) throw error;
 
