@@ -262,12 +262,26 @@ router.get('/asistencia/fecha', async (req, res) => {
       const seccion = Array.isArray(matricula?.secciones) ? matricula.secciones[0] : matricula?.secciones;
       const grado = Array.isArray(seccion?.grados) ? seccion.grados[0] : seccion?.grados;
 
+      const horaCruda = asist.hora_entrada || '';
+      const horaFormateada = horaCruda.includes('AM') || horaCruda.includes('PM')
+        ? horaCruda
+        : (() => {
+            const partes = horaCruda.split(':');
+            if (partes.length < 2) return horaCruda;
+            let h = parseInt(partes[0], 10);
+            const m = partes[1];
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            if (h > 12) h -= 12;
+            if (h === 0) h = 12;
+            return `${h.toString().padStart(2, '0')}:${m} ${ampm}`;
+          })();
+
       return {
         id: asist.id,
         persona_id: asist.persona_id,
         nombre_completo: `${persona.nombres} ${persona.apellidos}`,
         salon: `${grado?.nombre || ''} ${seccion?.nombre || ''}`.trim(),
-        hora_registro: asist.hora_entrada,
+        hora_registro: horaFormateada,
         estado_entrada: asist.estado,
         fecha: asist.fecha
       };
