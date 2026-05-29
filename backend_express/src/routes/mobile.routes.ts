@@ -254,8 +254,9 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
     const personaData = codigosQr[0]?.personas as any;
     const ahora = new Date();
     const fechaLima = ahora.toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
-    const horaLima = ahora.toLocaleTimeString('en-GB', { timeZone: 'America/Lima', hour12: false });
-    const [horaStr, minStr] = horaLima.split(':');
+    const horaLima24 = ahora.toLocaleTimeString('en-GB', { timeZone: 'America/Lima', hour12: false });
+    const horaLima12 = ahora.toLocaleTimeString('en-US', { timeZone: 'America/Lima', hour: '2-digit', minute: '2-digit', hour12: true });
+    const [horaStr, minStr] = horaLima24.split(':');
     const hora = parseInt(horaStr, 10);
     const minutos = parseInt(minStr, 10);
     const estado = (hora < 7 || (hora === 7 && minutos < 41)) ? 'presente' : 'tardanza';
@@ -288,7 +289,7 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
         persona_id: personaData?.id,
         tipo_persona: 'alumno',
         fecha: fechaLima,
-        hora_entrada: horaLima,
+        hora_entrada: horaLima12,
         estado
       });
 
@@ -297,7 +298,7 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
       throw insertError;
     }
 
-    const horaFormateada = horaLima.slice(0, 5);
+    const horaFormateada = horaLima12;
     
 
     // ========================================
