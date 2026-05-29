@@ -252,11 +252,13 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
     }
 
     const personaData = codigosQr[0]?.personas as any;
-    const hoy = new Date().toISOString().split('T')[0];
     const ahora = new Date();
-    const hora = ahora.getHours();
-    const minutos = ahora.getMinutes();
-    const estado = (hora < 7 || (hora === 7 && minutos <= 31)) ? 'presente' : 'tardanza';
+    const fechaLima = ahora.toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
+    const horaLima = ahora.toLocaleTimeString('en-GB', { timeZone: 'America/Lima', hour12: false });
+    const [horaStr, minStr] = horaLima.split(':');
+    const hora = parseInt(horaStr, 10);
+    const minutos = parseInt(minStr, 10);
+    const estado = (hora < 7 || (hora === 7 && minutos < 41)) ? 'presente' : 'tardanza';
 
 
     // Verificar si ya tiene asistencia HOY (no días anteriores)
@@ -264,7 +266,7 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
       .from('asistencias')
       .select('hora_entrada, estado')
       .eq('persona_id', personaData?.id)
-      .eq('fecha', hoy)  // SOLO HOY
+      .eq('fecha', fechaLima)  // SOLO HOY
       .limit(1);
 
     if (asistError) {
@@ -285,8 +287,8 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
       .insert({
         persona_id: personaData?.id,
         tipo_persona: 'alumno',
-        fecha: hoy,
-        hora_entrada: ahora.toTimeString().split(' ')[0],
+        fecha: fechaLima,
+        hora_entrada: horaLima,
         estado
       });
 
@@ -295,7 +297,7 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
       throw insertError;
     }
 
-    const horaFormateada = ahora.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+    const horaFormateada = horaLima.slice(0, 5);
     
 
     // ========================================
@@ -325,7 +327,7 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
             alumno_id: alumno.id.toString(),
             estado: estado,
             hora: horaFormateada,
-            fecha: hoy
+            fecha: fechaLima
           }
         });
         

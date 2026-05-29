@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
     if (fecha) {
       query = query.eq('asistencia_sesionclase.fecha', fecha);
     } else {
-      const hoy = new Date().toISOString().split('T')[0];
+      const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
       query = query.eq('asistencia_sesionclase.fecha', hoy);
     }
 
@@ -120,13 +120,17 @@ router.post('/', async (req, res) => {
       });
     }
 
+    const ahoraLima = new Date();
+    const fechaLima = ahoraLima.toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
+    const horaLima = ahoraLima.toLocaleTimeString('en-GB', { timeZone: 'America/Lima', hour12: false });
+
     const { data: nuevaAsistencia, error } = await supabase
       .from('asistencia_asistencia')
       .insert({
         sesion_id,
         alumno_id,
         estado,
-        hora_registro: new Date().toISOString(),
+        hora_registro: `${fechaLima}T${horaLima}.000Z`,
         registrado_via_qr: false,
         observaciones: observaciones || ''
       })
@@ -183,7 +187,7 @@ router.post('/', async (req, res) => {
         datos: {
           alumno_id: alumno_id.toString(),
           estado: estado,
-          fecha: new Date().toISOString()
+          fecha: fechaLima
         }
       });
 

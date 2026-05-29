@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.media.MediaPlayer;
 import android.os.Handler;
 import android.util.TypedValue;
 import android.text.Editable;
@@ -399,7 +400,11 @@ public class PanelAsistencia extends AppCompatActivity {
         tvModalBienvenida.setText("Bienvenido, " + nombre);
         modalExito.bringToFront();
         modalExito.setVisibility(View.VISIBLE);
-        modalExito.setTranslationY(1500f); 
+        modalExito.setTranslationY(1500f);
+
+        try {
+            MediaPlayer.create(this, R.raw.soundassist).start();
+        } catch (Exception ignored) {}
 
         modalExito.animate()
                 .translationY(0f) 
@@ -407,7 +412,7 @@ public class PanelAsistencia extends AppCompatActivity {
                 .withEndAction(() -> {
                     new Handler().postDelayed(() -> {
                         ocultarModalExito();
-                    }, 5000);
+                    }, 3000);
                 })
                 .start();
     }
