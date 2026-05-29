@@ -253,9 +253,11 @@ router.post('/registrar-ausentes-batch', async (req, res) => {
       .in('persona_id', personaIds);
 
     if (alumnosError) {
-      console.error('Error buscando alumnos:', alumnosError);
+      console.error('❌ Error buscando alumnos:', alumnosError);
       throw alumnosError;
     }
+
+    console.log(`✅ ${alumnos?.length || 0} alumnos encontrados en BD`);
 
     const alumnosMap = new Map<string, { id: string, nombres: string, apellidos: string }>();
     for (const a of alumnos || []) {
@@ -271,55 +273,48 @@ router.post('/registrar-ausentes-batch', async (req, res) => {
       .eq('fecha', fecha);
 
     const existentesSet = new Set((existentes || []).map(e => e.persona_id));
+    console.log(`✅ ${existentesSet.size} ausentes ya tenían asistencia registrada`);
 
-    // 3. Filtrar los que ya existen y los que no se encontraron
-    const aInsertar: any[] = [];
+    // 3. Preparar inserts (solo los que no tienen alumno registrado en BD)
     const alumnosParaNotificar: { alumno_id: string, nombreCompleto: string }[] = [];
-
-    for (const persona_id of personaIds) {
-      if (existentesSet.has(persona_id)) {
-        resultados.guardados++;
-        resultados.detalles.push(`Ya registrado: ${persona_id}`);
-        continue;
-      }
-
-      const alumno = alumnosMap.get(persona_id);
-      if (!alumno) {
+    const inserts = personaIds
+      .filter(pid => !existentesSet.has(pid))
+      .map(pid => {
+        const alumno = alumnosMap.get(pid);
+        if (alumno) {
+          alumnosParaNotificar.push({
+            alumno_id: alumno.id,
+            nombreCompleto: `${alumno.nombres} ${alumno.apellidos}`
+          });
+          return {
+            persona_id: pid,
+            fecha,
+            estado: 'falta',
+            tipo_persona: 'alumno',
+            hora_entrada: null
+          };
+        }
         resultados.errores++;
-        resultados.detalles.push(`Alumno no encontrado: ${persona_id}`);
-        continue;
-      }
+        resultados.detalles.push(`Alumno no encontrado: ${pid}`);
+        return null;
+      })
+      .filter(Boolean);
 
-      aInsertar.push({
-        persona_id,
-        fecha,
-        estado: 'falta',
-        tipo_persona: 'alumno',
-        hora_entrada: null
-      });
-
-      alumnosParaNotificar.push({
-        alumno_id: alumno.id,
-        nombreCompleto: `${alumno.nombres} ${alumno.apellidos}`
-      });
-    }
-
-    // 4. Insertar todo en un solo INSERT bulk
-    if (aInsertar.length > 0) {
+    // 4. Insertar todo en UN SOLO upsert (ignora duplicados automáticamente)
+    if (inserts.length > 0) {
       const { error: insertError } = await supabase
         .from('asistencias')
-        .insert(aInsertar);
+        .upsert(inserts, { onConflict: 'persona_id,fecha', ignoreDuplicates: true });
 
       if (insertError) {
-        console.error('Error insertando ausentes batch:', insertError);
+        console.error('❌ Error insertando ausentes batch:', insertError);
         throw insertError;
       }
+
+      resultados.guardados += inserts.length;
+      inserts.forEach(i => resultados.detalles.push(`Guardado: ${i.persona_id}`));
+      console.log(`✅ ${inserts.length} ausentes guardados en 1 upsert`);
     }
-
-    resultados.guardados += aInsertar.length;
-    aInsertar.forEach(i => resultados.detalles.push(`Guardado: ${i.persona_id}`));
-
-    console.log(`✅ ${aInsertar.length} ausentes guardados en 1 insert`);
 
     // 5. Enviar notificaciones sin esperar
     for (const notif of alumnosParaNotificar) {
@@ -639,6 +634,50 @@ router.post('/eliminar-batch', async (req, res) => {
     });
   }
 });
+
+// DELETE /api/asistencia/fecha/:fecha - Eliminar TODA la asistencia de una fecha
+// router.delete('/fecha/:fecha', async (req, res) => {
+//   try {
+//     const { fecha } = req.params;
+// 
+//     console.log('🗑️  Eliminando asistencias por fecha:', fecha);
+// 
+//     const { data: eliminadas, error } = await supabase
+//       .from('asistencias')
+//       .delete()
+//       .eq('fecha', fecha)
+//       .eq('tipo_persona', 'alumno')
+//       .select('id');
+// 
+//     if (error) {
+//       console.error('Error eliminando asistencias por fecha:', error);
+//       throw error;
+//     }
+// 
+//     const totalEliminadas = eliminadas?.length || 0;
+//     console.log(`✅ ${totalEliminadas} asistencias eliminadas para fecha ${fecha}`);
+// 
+//     if (totalEliminadas === 0) {
+//       return res.status(404).json({
+//         success: false,
+//         message: `No se encontraron asistencias para la fecha ${fecha}`
+//       });
+//     }
+// 
+//     res.json({
+//       success: true,
+//       message: `${totalEliminadas} asistencias eliminadas para la fecha ${fecha}`,
+//       data: { eliminadas: totalEliminadas, fecha }
+//     });
+//   } catch (error: any) {
+//     console.error('❌ Error eliminando asistencias por fecha:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Error al eliminar asistencias por fecha',
+//       error: error.message
+//     });
+//   }
+// });
 
 // Eliminar asistencia individual
 router.delete('/:id', async (req, res) => {
