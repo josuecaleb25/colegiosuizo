@@ -246,46 +246,42 @@ router.post('/registrar-ausentes-batch', async (req, res) => {
       });
     }
 
-    // 1. Traer todos los alumnos de una sola vez
+    // 1. Traer todos los alumnos activos (sin filtro IN para evitar headers overflow)
     const { data: alumnos, error: alumnosError } = await supabase
       .from('alumnos')
-      .select('id, persona_id, personas!inner(nombres, apellidos)')
-      .in('persona_id', personaIds);
+      .select('id, persona_id')
+      .eq('estado', 'activo');
 
     if (alumnosError) {
       console.error('❌ Error buscando alumnos:', alumnosError);
       throw alumnosError;
     }
 
-    console.log(`✅ ${alumnos?.length || 0} alumnos encontrados en BD`);
+    console.log(`✅ ${alumnos?.length || 0} alumnos activos en BD`);
 
-    const alumnosMap = new Map<string, { id: string, nombres: string, apellidos: string }>();
+    const alumnosMap = new Map<string, string>();
     for (const a of alumnos || []) {
-      const p = Array.isArray(a.personas) ? a.personas[0] : a.personas;
-      alumnosMap.set(a.persona_id, { id: a.id, nombres: p?.nombres || '', apellidos: p?.apellidos || '' });
+      alumnosMap.set(a.persona_id, a.id);
     }
 
-    // 2. Verificar quiénes ya tienen asistencia hoy
-    const { data: existentes } = await supabase
+    // 2. Verificar quiénes ya tienen asistencia hoy (sin filtro IN, por fecha nomás)
+    const { data: asistenciasHoy } = await supabase
       .from('asistencias')
       .select('persona_id')
-      .in('persona_id', personaIds)
-      .eq('fecha', fecha);
+      .eq('fecha', fecha)
+      .eq('tipo_persona', 'alumno');
 
-    const existentesSet = new Set((existentes || []).map(e => e.persona_id));
-    console.log(`✅ ${existentesSet.size} ausentes ya tenían asistencia registrada`);
+    const yaAsistieronHoy = new Set((asistenciasHoy || []).map(e => e.persona_id));
+    console.log(`✅ ${yaAsistieronHoy.size} alumnos ya registraron asistencia hoy`);
 
-    // 3. Preparar inserts (solo los que no tienen alumno registrado en BD)
-    const alumnosParaNotificar: { alumno_id: string, nombreCompleto: string }[] = [];
+    // 3. Preparar inserts (solo los que no asistieron hoy)
+    const alumnosParaNotificar: string[] = [];
     const inserts = personaIds
-      .filter(pid => !existentesSet.has(pid))
+      .filter(pid => !yaAsistieronHoy.has(pid))
       .map(pid => {
-        const alumno = alumnosMap.get(pid);
-        if (alumno) {
-          alumnosParaNotificar.push({
-            alumno_id: alumno.id,
-            nombreCompleto: `${alumno.nombres} ${alumno.apellidos}`
-          });
+        const alumnoId = alumnosMap.get(pid);
+        if (alumnoId) {
+          alumnosParaNotificar.push(alumnoId);
           return {
             persona_id: pid,
             fecha,
@@ -317,13 +313,13 @@ router.post('/registrar-ausentes-batch', async (req, res) => {
     }
 
     // 5. Enviar notificaciones sin esperar
-    for (const notif of alumnosParaNotificar) {
-      notificationService.enviarAEstudiante(notif.alumno_id, {
+    for (const alumnoId of alumnosParaNotificar) {
+      notificationService.enviarAEstudiante(alumnoId, {
         tipo: 'asistencia',
         titulo: '⚠️ Ausencia Registrada',
-        mensaje: `${notif.nombreCompleto} no registró asistencia hoy`,
+        mensaje: `Su hijo/a no registró asistencia hoy`,
         datos: {
-          alumno_id: notif.alumno_id.toString(),
+          alumno_id: alumnoId.toString(),
           estado: 'falta',
           fecha: fecha
         }
