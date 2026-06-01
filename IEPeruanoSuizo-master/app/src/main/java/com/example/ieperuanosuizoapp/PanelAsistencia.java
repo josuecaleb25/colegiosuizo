@@ -359,12 +359,14 @@ public class PanelAsistencia extends AppCompatActivity {
                     registrosEnSesion++;
                     String nombre = res.getData().getAlumno();
                     String hora = res.getData().getHora();
+                    String estado = res.getData().getEstado();
                     
                     // Actualizar la lista local con la hora del escaneo
                     if (nombre != null && hora != null) {
                         for (Alumno alumno : listaCompleta) {
                             if (alumno.nombre.equals(nombre)) {
                                 alumno.hora = hora;
+                                alumno.estado = estado;
                                 if (!listaActiva.contains(alumno)) {
                                     listaActiva.add(alumno);
                                 }
@@ -769,12 +771,13 @@ public class PanelAsistencia extends AppCompatActivity {
     }
 
     static class Alumno {
-        String nombre, fecha, hora, persona_id;
+        String nombre, fecha, hora, persona_id, estado;
         Alumno(String nombre, String fecha, String hora, String persona_id) { 
             this.nombre = nombre; 
             this.fecha = fecha; 
             this.hora = hora; 
             this.persona_id = persona_id;
+            this.estado = null;
         }
     }
 
@@ -792,6 +795,9 @@ public class PanelAsistencia extends AppCompatActivity {
             if (a.hora == null || a.hora.isEmpty()) {
                 holder.tvHora.setText("Ausente");
                 holder.tvHora.setTextColor(Color.parseColor("#BA1924"));
+            } else if ("tardanza".equals(a.estado)) {
+                holder.tvHora.setText(a.hora);
+                holder.tvHora.setTextColor(Color.parseColor("#FF9800"));
             } else {
                 holder.tvHora.setText(a.hora);
                 holder.tvHora.setTextColor(Color.parseColor("#27AE60"));

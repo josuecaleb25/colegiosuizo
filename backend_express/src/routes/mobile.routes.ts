@@ -259,7 +259,7 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
     const [horaStr, minStr] = horaLima24.split(':');
     const hora = parseInt(horaStr, 10);
     const minutos = parseInt(minStr, 10);
-    const estado = (hora < 7 || (hora === 7 && minutos < 41)) ? 'presente' : 'tardanza';
+    const estado = (hora < 7 || (hora === 7 && minutos <= 30)) ? 'presente' : 'tardanza';
 
 
     // Verificar si ya tiene asistencia HOY (no días anteriores)
