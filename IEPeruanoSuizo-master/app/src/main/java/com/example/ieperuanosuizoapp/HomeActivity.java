@@ -6,6 +6,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Outline;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewOutlineProvider;
@@ -47,6 +48,9 @@ public class HomeActivity extends AppCompatActivity {
     private String userMode;
     private boolean comunicadosCargados = false; // Bandera para evitar duplicados
     private boolean esPrimeraVez = true; // Bandera para detectar primera carga
+    private Handler horarioHandler = new Handler();
+    private List<Object> ultimosHorarios;
+    private Runnable horarioRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -1140,6 +1144,7 @@ public class HomeActivity extends AppCompatActivity {
                     List<Object> horariosData = response.body().getData();
                     
                     if (!horariosData.isEmpty()) {
+                        ultimosHorarios = horariosData;
                         // Encontrar el curso actual según la hora
                         Object cursoActual = encontrarCursoActual(horariosData);
                         if (cursoActual != null) {
@@ -1147,6 +1152,7 @@ public class HomeActivity extends AppCompatActivity {
                         } else {
                             mostrarSinActividad();
                         }
+                        programarProximaActualizacion();
                     } else {
                         mostrarSinActividad();
                     }
@@ -1233,8 +1239,8 @@ public class HomeActivity extends AppCompatActivity {
             }
         }
         
-        // Si no hay próximo curso, devolver el primero
-        return horarios.isEmpty() ? null : horarios.get(0);
+        // Si no hay próximo curso, todos ya terminaron
+        return null;
     }
     private void actualizarUIHorario(Object cursoData) {
         com.google.gson.Gson gson = new com.google.gson.Gson();
@@ -1376,6 +1382,94 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
+    private void programarProximaActualizacion() {
+        if (horarioRunnable != null) {
+            horarioHandler.removeCallbacks(horarioRunnable);
+        }
+        horarioRunnable = () -> {
+            if (ultimosHorarios != null && !ultimosHorarios.isEmpty()) {
+                Object cursoActual = encontrarCursoActual(ultimosHorarios);
+                if (cursoActual != null) {
+                    actualizarUIHorario(cursoActual);
+                } else {
+                    mostrarSinActividad();
+                }
+                programarProximaActualizacion();
+            }
+        };
+
+        long msParaProximoEvento = calcularMsHastaProximoEvento();
+        if (msParaProximoEvento > 0) {
+            horarioHandler.postDelayed(horarioRunnable, msParaProximoEvento);
+        }
+    }
+
+    private long calcularMsHastaProximoEvento() {
+        if (ultimosHorarios == null || ultimosHorarios.isEmpty()) {
+            return 300000;
+        }
+
+        Calendar ahora = Calendar.getInstance();
+        int horaActual = ahora.get(Calendar.HOUR_OF_DAY);
+        int minutoActual = ahora.get(Calendar.MINUTE);
+        int segundoActual = ahora.get(Calendar.SECOND);
+        int tiempoActualEnMinutos = horaActual * 60 + minutoActual;
+
+        com.google.gson.Gson gson = new com.google.gson.Gson();
+        long menorMs = Long.MAX_VALUE;
+
+        for (Object obj : ultimosHorarios) {
+            com.google.gson.JsonObject jsonObj = gson.toJsonTree(obj).getAsJsonObject();
+            String horaInicio = jsonObj.has("hora_inicio") ? jsonObj.get("hora_inicio").getAsString() : "";
+            String horaFin = jsonObj.has("hora_fin") ? jsonObj.get("hora_fin").getAsString() : "";
+
+            try {
+                String[] partesInicio = horaInicio.split(":");
+                int horaIni = Integer.parseInt(partesInicio[0]);
+                int minIni = Integer.parseInt(partesInicio[1]);
+                int tiempoInicio = horaIni * 60 + minIni;
+
+                String[] partesFin = horaFin.split(":");
+                int horaF = Integer.parseInt(partesFin[0]);
+                int minF = Integer.parseInt(partesFin[1]);
+                int tiempoFin = horaF * 60 + minF;
+
+                if (tiempoActualEnMinutos >= tiempoInicio && tiempoActualEnMinutos < tiempoFin) {
+                    int msHastaFin = ((tiempoFin - tiempoActualEnMinutos) * 60 - segundoActual) * 1000;
+                    if (msHastaFin > 0 && msHastaFin < menorMs) {
+                        menorMs = msHastaFin;
+                    }
+                } else if (tiempoActualEnMinutos < tiempoInicio) {
+                    int msHastaInicio = ((tiempoInicio - tiempoActualEnMinutos) * 60 - segundoActual) * 1000;
+                    if (msHastaInicio > 0 && msHastaInicio < menorMs) {
+                        menorMs = msHastaInicio;
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (menorMs == Long.MAX_VALUE) {
+            return 300000; // Todos los cursos terminaron, revisar en 5 min
+        }
+        return Math.max(menorMs, 1000);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (horarioHandler != null && horarioRunnable != null) {
+            horarioHandler.removeCallbacks(horarioRunnable);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (horarioHandler != null && horarioRunnable != null) {
+            horarioHandler.removeCallbacks(horarioRunnable);
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -1390,7 +1484,12 @@ public class HomeActivity extends AppCompatActivity {
         actualizarVisibilidadMenuLateral();
         actualizarDatosUsuario();
         
-        // Solo recargar si NO es la primera vez (onCreate ya cargó)
+        // Recargar horario para actualizar si cambió la hora mientras estaba en otra pantalla
+        if (!esPrimeraVez) {
+            cargarHorarioActual();
+        }
+        
+        // Solo recargar comunicados si NO es la primera vez (onCreate ya cargó)
         if (!esPrimeraVez) {
             comunicadosCargados = false;
             cargarComunicados();

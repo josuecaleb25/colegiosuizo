@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.HorizontalScrollView;
@@ -30,6 +31,9 @@ public class HorariosActivity extends AppCompatActivity {
     private Calendar today;
     private int selectedDayIndex = -1;
     private String userMode;
+    private Handler horarioHandler = new Handler();
+    private Runnable horarioRunnable;
+    private List<Object> ultimosHorarios;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -204,6 +208,12 @@ public class HorariosActivity extends AppCompatActivity {
                     }
                     
                     mostrarHorarios(horariosData);
+                    // Guardar horarios y programar actualización si la fecha seleccionada es hoy
+                    boolean esDiaHoy = isSameDay(selectedDate, Calendar.getInstance());
+                    if (esDiaHoy) {
+                        ultimosHorarios = horariosData;
+                        programarProximaActualizacion();
+                    }
                 } else {
                     mostrarMensajeVacio();
                 }
@@ -287,7 +297,33 @@ public class HorariosActivity extends AppCompatActivity {
                 layoutLocation.setVisibility(View.GONE);
             }
 
-            if (i == 0) {
+            // Marcar curso actual si la fecha seleccionada es hoy
+            boolean esHoy = isSameDay(selectedDate, Calendar.getInstance());
+            boolean esCursoActual = false;
+            if (esHoy) {
+                Calendar ahora = Calendar.getInstance();
+                int horaActual = ahora.get(Calendar.HOUR_OF_DAY);
+                int minutoActual = ahora.get(Calendar.MINUTE);
+                int tiempoActualEnMinutos = horaActual * 60 + minutoActual;
+
+                try {
+                    String[] partesInicio = horaInicio.split(":");
+                    int horaIni = Integer.parseInt(partesInicio[0]);
+                    int minIni = Integer.parseInt(partesInicio[1]);
+                    int tiempoInicio = horaIni * 60 + minIni;
+
+                    String[] partesFin = horaFin.split(":");
+                    int horaF = Integer.parseInt(partesFin[0]);
+                    int minF = Integer.parseInt(partesFin[1]);
+                    int tiempoFin = horaF * 60 + minF;
+
+                    if (tiempoActualEnMinutos >= tiempoInicio && tiempoActualEnMinutos < tiempoFin) {
+                        esCursoActual = true;
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            if (esCursoActual) {
                 View card = itemView.findViewById(R.id.card_content);
                 card.setBackgroundResource(R.drawable.bg_course_card_red);
                 ((TextView) itemView.findViewById(R.id.tv_course_name)).setTextColor(Color.WHITE);
@@ -298,6 +334,88 @@ public class HorariosActivity extends AppCompatActivity {
             }
 
             coursesContainer.addView(itemView);
+        }
+    }
+
+    private void programarProximaActualizacion() {
+        if (horarioRunnable != null) {
+            horarioHandler.removeCallbacks(horarioRunnable);
+        }
+        horarioRunnable = () -> {
+            if (ultimosHorarios != null && !ultimosHorarios.isEmpty()) {
+                loadCoursesForSelectedDate();
+            }
+        };
+
+        long msParaProximoEvento = calcularMsHastaProximoEvento();
+        if (msParaProximoEvento > 0) {
+            horarioHandler.postDelayed(horarioRunnable, msParaProximoEvento);
+        }
+    }
+
+    private long calcularMsHastaProximoEvento() {
+        if (ultimosHorarios == null || ultimosHorarios.isEmpty()) {
+            return 60000;
+        }
+
+        Calendar ahora = Calendar.getInstance();
+        int horaActual = ahora.get(Calendar.HOUR_OF_DAY);
+        int minutoActual = ahora.get(Calendar.MINUTE);
+        int segundoActual = ahora.get(Calendar.SECOND);
+        int tiempoActualEnMinutos = horaActual * 60 + minutoActual;
+
+        com.google.gson.Gson gson = new com.google.gson.Gson();
+        long menorMs = Long.MAX_VALUE;
+
+        for (Object obj : ultimosHorarios) {
+            com.google.gson.JsonObject jsonObj = gson.toJsonTree(obj).getAsJsonObject();
+            String horaInicio = jsonObj.has("hora_inicio") ? jsonObj.get("hora_inicio").getAsString() : "";
+            String horaFin = jsonObj.has("hora_fin") ? jsonObj.get("hora_fin").getAsString() : "";
+
+            try {
+                String[] partesInicio = horaInicio.split(":");
+                int horaIni = Integer.parseInt(partesInicio[0]);
+                int minIni = Integer.parseInt(partesInicio[1]);
+                int tiempoInicio = horaIni * 60 + minIni;
+
+                String[] partesFin = horaFin.split(":");
+                int horaF = Integer.parseInt(partesFin[0]);
+                int minF = Integer.parseInt(partesFin[1]);
+                int tiempoFin = horaF * 60 + minF;
+
+                if (tiempoActualEnMinutos >= tiempoInicio && tiempoActualEnMinutos < tiempoFin) {
+                    int msHastaFin = ((tiempoFin - tiempoActualEnMinutos) * 60 - segundoActual) * 1000;
+                    if (msHastaFin > 0 && msHastaFin < menorMs) {
+                        menorMs = msHastaFin;
+                    }
+                } else if (tiempoActualEnMinutos < tiempoInicio) {
+                    int msHastaInicio = ((tiempoInicio - tiempoActualEnMinutos) * 60 - segundoActual) * 1000;
+                    if (msHastaInicio > 0 && msHastaInicio < menorMs) {
+                        menorMs = msHastaInicio;
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (menorMs == Long.MAX_VALUE) {
+            return 60000;
+        }
+        return Math.max(menorMs, 1000);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (horarioHandler != null && horarioRunnable != null) {
+            horarioHandler.removeCallbacks(horarioRunnable);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (horarioHandler != null && horarioRunnable != null) {
+            horarioHandler.removeCallbacks(horarioRunnable);
         }
     }
 

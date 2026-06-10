@@ -1,7 +1,10 @@
 package com.example.ieperuanosuizoapp.api;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -54,9 +57,33 @@ public class RetrofitClient {
                 }
             };
 
+            // Interceptor para manejar 401 (token expirado)
+            Interceptor responseInterceptor = new Interceptor() {
+                @Override
+                public Response intercept(Chain chain) throws IOException {
+                    Response response = chain.proceed(chain.request());
+                    
+                    if (response.code() == 401 && appContext != null) {
+                        SharedPreferences prefs = appContext.getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+                        String token = prefs.getString("user_token", null);
+                        if (token != null && !token.isEmpty()) {
+                            prefs.edit().clear().apply();
+                            new Handler(Looper.getMainLooper()).post(() -> {
+                                Intent intent = new Intent(appContext, com.example.ieperuanosuizoapp.AuthLogin.class);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                appContext.startActivity(intent);
+                            });
+                        }
+                    }
+                    
+                    return response;
+                }
+            };
+
             // Cliente HTTP con timeouts e interceptors
             OkHttpClient client = new OkHttpClient.Builder()
                     .addInterceptor(authInterceptor)
+                    .addInterceptor(responseInterceptor)
                     .addInterceptor(loggingInterceptor)
                     .connectTimeout(ApiConfig.CONNECT_TIMEOUT, TimeUnit.SECONDS)
                     .readTimeout(ApiConfig.READ_TIMEOUT, TimeUnit.SECONDS)

@@ -1,6 +1,7 @@
 package com.example.ieperuanosuizoapp;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -11,6 +12,8 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.viewpager2.widget.ViewPager2;
+
+import com.example.ieperuanosuizoapp.api.RetrofitClient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +28,18 @@ public class PresentationActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Verificar si ya hay sesión activa
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        String tokenGuardado = prefs.getString("user_token", null);
+        String userIdGuardado = prefs.getString("user_id", null);
+        if (tokenGuardado != null && !tokenGuardado.isEmpty() && userIdGuardado != null && !userIdGuardado.isEmpty()) {
+            RetrofitClient.init(this);
+            startActivity(new Intent(this, HomeActivity.class));
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_presentation);
 
         layoutDots = findViewById(R.id.layoutDots);
