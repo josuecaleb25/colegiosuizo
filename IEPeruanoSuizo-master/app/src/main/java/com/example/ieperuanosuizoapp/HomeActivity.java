@@ -1084,6 +1084,8 @@ public class HomeActivity extends AppCompatActivity {
                 @Override
                 public void onFailure(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<Object>> call, Throwable t) {
                     android.util.Log.e("HomeActivity", "Error al cargar días asistidos: " + t.getMessage());
+                    // Resetear valores por defecto si falla la conexión
+                    actualizarUIAsistencia(0, false, false, false, false, false);
                 }
             });
     }
