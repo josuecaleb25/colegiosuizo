@@ -51,6 +51,7 @@ public class HomeActivity extends AppCompatActivity {
     private Handler horarioHandler = new Handler();
     private List<Object> ultimosHorarios;
     private Runnable horarioRunnable;
+    private static final long CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -599,6 +600,11 @@ public class HomeActivity extends AppCompatActivity {
                         
                         // Marcar como cargados
                         comunicadosCargados = true;
+                        // Guardar timestamp de la última carga exitosa
+                        getSharedPreferences("cache_prefs", MODE_PRIVATE)
+                            .edit()
+                            .putLong("comunicados_time", System.currentTimeMillis())
+                            .apply();
                         
                     } else {
                         // Error en la respuesta - mostrar mensaje general
@@ -1075,6 +1081,7 @@ public class HomeActivity extends AppCompatActivity {
                         
                         // Actualizar UI
                         actualizarUIAsistencia(rachaActual, lunes, martes, miercoles, jueves, viernes);
+                        guardarAsistenciaCache(rachaActual, lunes, martes, miercoles, jueves, viernes);
                         
                     } else {
                         android.util.Log.w("HomeActivity", "Error al cargar días asistidos: " + response.message());
@@ -1155,6 +1162,7 @@ public class HomeActivity extends AppCompatActivity {
                             mostrarSinActividad();
                         }
                         programarProximaActualizacion();
+                        guardarHorarioCache(horariosData);
                     } else {
                         mostrarSinActividad();
                     }
@@ -1456,6 +1464,67 @@ public class HomeActivity extends AppCompatActivity {
         return Math.max(menorMs, 1000);
     }
 
+    private void guardarHorarioCache(List<Object> horarios) {
+        SharedPreferences prefs = getSharedPreferences("cache_prefs", MODE_PRIVATE);
+        com.google.gson.Gson gson = new com.google.gson.Gson();
+        String json = gson.toJson(horarios);
+        prefs.edit()
+            .putString("horario_data", json)
+            .putLong("horario_time", System.currentTimeMillis())
+            .apply();
+    }
+
+    private void cargarHorarioDesdeCache() {
+        SharedPreferences prefs = getSharedPreferences("cache_prefs", MODE_PRIVATE);
+        String json = prefs.getString("horario_data", null);
+        if (json == null) return;
+
+        java.lang.reflect.Type type = new com.google.gson.reflect.TypeToken<List<Object>>(){}.getType();
+        com.google.gson.Gson gson = new com.google.gson.Gson();
+        List<Object> horarios = gson.fromJson(json, type);
+        if (horarios == null || horarios.isEmpty()) return;
+
+        ultimosHorarios = horarios;
+        Object cursoActual = encontrarCursoActual(horarios);
+        if (cursoActual != null) {
+            actualizarUIHorario(cursoActual);
+        } else {
+            mostrarSinActividad();
+        }
+        programarProximaActualizacion();
+    }
+
+    private void guardarAsistenciaCache(int racha, boolean lunes, boolean martes, boolean miercoles, boolean jueves, boolean viernes) {
+        SharedPreferences prefs = getSharedPreferences("cache_prefs", MODE_PRIVATE);
+        prefs.edit()
+            .putInt("asistencia_racha", racha)
+            .putBoolean("asistencia_lunes", lunes)
+            .putBoolean("asistencia_martes", martes)
+            .putBoolean("asistencia_miercoles", miercoles)
+            .putBoolean("asistencia_jueves", jueves)
+            .putBoolean("asistencia_viernes", viernes)
+            .putLong("asistencia_time", System.currentTimeMillis())
+            .apply();
+    }
+
+    private void cargarAsistenciaDesdeCache() {
+        SharedPreferences prefs = getSharedPreferences("cache_prefs", MODE_PRIVATE);
+        if (!prefs.contains("asistencia_racha")) return;
+        int racha = prefs.getInt("asistencia_racha", 0);
+        boolean lunes = prefs.getBoolean("asistencia_lunes", false);
+        boolean martes = prefs.getBoolean("asistencia_martes", false);
+        boolean miercoles = prefs.getBoolean("asistencia_miercoles", false);
+        boolean jueves = prefs.getBoolean("asistencia_jueves", false);
+        boolean viernes = prefs.getBoolean("asistencia_viernes", false);
+        actualizarUIAsistencia(racha, lunes, martes, miercoles, jueves, viernes);
+    }
+
+    private boolean comunicadosCacheExpirados() {
+        SharedPreferences prefs = getSharedPreferences("cache_prefs", MODE_PRIVATE);
+        long time = prefs.getLong("comunicados_time", 0);
+        return System.currentTimeMillis() - time >= CACHE_TTL_MS;
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -1475,6 +1544,11 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        // Cargar datos cacheados al instante antes de cualquier API
+        cargarHorarioDesdeCache();
+        cargarAsistenciaDesdeCache();
+
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         bottomNav.setSelectedItemId(R.id.nav_home);
         
@@ -1486,15 +1560,18 @@ public class HomeActivity extends AppCompatActivity {
         actualizarVisibilidadMenuLateral();
         actualizarDatosUsuario();
         
-        // Recargar horario para actualizar si cambió la hora mientras estaba en otra pantalla
+        // Recargar horario y asistencia para actualizar si cambió mientras estaba fuera
         if (!esPrimeraVez) {
             cargarHorarioActual();
+            cargarDiasAsistidos();
         }
         
-        // Solo recargar comunicados si NO es la primera vez (onCreate ya cargó)
+        // Solo recargar comunicados si NO es la primera vez y pasó suficiente tiempo
         if (!esPrimeraVez) {
-            comunicadosCargados = false;
-            cargarComunicados();
+            if (comunicadosCacheExpirados()) {
+                comunicadosCargados = false;
+                cargarComunicados();
+            }
         } else {
             esPrimeraVez = false;
         }
