@@ -26,7 +26,7 @@ router.get('/perfil/:id', async (req, res) => {
            fecha_nacimiento
         )
       `)
-      .eq('id', id)
+      .eq('persona_id', id)
       .limit(1);
 
     if (error) throw error;
@@ -204,11 +204,10 @@ router.put('/perfil/:id', async (req, res) => {
     const { id } = req.params;
     const { telefono } = req.body;
 
-    // Obtener persona_id del usuario
     const { data: usuario, error: errorUsuario } = await supabase
       .from('usuarios')
       .select('persona_id')
-      .eq('id', id)
+      .eq('persona_id', id)
       .single();
 
     if (errorUsuario) throw errorUsuario;
