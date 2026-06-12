@@ -942,16 +942,20 @@ router.get('/leaderboard', async (req, res) => {
       let puntualCount = 0;
 
       for (const a of asistenciasAlumno) {
+        const minutos = parseHora(a.hora_entrada);
+        // Asistió si tiene hora de entrada (presente o tardanza del QR)
         if (a.estado === 'presente' || a.estado === 'tardanza') {
           asistencia++;
         }
-        if (a.estado === 'presente') {
+        // Puntual en el leaderboard = llegó antes de 7:15 AM (435 min)
+        if (minutos !== null && minutos <= 435) {
           puntual++;
-          const minutos = parseHora(a.hora_entrada);
-          if (minutos !== null) {
-            sumaMinutos += minutos;
-            puntualCount++;
-          }
+          sumaMinutos += minutos;
+          puntualCount++;
+        } else if (minutos !== null) {
+          // Tardanza: acumular hora para promedio igual
+          sumaMinutos += minutos;
+          puntualCount++;
         }
       }
 
