@@ -105,6 +105,12 @@ public class LeaderboardActivity extends AppCompatActivity {
             currentCalendar.add(Calendar.MONTH, 1);
             updateMonth();
         });
+
+        // Inicializar label del mes
+        SimpleDateFormat displayFmt = new SimpleDateFormat("MMMM yyyy", new Locale("es", "PE"));
+        String label = displayFmt.format(currentCalendar.getTime());
+        label = label.substring(0, 1).toUpperCase() + label.substring(1);
+        tvMonthLabel.setText(label);
     }
 
     private void updateMonth() {
@@ -124,6 +130,11 @@ public class LeaderboardActivity extends AppCompatActivity {
     }
 
     private void setupTabLayout() {
+        // Set icons on tabs
+        TabLayout.Tab tab0 = tabLayout.getTabAt(0);
+        TabLayout.Tab tab1 = tabLayout.getTabAt(1);
+        if (tab0 != null) tab0.setIcon(R.drawable.ic_fire);
+        if (tab1 != null) tab1.setIcon(R.drawable.ic_check_circle);
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
