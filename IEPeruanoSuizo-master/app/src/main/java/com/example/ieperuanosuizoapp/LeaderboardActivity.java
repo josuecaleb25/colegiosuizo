@@ -241,11 +241,13 @@ public class LeaderboardActivity extends AppCompatActivity {
             switch (tipo) {
                 case "puntual":
                     holder.tvPercentage.setText(entry.getPuntualidad() + "%");
-                    holder.tvStats.setText(entry.getPuntual() + "/" + entry.getTotalDias() + " puntual");
+                    holder.tvLabel.setText("puntualidad");
+                    holder.tvStats.setText(entry.getPuntual() + " de " + entry.getTotalDias() + " días");
                     break;
                 case "asistencia":
                     holder.tvPercentage.setText(entry.getAsistencia() + "%");
-                    holder.tvStats.setText(entry.getAsistenciaDias() + "/" + entry.getTotalDias() + " asistió");
+                    holder.tvLabel.setText("asistencia");
+                    holder.tvStats.setText(entry.getAsistenciaDias() + " de " + entry.getTotalDias() + " días");
                     break;
             }
         }
@@ -256,7 +258,7 @@ public class LeaderboardActivity extends AppCompatActivity {
         }
 
         static class ViewHolder extends RecyclerView.ViewHolder {
-            TextView tvPosition, tvName, tvPercentage, tvStats;
+            TextView tvPosition, tvName, tvPercentage, tvStats, tvLabel;
 
             ViewHolder(View itemView) {
                 super(itemView);
@@ -264,6 +266,7 @@ public class LeaderboardActivity extends AppCompatActivity {
                 tvName = itemView.findViewById(R.id.tv_name);
                 tvPercentage = itemView.findViewById(R.id.tv_percentage);
                 tvStats = itemView.findViewById(R.id.tv_stats);
+                tvLabel = itemView.findViewById(R.id.tv_label);
             }
         }
     }

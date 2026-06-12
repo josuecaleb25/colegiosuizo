@@ -1,76 +1,96 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="2dp"
-    app:cardBackgroundColor="#FFFFFF">
+    app:cardBackgroundColor="?attr/homeContentBackground"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="2dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="80dp"
+        android:layout_height="72dp"
         android:padding="12dp">
 
-        <!-- Position number -->
+        <!-- Position badge -->
         <TextView
             android:id="@+id/tv_position"
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:gravity="center"
-            android:fontFamily="@font/poppinsbold"
-            android:textSize="14sp"
-            android:textColor="#FFFFFF"
-            android:background="@drawable/circle_red"
+            android:fontFamily="@font/poppinssemibold"
+            android:textColor="#BA1924"
+            android:textSize="15sp"
+            android:background="@drawable/circle_red_outline"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="1" />
 
-        <!-- Student name -->
-        <TextView
-            android:id="@+id/tv_name"
+        <!-- Name and subtitle -->
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
-            android:fontFamily="@font/poppinssemibold"
-            android:textColor="#2D2D2D"
-            android:textSize="14sp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/layout_right"
             app:layout_constraintStart_toEndOf="@id/tv_position"
-            app:layout_constraintTop_toTopOf="@id/tv_position"
-            tools:text="Sebastián López" />
+            app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Percentage badge -->
-        <TextView
-            android:id="@+id/tv_percentage"
-            android:layout_width="wrap_content"
-            android:layout_height="28dp"
-            android:gravity="center"
-            android:paddingHorizontal="12dp"
-            android:fontFamily="@font/poppinsbold"
-            android:textSize="13sp"
-            android:textColor="#FFFFFF"
-            android:background="@drawable/badge_percentage"
-            app:layout_constraintBottom_toBottomOf="@id/tv_position"
-            app:layout_constraintStart_toStartOf="@id/tv_name"
-            tools:text="95%" />
+            <TextView
+                android:id="@+id/tv_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinssemibold"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="14sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="Sebastián López" />
 
-        <!-- Stats detail -->
-        <TextView
-            android:id="@+id/tv_stats"
+            <TextView
+                android:id="@+id/tv_stats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinsregular"
+                android:textColor="#9E9E9E"
+                android:textSize="11sp"
+                tools:text="8 de 10 días" />
+        </LinearLayout>
+
+        <!-- Right side: percentage -->
+        <LinearLayout
+            android:id="@+id/layout_right"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/poppinsregular"
-            android:textColor="#9E9E9E"
-            android:textSize="11sp"
-            app:layout_constraintBottom_toBottomOf="@id/tv_percentage"
+            android:gravity="center"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/tv_percentage"
-            tools:text="8/10 puntual" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/tv_percentage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:fontFamily="@font/poppinsbold"
+                android:textColor="#BA1924"
+                android:textSize="20sp"
+                tools:text="95%" />
+
+            <TextView
+                android:id="@+id/tv_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinsregular"
+                android:textColor="#9E9E9E"
+                android:textSize="10sp"
+                android:text="puntualidad" />
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

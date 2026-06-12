@@ -388,7 +388,7 @@ public class HomeActivity extends AppCompatActivity {
         menu.findItem(R.id.nav_horarios).setVisible(true);
         menu.findItem(R.id.nav_perfil).setVisible(true);
         menu.findItem(R.id.nav_identificacion).setVisible(false);
-        menu.findItem(R.id.nav_leaderboard).setVisible(false);
+        menu.findItem(R.id.nav_leaderboard).setVisible(true);
         
         // Cambiar de Rol solo visible para administradores
         menu.findItem(R.id.nav_switch_role).setVisible(false);
