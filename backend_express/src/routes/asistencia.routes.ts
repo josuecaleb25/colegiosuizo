@@ -958,7 +958,7 @@ router.get('/leaderboard', async (req, res) => {
 
     res.json({
       success: true,
-      data: ordenado
+      data: ordenado.slice(0, 15)
     });
   } catch (error: any) {
     console.error('Error en leaderboard:', error);
