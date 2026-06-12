@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -18,14 +19,14 @@ import com.example.ieperuanosuizoapp.api.RetrofitClient;
 import com.example.ieperuanosuizoapp.api.models.ApiResponse;
 import com.example.ieperuanosuizoapp.api.models.LeaderboardEntry;
 import com.google.android.material.tabs.TabLayout;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -49,7 +50,7 @@ public class LeaderboardActivity extends AppCompatActivity {
     private String userRol;
     private String currentTipo = "puntual";
     private String currentMes;
-    private String currentSalon = null; // null = Todos
+    private String currentSalon = null;
     private Calendar currentCalendar;
 
     private List<LeaderboardEntry> entries = new ArrayList<>();
@@ -74,8 +75,7 @@ public class LeaderboardActivity extends AppCompatActivity {
         setupTabLayout();
         setupSwipeRefresh();
         setupRecyclerView();
-        setupSectionSelector();
-        fetchLeaderboard();
+        fetchSections();
     }
 
     private void initViews() {
@@ -157,9 +157,52 @@ public class LeaderboardActivity extends AppCompatActivity {
         rvLeaderboard.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
     }
 
+    private void fetchSections() {
+        showLoading(true);
+        RetrofitClient.getApiService().getSecciones(userId, userRol).enqueue(new Callback<ApiResponse<List<Object>>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<List<Object>>> call, Response<ApiResponse<List<Object>>> response) {
+                showLoading(false);
+                salonNames.clear();
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    List<Object> data = response.body().getData();
+                    if (data != null && !data.isEmpty()) {
+                        Gson gson = new Gson();
+                        for (Object obj : data) {
+                            JsonObject json = gson.toJsonTree(obj).getAsJsonObject();
+                            String nombre = json.has("nombre") ? json.get("nombre").getAsString() : "";
+                            if (!nombre.isEmpty()) salonNames.add(nombre);
+                        }
+                    }
+                }
+                if (salonNames.isEmpty()) {
+                    salonNames.add("1ro A");
+                    salonNames.add("2do B");
+                    salonNames.add("3ro C");
+                    salonNames.add("4to A");
+                    salonNames.add("5to B");
+                }
+                setupSectionSelector();
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<List<Object>>> call, Throwable t) {
+                showLoading(false);
+                salonNames.clear();
+                salonNames.add("1ro A");
+                salonNames.add("2do B");
+                salonNames.add("3ro C");
+                salonNames.add("4to A");
+                salonNames.add("5to B");
+                setupSectionSelector();
+            }
+        });
+    }
+
     private void setupSectionSelector() {
         List<String> names = new ArrayList<>();
         names.add("Todos");
+        names.addAll(salonNames);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, names);
         autoCompleteSection.setAdapter(adapter);
         autoCompleteSection.setText("Todos", false);
@@ -172,29 +215,7 @@ public class LeaderboardActivity extends AppCompatActivity {
             }
             applyFilter();
         });
-    }
-
-    private void rebuildSalonSelector(List<LeaderboardEntry> data) {
-        Set<String> unique = new LinkedHashSet<>();
-        for (LeaderboardEntry e : data) {
-            String s = e.getSalon();
-            if (s != null && !s.isEmpty()) unique.add(s);
-        }
-        salonNames.clear();
-        salonNames.addAll(unique);
-        List<String> names = new ArrayList<>();
-        names.add("Todos");
-        names.addAll(salonNames);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, names);
-        autoCompleteSection.setAdapter(adapter);
-        if (currentSalon == null) {
-            autoCompleteSection.setText("Todos", false);
-        } else if (salonNames.contains(currentSalon)) {
-            autoCompleteSection.setText(currentSalon, false);
-        } else {
-            currentSalon = null;
-            autoCompleteSection.setText("Todos", false);
-        }
+        fetchLeaderboard();
     }
 
     private void applyFilter() {
@@ -240,7 +261,6 @@ public class LeaderboardActivity extends AppCompatActivity {
                         sectionHeader.setVisibility(View.VISIBLE);
                         statusLayout.setVisibility(View.VISIBLE);
                         updatePodium();
-                        rebuildSalonSelector(data);
                     } else {
                         entries.clear();
                         filteredEntries.clear();
