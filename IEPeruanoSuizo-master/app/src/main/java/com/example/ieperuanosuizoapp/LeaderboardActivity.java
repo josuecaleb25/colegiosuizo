@@ -206,6 +206,7 @@ public class LeaderboardActivity extends AppCompatActivity {
                             tvEmptyInner.setVisibility(View.VISIBLE);
                             tvEmptyInner.setText("No hay datos para este período");
                         }
+                    }
 
                     @Override
                     public void onFailure(Call<ApiResponse<List<LeaderboardEntry>>> call, Throwable t) {
