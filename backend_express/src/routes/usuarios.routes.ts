@@ -9,43 +9,56 @@ router.get('/perfil/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Buscar usuario con sus relaciones
-    const { data: usuarios, error } = await supabase
-      .from('usuarios')
+    // Buscar persona por ID (login usa personas, no necesariamente usuarios)
+    const { data: personas, error: personaError } = await supabase
+      .from('personas')
       .select(`
         id,
-        email,
-        rol,
-        activo,
-        personas!inner (
+        dni,
+        nombres,
+        apellidos,
+        correo,
+        telefono,
+        fecha_nacimiento,
+        alumnos (
           id,
-          nombres,
-          apellidos,
-          dni,
-           telefono,
-           fecha_nacimiento
-        )
+          codigo_alumno,
+          estado,
+          matriculas (
+            seccion_id,
+            secciones (
+              nombre,
+              grados ( nombre )
+            )
+          )
+        ),
+        docentes (id, codigo_docente, estado)
       `)
-      .eq('persona_id', id)
+      .eq('id', id)
       .limit(1);
 
-    if (error) throw error;
+    if (personaError) throw personaError;
 
-    if (!usuarios || usuarios.length === 0) {
+    if (!personas || personas.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Usuario no encontrado'
+        message: 'Persona no encontrada'
       });
     }
 
-    const usuario = usuarios[0];
-    const persona = Array.isArray(usuario.personas) ? usuario.personas[0] : usuario.personas;
+    const persona = personas[0];
+
+    // Determinar rol igual que en login
+    let rol = 'padre';
+    if (persona.docentes && persona.docentes.length > 0) {
+      rol = 'profesor';
+    }
 
     let perfilCompleto: any = {
-      id: usuario.id,
-      email: usuario.email,
-      rol: usuario.rol,
-      activo: usuario.activo,
+      id: persona.id,
+      email: persona.correo,
+      rol: rol,
+      activo: true,
       persona: {
         id: persona.id,
         nombres: persona.nombres,
@@ -56,82 +69,61 @@ router.get('/perfil/:id', async (req, res) => {
       }
     };
 
-    // Función auxiliar para obtener datos de alumno por persona_id
-    async function obtenerDatosAlumno(personaId: string) {
-      const { data: alumno } = await supabase
-        .from('alumnos')
-        .select(`
-          id,
-          codigo,
-          matriculas!inner (
-            id,
-            secciones!inner (
-              id,
-              nombre,
-              grados!inner (
-                nombre
-              )
-            )
-          ),
-          codigos_qr (
-            codigo,
-            activo
-          )
-        `)
-        .eq('persona_id', personaId)
+    // Función para generar QR y armar objeto alumno
+    async function generarQRCompleto(alumnoRow: any, personaId: string): Promise<any> {
+      const matriculas = Array.isArray(alumnoRow.matriculas) ? alumnoRow.matriculas : [alumnoRow.matriculas];
+      const matriculaActiva = matriculas[0];
+      const secciones = Array.isArray(matriculaActiva.secciones) ? matriculaActiva.secciones[0] : matriculaActiva.secciones;
+      const grados = Array.isArray(secciones.grados) ? secciones.grados[0] : secciones.grados;
+
+      // Buscar QR token en tabla codigos_qr
+      const { data: qrData } = await supabase
+        .from('codigos_qr')
+        .select('codigo')
+        .eq('alumno_id', alumnoRow.id)
         .eq('activo', true)
         .limit(1);
+      const qrCodeString = qrData && qrData.length > 0 ? qrData[0].codigo : null;
 
-      if (alumno && alumno.length > 0) {
-        const matriculas = Array.isArray(alumno[0].matriculas) ? alumno[0].matriculas : [alumno[0].matriculas];
-        const matriculaActiva = matriculas[0];
-        const secciones = Array.isArray(matriculaActiva.secciones) ? matriculaActiva.secciones[0] : matriculaActiva.secciones;
-        const grados = Array.isArray(secciones.grados) ? secciones.grados[0] : secciones.grados;
-        const codigoQR = alumno[0].codigos_qr?.find((qr: any) => qr.activo);
-        const qrCodeString = codigoQR?.codigo || null;
-        
-        let qrImage = null;
-        if (qrCodeString) {
-          try {
-            qrImage = await QRCode.toDataURL(qrCodeString, {
-              width: 300,
-              margin: 2,
-              color: {
-                dark: '#000000',
-                light: '#FFFFFF'
-              }
-            });
-          } catch (qrError) {
-            console.error('Error generando QR image en perfil:', qrError);
-          }
+      let qrImage = null;
+      if (qrCodeString) {
+        try {
+          qrImage = await QRCode.toDataURL(qrCodeString, {
+            width: 300, margin: 2,
+            color: { dark: '#000000', light: '#FFFFFF' }
+          });
+        } catch (qrError) {
+          console.error('Error generando QR image en perfil:', qrError);
         }
+      }
 
-        // Obtener nombre completo del alumno
-        const { data: alumnoPersona } = await supabase
-          .from('personas')
-          .select('nombres, apellidos')
-          .eq('id', personaId)
-          .single();
+      const { data: alumnoPersona } = await supabase
+        .from('personas')
+        .select('nombres, apellidos')
+        .eq('id', personaId)
+        .single();
 
-        perfilCompleto.alumno = {
-          id: alumno[0].id,
-          codigo: alumno[0].codigo,
-          seccion: `${grados.nombre} ${secciones.nombre}`,
-          seccion_id: secciones.id,
-          codigo_qr: qrCodeString,
-          qr_image: qrImage,
-          nombre_completo: alumnoPersona ? `${alumnoPersona.nombres} ${alumnoPersona.apellidos}` : ''
-        };
+      return {
+        id: alumnoRow.id,
+        codigo: alumnoRow.codigo_alumno || '',
+        seccion: `${grados.nombre} ${secciones.nombre}`,
+        seccion_id: secciones.id,
+        codigo_qr: qrCodeString,
+        qr_image: qrImage,
+        nombre_completo: alumnoPersona ? `${alumnoPersona.nombres} ${alumnoPersona.apellidos}` : ''
+      };
+    }
+
+    // Si ya trajimos alumnos en la consulta principal (ALUMNO directo)
+    if (persona.alumnos && persona.alumnos.length > 0) {
+      const alumnoRow = persona.alumnos[0];
+      if (alumnoRow.estado === 'activo') {
+        perfilCompleto.alumno = await generarQRCompleto(alumnoRow, persona.id);
       }
     }
 
-    const rolLower = usuario.rol.toLowerCase();
-
-    if (rolLower === 'alumno') {
-      await obtenerDatosAlumno(persona.id);
-    }
-
-    if (rolLower === 'padre') {
+    // Si es padre, buscar datos del hijo a través de padres_alumnos
+    if (rol === 'padre' && (!persona.alumnos || persona.alumnos.length === 0)) {
       const { data: relacion } = await supabase
         .from('padres_alumnos')
         .select('alumno_id, alumnos!inner(persona_id, estado)')
@@ -141,12 +133,21 @@ router.get('/perfil/:id', async (req, res) => {
 
       if (relacion) {
         const alumnosData = relacion.alumnos as any;
-        await obtenerDatosAlumno(alumnosData.persona_id);
+        const { data: hijoAlumno } = await supabase
+          .from('alumnos')
+          .select('id, codigo_alumno, matriculas!inner(secciones!inner(id, nombre, grados!inner(nombre)))')
+          .eq('persona_id', alumnosData.persona_id)
+          .eq('activo', true)
+          .limit(1);
+
+        if (hijoAlumno && hijoAlumno.length > 0) {
+          perfilCompleto.alumno = await generarQRCompleto(hijoAlumno[0], alumnosData.persona_id);
+        }
       }
     }
 
     // Si es docente, obtener datos adicionales
-    if (usuario.rol === 'DOCENTE') {
+    if (rol === 'profesor' && persona.docentes && persona.docentes.length > 0) {
       const { data: docente } = await supabase
         .from('docentes')
         .select(`
