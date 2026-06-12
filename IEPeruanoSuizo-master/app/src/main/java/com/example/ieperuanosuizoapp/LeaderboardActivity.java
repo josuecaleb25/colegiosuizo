@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
@@ -190,18 +189,13 @@ public class LeaderboardActivity extends AppCompatActivity {
         currentSeccionId = -1;
         fetchLeaderboard();
 
-        autoCompleteSection.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position == 0) {
-                    currentSeccionId = -1;
-                } else {
-                    currentSeccionId = sections.get(position - 1).getId();
-                }
-                fetchLeaderboard();
+        autoCompleteSection.setOnItemClickListener((parent, view, position, id) -> {
+            if (position == 0) {
+                currentSeccionId = -1;
+            } else {
+                currentSeccionId = sections.get(position - 1).getId();
             }
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
+            fetchLeaderboard();
         });
     }
 
