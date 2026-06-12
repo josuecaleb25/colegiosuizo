@@ -117,7 +117,6 @@
                             android:layout_height="24dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:contentDescription="Mes anterior"
-                            android:rotation="180"
                             android:scaleType="center"
                             android:src="@drawable/righticon"
                             app:tint="#666666" />
@@ -138,6 +137,7 @@
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:contentDescription="Mes siguiente"
                             android:scaleType="center"
+                            android:rotation="180"
                             android:src="@drawable/righticon"
                             app:tint="#666666" />
                     </LinearLayout>
