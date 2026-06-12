@@ -98,6 +98,20 @@ public interface ApiService {
         @Query("usuario_id") String usuarioId,
         @Query("rol") String rol
     );
+
+    @GET("secciones")
+    Call<ApiResponse<List<com.example.ieperuanosuizoapp.api.models.Section>>> getSeccionesTyped(
+        @Query("usuario_id") String usuarioId,
+        @Query("rol") String rol
+    );
+
+    // Leaderboard
+    @GET("asistencia/leaderboard")
+    Call<ApiResponse<List<com.example.ieperuanosuizoapp.api.models.LeaderboardEntry>>> getLeaderboard(
+        @Query("seccion_id") int seccionId,
+        @Query("tipo") String tipo,
+        @Query("mes") String mes
+    );
     
     // Perfil de Usuario
     @GET("usuarios/perfil/{user_id}")

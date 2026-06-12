@@ -26,6 +26,10 @@
             android:id="@+id/nav_identificacion"
             android:icon="@drawable/carduseridentifinew"
             android:title="Mi identificación" />
+        <item
+            android:id="@+id/nav_leaderboard"
+            android:icon="@drawable/ic_leaderboard"
+            android:title="Leaderboard" />
 
         <item
             android:id="@+id/nav_switch_role"

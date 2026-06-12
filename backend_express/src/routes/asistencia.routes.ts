@@ -833,4 +833,130 @@ router.get('/historial/:alumno_id', async (req, res) => {
   }
 });
 
+// GET /api/asistencia/leaderboard - Leaderboard de puntualidad/asistencia
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const { seccion_id, tipo, mes } = req.query;
+
+    if (!seccion_id || !tipo || !mes) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere seccion_id, tipo y mes'
+      });
+    }
+
+    const fechaInicio = `${mes}-01`;
+    const fechaFin = `${mes}-31`;
+
+    // Obtener alumnos activos en la sección
+    const { data: matriculasData, error: matError } = await supabase
+      .from('matriculas')
+      .select('alumno_id')
+      .eq('seccion_id', seccion_id)
+      .eq('activo', true);
+
+    if (matError) {
+      console.error('Error obteniendo matrículas:', matError);
+      throw matError;
+    }
+
+    if (!matriculasData || matriculasData.length === 0) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const alumnoIds = matriculasData.map(m => m.alumno_id);
+
+    const { data: alumnos, error: alumnosError } = await supabase
+      .from('alumnos')
+      .select(`
+        persona_id,
+        personas ( id, nombres, apellidos )
+      `)
+      .in('id', alumnoIds);
+
+    if (alumnosError) {
+      console.error('Error obteniendo alumnos:', alumnosError);
+      throw alumnosError;
+    }
+
+    if (!alumnos || alumnos.length === 0) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const personaIds = alumnos.map(a => a.persona_id);
+
+    // Obtener asistencias del mes para esos alumnos
+    const { data: asistencias, error: asisError } = await supabase
+      .from('asistencias')
+      .select('persona_id, estado, hora_entrada, fecha')
+      .in('persona_id', personaIds)
+      .gte('fecha', fechaInicio)
+      .lte('fecha', fechaFin)
+      .eq('tipo_persona', 'alumno')
+      .order('fecha', { ascending: false });
+
+    if (asisError) {
+      console.error('Error obteniendo asistencias:', asisError);
+      throw asisError;
+    }
+
+    // Construir leaderboard
+    const leaderboard = alumnos.map(alumno => {
+      const persona = alumno.personas as any;
+      const asistenciasAlumno = asistencias?.filter(a => a.persona_id === alumno.persona_id) || [];
+      const totalDias = asistenciasAlumno.length;
+
+      let puntual = 0;
+      let asistencia = 0;
+
+      for (const a of asistenciasAlumno) {
+        if (a.estado === 'presente' || a.estado === 'tardanza') {
+          asistencia++;
+        }
+        if (a.estado === 'presente') {
+          puntual++;
+        }
+      }
+
+      const puntualidad = totalDias > 0 ? Math.round((puntual / totalDias) * 100) : 0;
+      const asistenciaPct = totalDias > 0 ? Math.round((asistencia / totalDias) * 100) : 0;
+
+      return {
+        persona_id: alumno.persona_id,
+        nombres: persona?.nombres || '',
+        apellidos: persona?.apellidos || '',
+        total_dias: totalDias,
+        puntual,
+        tardanza: totalDias - puntual,
+        puntualidad,
+        asistencia_dias: asistencia,
+        asistencia: asistenciaPct
+      };
+    });
+
+    // Ordenar según tipo
+    const ordenado = leaderboard.sort((a, b) => {
+      if (tipo === 'puntual') {
+        if (b.puntualidad !== a.puntualidad) return b.puntualidad - a.puntualidad;
+        return b.puntual - a.puntual;
+      }
+      // asistencia
+      if (b.asistencia !== a.asistencia) return b.asistencia - a.asistencia;
+      return b.asistencia_dias - a.asistencia_dias;
+    });
+
+    res.json({
+      success: true,
+      data: ordenado
+    });
+  } catch (error: any) {
+    console.error('Error en leaderboard:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener leaderboard',
+      error: error.message
+    });
+  }
+});
+
 export default router;

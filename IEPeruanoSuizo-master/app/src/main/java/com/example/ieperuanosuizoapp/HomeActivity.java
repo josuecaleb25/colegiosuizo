@@ -205,6 +205,13 @@ public class HomeActivity extends AppCompatActivity {
                 overridePendingTransition(0, 0);
                 drawerLayout.closeDrawer(GravityCompat.START);
                 return true;
+            } else if (id == R.id.nav_leaderboard) {
+                Intent intent = new Intent(HomeActivity.this, LeaderboardActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+                startActivity(intent);
+                overridePendingTransition(0, 0);
+                drawerLayout.closeDrawer(GravityCompat.START);
+                return true;
             } else if (id == R.id.nav_panel_admin) {
                 Intent intent = new Intent(HomeActivity.this, AdminPanelActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
@@ -381,6 +388,7 @@ public class HomeActivity extends AppCompatActivity {
         menu.findItem(R.id.nav_horarios).setVisible(true);
         menu.findItem(R.id.nav_perfil).setVisible(true);
         menu.findItem(R.id.nav_identificacion).setVisible(false);
+        menu.findItem(R.id.nav_leaderboard).setVisible(false);
         
         // Cambiar de Rol solo visible para administradores
         menu.findItem(R.id.nav_switch_role).setVisible(false);
@@ -405,13 +413,15 @@ public class HomeActivity extends AppCompatActivity {
             menu.findItem(R.id.nav_identificacion).setVisible(false);
             menu.findItem(R.id.nav_gestion_comunicados).setVisible(true);
             menu.findItem(R.id.nav_asistencia).setVisible(false);
+            menu.findItem(R.id.nav_leaderboard).setVisible(true);
             menu.findItem(R.id.nav_panel_admin).setVisible(false);
             
         } else if ("AUXILIAR".equals(rolNormalizado)) {
-            // Auxiliar: Solo Inicio, Comunicados y Asistencia
+            // Auxiliar: Inicio, Comunicados, Asistencia y Leaderboard
             menu.findItem(R.id.nav_home).setVisible(true);
             menu.findItem(R.id.nav_gestion_comunicados).setVisible(true);
             menu.findItem(R.id.nav_asistencia).setVisible(true);
+            menu.findItem(R.id.nav_leaderboard).setVisible(true);
             
             // Ocultar el resto
             menu.findItem(R.id.nav_cursos).setVisible(false);
@@ -428,6 +438,7 @@ public class HomeActivity extends AppCompatActivity {
             menu.findItem(R.id.nav_perfil).setVisible(true);
             menu.findItem(R.id.nav_identificacion).setVisible(false);
             menu.findItem(R.id.nav_asistencia).setVisible(true);
+            menu.findItem(R.id.nav_leaderboard).setVisible(true);
             menu.findItem(R.id.nav_switch_role).setVisible(true); // Solo admin puede cambiar de rol
             menu.findItem(R.id.nav_panel_admin).setVisible(true);
             

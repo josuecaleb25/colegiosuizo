@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAFAFA"
+    tools:context=".LeaderboardActivity">
+
+    <View
+        android:id="@+id/status_bar_background"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#BA1924"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/btn_back"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="52dp"
+        app:cardCornerRadius="15dp"
+        app:cardElevation="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/border_red_2dp">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/chvronlefticon"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="56dp"
+        android:layout_marginEnd="20dp"
+        android:fontFamily="@font/poppinsbold"
+        android:text="Leaderboard"
+        android:textColor="#BA1924"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/btn_back"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_subtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="20dp"
+        android:fontFamily="@font/poppinsregular"
+        android:text="Rendimiento de asistencia"
+        android:textColor="#5E5F60"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@id/tv_title"
+        app:layout_constraintTop_toBottomOf="@id/tv_title" />
+
+    <LinearLayout
+        android:id="@+id/layout_section_selector"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:gravity="center_vertical"
+        android:background="@drawable/border_red_2dp"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_subtitle">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/poppinsregular"
+            android:text="Sección:"
+            android:textColor="#BA1924"
+            android:textSize="12sp" />
+
+        <Spinner
+            android:id="@+id/spinner_section"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@null"
+            android:fontFamily="@font/poppinsbold"
+            android:textColor="#2D2D2D"
+            android:textSize="13sp" />
+
+    </LinearLayout>
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_layout"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        app:tabIndicatorColor="#BA1924"
+        app:tabIndicatorFullWidth="false"
+        app:tabIndicatorHeight="3dp"
+        app:tabMode="fixed"
+        app:tabSelectedTextColor="#BA1924"
+        app:tabTextColor="#5E5F60"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_subtitle">
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Puntualidad" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Asistencia" />
+
+    </com.google.android.material.tabs.TabLayout>
+
+    <View
+        android:id="@+id/divider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="#E0E0E0"
+        app:layout_constraintEnd_toEndOf="@id/tab_layout"
+        app:layout_constraintStart_toStartOf="@id/tab_layout"
+        app:layout_constraintTop_toBottomOf="@id/tab_layout" />
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipe_refresh"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/divider">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_leaderboard"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="80dp" />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/divider" />
+
+    <TextView
+        android:id="@+id/tv_empty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poppinsregular"
+        android:text="No hay datos disponibles"
+        android:textColor="#9E9E9E"
+        android:textSize="16sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/divider" />
+
+    <!-- Red decorative strip on the right -->
+    <View
+        android:layout_width="70dp"
+        android:layout_height="0dp"
+        android:background="#BA1924"
+        android:alpha="0.06"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
