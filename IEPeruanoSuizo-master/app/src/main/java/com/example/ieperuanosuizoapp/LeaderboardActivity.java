@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -21,7 +22,7 @@ import com.google.android.material.tabs.TabLayout;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
@@ -38,14 +39,17 @@ public class LeaderboardActivity extends AppCompatActivity {
     private TextView tvEmpty;
     private androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipeRefresh;
 
-    private View sectionHeader, statusLayout, podiumContainer;
+    private View sectionHeader, statusLayout, podiumContainer, monthNav;
     private TextView tvName1, tvScore1, tvName2, tvScore2, tvName3, tvScore3;
+    private TextView tvMonthLabel;
+    private ImageButton btnPrevMonth, btnNextMonth;
 
     private String userId;
     private String userRol;
     private String currentTipo = "puntual";
     private String currentMes;
     private int currentSeccionId = -1;
+    private Calendar currentCalendar;
 
     private List<Section> sections = new ArrayList<>();
     private List<LeaderboardEntry> entries = new ArrayList<>();
@@ -56,7 +60,8 @@ public class LeaderboardActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_leaderboard);
 
-        currentMes = new SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(new Date());
+        currentCalendar = Calendar.getInstance();
+        currentMes = new SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(currentCalendar.getTime());
 
         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         userId = prefs.getString("user_id", "");
@@ -80,6 +85,10 @@ public class LeaderboardActivity extends AppCompatActivity {
         sectionHeader = findViewById(R.id.section_header);
         statusLayout = findViewById(R.id.status_layout);
         podiumContainer = findViewById(R.id.podium_container);
+        monthNav = findViewById(R.id.month_nav);
+        tvMonthLabel = findViewById(R.id.tv_month_label);
+        btnPrevMonth = findViewById(R.id.btn_prev_month);
+        btnNextMonth = findViewById(R.id.btn_next_month);
 
         tvName1 = findViewById(R.id.tv_name_1);
         tvScore1 = findViewById(R.id.tv_score_1);
@@ -87,6 +96,24 @@ public class LeaderboardActivity extends AppCompatActivity {
         tvScore2 = findViewById(R.id.tv_score_2);
         tvName3 = findViewById(R.id.tv_name_3);
         tvScore3 = findViewById(R.id.tv_score_3);
+
+        btnPrevMonth.setOnClickListener(v -> {
+            currentCalendar.add(Calendar.MONTH, -1);
+            updateMonth();
+        });
+        btnNextMonth.setOnClickListener(v -> {
+            currentCalendar.add(Calendar.MONTH, 1);
+            updateMonth();
+        });
+    }
+
+    private void updateMonth() {
+        currentMes = new SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(currentCalendar.getTime());
+        SimpleDateFormat displayFmt = new SimpleDateFormat("MMMM yyyy", new Locale("es", "PE"));
+        String label = displayFmt.format(currentCalendar.getTime());
+        label = label.substring(0, 1).toUpperCase() + label.substring(1);
+        tvMonthLabel.setText(label);
+        fetchLeaderboard();
     }
 
     private void setupBackButton() {
@@ -174,6 +201,7 @@ public class LeaderboardActivity extends AppCompatActivity {
         tvEmpty.setVisibility(View.GONE);
         sectionHeader.setVisibility(View.GONE);
         statusLayout.setVisibility(View.GONE);
+        monthNav.setVisibility(View.GONE);
         podiumContainer.setVisibility(View.GONE);
 
         retrofit2.Call<ApiResponse<List<LeaderboardEntry>>> call;
@@ -193,12 +221,14 @@ public class LeaderboardActivity extends AppCompatActivity {
                             entries.addAll(response.body().getData());
                             adapter.notifyDataSetChanged();
                             sectionHeader.setVisibility(View.VISIBLE);
+                            monthNav.setVisibility(View.VISIBLE);
                             statusLayout.setVisibility(View.VISIBLE);
                             updatePodium();
                         } else {
                             entries.clear();
                             adapter.notifyDataSetChanged();
                             sectionHeader.setVisibility(View.VISIBLE);
+                            monthNav.setVisibility(View.VISIBLE);
                             statusLayout.setVisibility(View.GONE);
                             podiumContainer.setVisibility(View.GONE);
                             tvEmpty.setVisibility(View.VISIBLE);
@@ -213,6 +243,7 @@ public class LeaderboardActivity extends AppCompatActivity {
                         entries.clear();
                         adapter.notifyDataSetChanged();
                         sectionHeader.setVisibility(View.GONE);
+                        monthNav.setVisibility(View.GONE);
                         statusLayout.setVisibility(View.GONE);
                         podiumContainer.setVisibility(View.GONE);
                         tvEmpty.setVisibility(View.VISIBLE);

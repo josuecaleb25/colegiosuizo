@@ -885,14 +885,24 @@ router.get('/leaderboard', async (req, res) => {
       return res.json({ success: true, data: [] });
     }
 
-    const personaIds = alumnos.map((a: any) => a.personas?.id).filter(Boolean);
-    const alumnoIds = alumnos.filter(a => a.id).map(a => a.id);
+    // Construir mapa persona_id → alumno_id y viceversa
+    const personaIdsSet = new Set<number>();
+    const alumnoToPersona = new Map<number, number>();
+    const personaToAlumno = new Map<number, number>();
+    for (const a of alumnos as any[]) {
+      const pid = a.personas?.id;
+      if (a.id && pid) {
+        personaIdsSet.add(pid);
+        alumnoToPersona.set(a.id, pid);
+        personaToAlumno.set(pid, a.id);
+      }
+    }
+    const personaIds = [...personaIdsSet];
 
-    // Obtener asistencias del mes (tabla nueva: asistencias)
+    // Obtener asistencias del mes (tabla nueva: asistencias) - SIN filtro IN para evitar headers overflow
     const { data: asistencias, error: asisError } = await supabase
       .from('asistencias')
       .select('persona_id, estado, hora_entrada, fecha')
-      .in('persona_id', personaIds)
       .gte('fecha', fechaInicio)
       .lte('fecha', fechaFin)
       .eq('tipo_persona', 'alumno');
@@ -902,48 +912,47 @@ router.get('/leaderboard', async (req, res) => {
       throw asisError;
     }
 
+    let allRecords: { persona_id: number; estado: string; hora_entrada: string; fecha: string }[] = [];
+
+    // Filtrar solo los que nos interesan
+    for (const r of asistencias || []) {
+      if (personaIdsSet.has(r.persona_id)) {
+        allRecords.push(r);
+      }
+    }
+
     // También obtener de la tabla legacy (asistencia_asistencia)
-    let allRecords: { persona_id: number; estado: string; hora_entrada: string; fecha: string }[] = [...(asistencias || [])];
+    // Usar filtro por fecha de sesión en lugar de IN alumno_ids
+    const { data: legacyData, error: legacyError } = await supabase
+      .from('asistencia_asistencia')
+      .select(`
+        alumno_id,
+        estado,
+        hora_registro,
+        asistencia_sesionclase!inner ( fecha )
+      `)
+      .gte('asistencia_sesionclase.fecha', fechaInicio)
+      .lte('asistencia_sesionclase.fecha', fechaFin);
 
-    if (alumnoIds.length > 0) {
-      const { data: legacyData, error: legacyError } = await supabase
-        .from('asistencia_asistencia')
-        .select(`
-          alumno_id,
-          estado,
-          hora_registro,
-          asistencia_sesionclase!inner ( fecha )
-        `)
-        .in('alumno_id', alumnoIds);
+    if (!legacyError && legacyData) {
+      for (const rec of legacyData) {
+        const personaId = alumnoToPersona.get(rec.alumno_id);
+        if (!personaId) continue;
+        const fecha = (rec.asistencia_sesionclase as any)?.fecha;
 
-      if (!legacyError && legacyData) {
-        // Construir mapa alumno_id → persona_id
-        const alumnoToPersona = new Map<number, number>();
-        for (const a of alumnos as any[]) {
-          const pid = a.personas?.id;
-          if (a.id && pid) alumnoToPersona.set(a.id, pid);
+        // Extraer hora de hora_registro (ISO string)
+        let horaEntrada = '';
+        if (rec.hora_registro) {
+          const d = new Date(rec.hora_registro);
+          horaEntrada = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
         }
 
-        for (const rec of legacyData) {
-          const personaId = alumnoToPersona.get(rec.alumno_id);
-          if (!personaId) continue;
-          const fecha = (rec.asistencia_sesionclase as any)?.fecha;
-          if (!fecha || fecha < fechaInicio || fecha > fechaFin) continue;
-
-          // Extraer hora de hora_registro (ISO string)
-          let horaEntrada = '';
-          if (rec.hora_registro) {
-            const d = new Date(rec.hora_registro);
-            horaEntrada = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-          }
-
-          allRecords.push({
-            persona_id: personaId,
-            estado: rec.estado,
-            hora_entrada: horaEntrada,
-            fecha
-          });
-        }
+        allRecords.push({
+          persona_id: personaId,
+          estado: rec.estado,
+          hora_entrada: horaEntrada,
+          fecha
+        });
       }
     }
 
