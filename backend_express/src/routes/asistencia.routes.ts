@@ -968,6 +968,7 @@ router.get('/leaderboard', async (req, res) => {
         nombres: alumno.personas?.nombres || '',
         apellidos: alumno.personas?.apellidos || '',
         salon,
+        seccion_id: seccion?.id || null,
         total_dias: totalDias,
         puntual,
         tardanza: totalDias - puntual,

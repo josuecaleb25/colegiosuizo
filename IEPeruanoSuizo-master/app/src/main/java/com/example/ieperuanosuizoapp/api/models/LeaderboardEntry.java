@@ -34,12 +34,16 @@ public class LeaderboardEntry {
     @SerializedName("salon")
     private String salon;
 
+    @SerializedName("seccion_id")
+    private int seccionId;
+
     public String getPersonaId() { return personaId; }
     public String getNombres() { return nombres; }
     public String getApellidos() { return apellidos; }
     public String getNombreCompleto() { return nombres + " " + apellidos; }
     public String getPrimerNombre() { return nombres != null ? nombres.split(" ")[0] : ""; }
     public String getSalon() { return salon != null ? salon : ""; }
+    public int getSeccionId() { return seccionId; }
     public int getTotalDias() { return totalDias; }
     public int getPuntual() { return puntual; }
     public int getTardanza() { return tardanza; }
