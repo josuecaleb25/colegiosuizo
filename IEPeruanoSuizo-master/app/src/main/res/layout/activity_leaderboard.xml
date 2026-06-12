@@ -90,7 +90,7 @@
                 android:layout_height="wrap_content"
                 android:paddingBottom="24dp">
 
-                <!-- Header de Sección (Selector a la derecha) -->
+                <!-- Header: Mes a la izquierda, Selector a la derecha -->
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/section_header"
                     android:layout_width="match_parent"
@@ -100,12 +100,54 @@
                     android:visibility="gone"
                     app:layout_constraintTop_toTopOf="parent">
 
-                    <!-- Selector de Sección Estilo Rojo -->
+                    <!-- Navegación de Mes (izquierda) -->
+                    <LinearLayout
+                        android:id="@+id/month_nav"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <ImageButton
+                            android:id="@+id/btn_prev_month"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="Mes anterior"
+                            android:rotation="180"
+                            android:scaleType="center"
+                            android:src="@drawable/righticon"
+                            app:tint="#666666" />
+
+                        <TextView
+                            android:id="@+id/tv_month_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="8dp"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:textColor="#333333"
+                            android:textSize="13sp" />
+
+                        <ImageButton
+                            android:id="@+id/btn_next_month"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="Mes siguiente"
+                            android:scaleType="center"
+                            android:src="@drawable/righticon"
+                            app:tint="#666666" />
+                    </LinearLayout>
+
+                    <!-- Selector de Sección (derecha) -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/layout_spinner_container"
                         style="@style/Widget.Material3.TextInputLayout.FilledBox.ExposedDropdownMenu"
                         android:layout_width="110dp"
-                        android:layout_height="48dp"
+                        android:layout_height="40dp"
                         app:boxBackgroundColor="#BA1924"
                         app:boxCornerRadiusBottomEnd="14dp"
                         app:boxCornerRadiusBottomStart="14dp"
@@ -116,7 +158,7 @@
                         app:endIconTint="@android:color/white"
                         app:hintEnabled="false"
                         app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent">
 
                         <com.google.android.material.textfield.MaterialAutoCompleteTextView
@@ -133,50 +175,6 @@
                             android:textSize="12sp" />
                     </com.google.android.material.textfield.TextInputLayout>
                 </androidx.constraintlayout.widget.ConstraintLayout>
-
-                <!-- Navegación de Mes -->
-                <LinearLayout
-                    android:id="@+id/month_nav"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:gravity="center"
-                    android:orientation="horizontal"
-                    android:visibility="gone"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/section_header">
-
-                    <ImageButton
-                        android:id="@+id/btn_prev_month"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@drawable/righticon"
-                        android:scaleType="center"
-                        android:contentDescription="Mes anterior"
-                        android:rotation="180"
-                        app:tint="#666666" />
-
-                    <TextView
-                        android:id="@+id/tv_month_label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="16dp"
-                        android:fontFamily="@font/poppinsmedium"
-                        android:textColor="#333333"
-                        android:textSize="15sp" />
-
-                    <ImageButton
-                        android:id="@+id/btn_next_month"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@drawable/righticon"
-                        android:scaleType="center"
-                        android:contentDescription="Mes siguiente"
-                        app:tint="#666666" />
-                </LinearLayout>
 
                 <!-- PODIO -->
                 <androidx.constraintlayout.widget.ConstraintLayout

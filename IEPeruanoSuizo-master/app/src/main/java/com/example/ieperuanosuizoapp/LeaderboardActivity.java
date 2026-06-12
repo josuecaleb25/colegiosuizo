@@ -39,7 +39,7 @@ public class LeaderboardActivity extends AppCompatActivity {
     private TextView tvEmpty;
     private androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipeRefresh;
 
-    private View sectionHeader, statusLayout, podiumContainer, monthNav;
+    private View sectionHeader, statusLayout, podiumContainer;
     private TextView tvName1, tvScore1, tvName2, tvScore2, tvName3, tvScore3;
     private TextView tvMonthLabel;
     private ImageButton btnPrevMonth, btnNextMonth;
@@ -85,7 +85,6 @@ public class LeaderboardActivity extends AppCompatActivity {
         sectionHeader = findViewById(R.id.section_header);
         statusLayout = findViewById(R.id.status_layout);
         podiumContainer = findViewById(R.id.podium_container);
-        monthNav = findViewById(R.id.month_nav);
         tvMonthLabel = findViewById(R.id.tv_month_label);
         btnPrevMonth = findViewById(R.id.btn_prev_month);
         btnNextMonth = findViewById(R.id.btn_next_month);
@@ -199,7 +198,6 @@ public class LeaderboardActivity extends AppCompatActivity {
         tvEmpty.setVisibility(View.GONE);
         sectionHeader.setVisibility(View.GONE);
         statusLayout.setVisibility(View.GONE);
-        monthNav.setVisibility(View.GONE);
         podiumContainer.setVisibility(View.GONE);
 
         retrofit2.Call<ApiResponse<List<LeaderboardEntry>>> call;
@@ -219,14 +217,12 @@ public class LeaderboardActivity extends AppCompatActivity {
                             entries.addAll(response.body().getData());
                             adapter.notifyDataSetChanged();
                             sectionHeader.setVisibility(View.VISIBLE);
-                            monthNav.setVisibility(View.VISIBLE);
                             statusLayout.setVisibility(View.VISIBLE);
                             updatePodium();
                         } else {
                             entries.clear();
                             adapter.notifyDataSetChanged();
                             sectionHeader.setVisibility(View.VISIBLE);
-                            monthNav.setVisibility(View.VISIBLE);
                             statusLayout.setVisibility(View.GONE);
                             podiumContainer.setVisibility(View.GONE);
                             tvEmpty.setVisibility(View.VISIBLE);
@@ -241,7 +237,6 @@ public class LeaderboardActivity extends AppCompatActivity {
                         entries.clear();
                         adapter.notifyDataSetChanged();
                         sectionHeader.setVisibility(View.GONE);
-                        monthNav.setVisibility(View.GONE);
                         statusLayout.setVisibility(View.GONE);
                         podiumContainer.setVisibility(View.GONE);
                         tvEmpty.setVisibility(View.VISIBLE);
