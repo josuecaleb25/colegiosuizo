@@ -935,14 +935,11 @@ router.get('/leaderboard', async (req, res) => {
       };
     });
 
-    // Ordenar según tipo
+    // Ordenar según tipo (por acumulado, no porcentaje)
     const ordenado = leaderboard.sort((a, b) => {
       if (tipo === 'puntual') {
-        if (b.puntualidad !== a.puntualidad) return b.puntualidad - a.puntualidad;
         return b.puntual - a.puntual;
       }
-      // asistencia
-      if (b.asistencia !== a.asistencia) return b.asistencia - a.asistencia;
       return b.asistencia_dias - a.asistencia_dias;
     });
 

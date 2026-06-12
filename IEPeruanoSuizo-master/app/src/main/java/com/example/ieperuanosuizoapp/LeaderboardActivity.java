@@ -248,9 +248,9 @@ public class LeaderboardActivity extends AppCompatActivity {
 
     private String getScoreText(LeaderboardEntry e) {
         if ("asistencia".equals(currentTipo)) {
-            return e.getAsistencia() + "%";
+            return String.valueOf(e.getAsistenciaDias());
         }
-        return e.getPuntualidad() + "%";
+        return String.valueOf(e.getPuntual());
     }
 
     private void showLoading(boolean show) {
@@ -296,12 +296,12 @@ public class LeaderboardActivity extends AppCompatActivity {
             if (tipo == null) return;
             switch (tipo) {
                 case "puntual":
-                    holder.tvPercentage.setText(entry.getPuntualidad() + "%");
-                    holder.tvStats.setText(entry.getSalon() + " · " + entry.getPuntual() + "/" + entry.getTotalDias());
+                    holder.tvPercentage.setText(String.valueOf(entry.getPuntual()));
+                    holder.tvStats.setText(entry.getSalon());
                     break;
                 case "asistencia":
-                    holder.tvPercentage.setText(entry.getAsistencia() + "%");
-                    holder.tvStats.setText(entry.getSalon() + " · " + entry.getAsistenciaDias() + "/" + entry.getTotalDias());
+                    holder.tvPercentage.setText(String.valueOf(entry.getAsistenciaDias()));
+                    holder.tvStats.setText(entry.getSalon());
                     break;
             }
         }
