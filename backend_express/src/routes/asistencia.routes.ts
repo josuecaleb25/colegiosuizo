@@ -846,7 +846,9 @@ router.get('/leaderboard', async (req, res) => {
     }
 
     const fechaInicio = `${mes}-01`;
-    const fechaFin = `${mes}-31`;
+    const [year, month] = (mes as string).split('-').map(Number);
+    const ultimoDia = new Date(year, month, 0).getDate();
+    const fechaFin = `${mes}-${ultimoDia}`;
 
     // Obtener alumnos según seccion_id
     let query = supabase
