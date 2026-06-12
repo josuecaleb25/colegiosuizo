@@ -852,6 +852,7 @@ router.get('/leaderboard', async (req, res) => {
     let query = supabase
       .from('alumnos')
       .select(`
+        id,
         persona_id,
         personas ( id, nombres, apellidos ),
         matriculas!inner (
@@ -880,21 +881,74 @@ router.get('/leaderboard', async (req, res) => {
     }
 
     const personaIds = alumnos.map(a => a.persona_id);
+    const alumnoIds = alumnos.filter(a => a.id).map(a => a.id);
 
-    // Obtener asistencias del mes para esos alumnos
+    // Obtener asistencias del mes (tabla nueva: asistencias)
     const { data: asistencias, error: asisError } = await supabase
       .from('asistencias')
       .select('persona_id, estado, hora_entrada, fecha')
       .in('persona_id', personaIds)
       .gte('fecha', fechaInicio)
       .lte('fecha', fechaFin)
-      .eq('tipo_persona', 'alumno')
-      .order('fecha', { ascending: false });
+      .eq('tipo_persona', 'alumno');
 
     if (asisError) {
       console.error('Error obteniendo asistencias:', asisError);
       throw asisError;
     }
+
+    // También obtener de la tabla legacy (asistencia_asistencia)
+    let allRecords: { persona_id: number; estado: string; hora_entrada: string; fecha: string }[] = [...(asistencias || [])];
+
+    if (alumnoIds.length > 0) {
+      const { data: legacyData, error: legacyError } = await supabase
+        .from('asistencia_asistencia')
+        .select(`
+          alumno_id,
+          estado,
+          hora_registro,
+          asistencia_sesionclase!inner ( fecha )
+        `)
+        .in('alumno_id', alumnoIds);
+
+      if (!legacyError && legacyData) {
+        // Construir mapa alumno_id → persona_id
+        const alumnoToPersona = new Map<number, number>();
+        for (const a of alumnos) {
+          if (a.id && a.persona_id) alumnoToPersona.set(a.id, a.persona_id);
+        }
+
+        for (const rec of legacyData) {
+          const personaId = alumnoToPersona.get(rec.alumno_id);
+          if (!personaId) continue;
+          const fecha = (rec.asistencia_sesionclase as any)?.fecha;
+          if (!fecha || fecha < fechaInicio || fecha > fechaFin) continue;
+
+          // Extraer hora de hora_registro (ISO string)
+          let horaEntrada = '';
+          if (rec.hora_registro) {
+            const d = new Date(rec.hora_registro);
+            horaEntrada = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+          }
+
+          allRecords.push({
+            persona_id: personaId,
+            estado: rec.estado,
+            hora_entrada: horaEntrada,
+            fecha
+          });
+        }
+      }
+    }
+
+    // Deduplicar: si un mismo día aparece en ambas tablas, priorizar asistencias (nueva)
+    const seen = new Set<string>();
+    const uniqueRecords = allRecords.filter(r => {
+      const key = `${r.persona_id}|${r.fecha}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 
     // Construir leaderboard
     const leaderboard = alumnos.map(alumno => {
@@ -903,7 +957,7 @@ router.get('/leaderboard', async (req, res) => {
       const seccion = matricula?.secciones;
       const salon = seccion ? `${seccion.grados?.nombre} ${seccion.nombre}` : '';
 
-      const asistenciasAlumno = asistencias?.filter(a => a.persona_id === alumno.persona_id) || [];
+      const asistenciasAlumno = uniqueRecords.filter(a => a.persona_id === alumno.persona_id) || [];
       const totalDias = asistenciasAlumno.length;
 
       let puntual = 0;
