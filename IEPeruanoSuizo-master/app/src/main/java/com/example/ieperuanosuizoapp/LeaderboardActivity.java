@@ -66,21 +66,26 @@ public class LeaderboardActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_leaderboard);
+        try {
+            setContentView(R.layout.activity_leaderboard);
 
-        currentCalendar = Calendar.getInstance();
-        currentMes = new SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(currentCalendar.getTime());
+            currentCalendar = Calendar.getInstance();
+            currentMes = new SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(currentCalendar.getTime());
 
-        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
-        userId = prefs.getString("user_id", "");
-        userRol = prefs.getString("user_mode", "ALUMNO").toLowerCase();
+            SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+            userId = prefs.getString("user_id", "");
+            userRol = prefs.getString("user_mode", "ALUMNO").toLowerCase();
 
-        initViews();
-        setupBackButton();
-        setupTabLayout();
-        setupSwipeRefresh();
-        setupRecyclerView();
-        fetchSections();
+            initViews();
+            setupBackButton();
+            setupTabLayout();
+            setupSwipeRefresh();
+            setupRecyclerView();
+            fetchSections();
+        } catch (Exception e) {
+            e.printStackTrace();
+            finish();
+        }
     }
 
     private void initViews() {
@@ -168,17 +173,21 @@ public class LeaderboardActivity extends AppCompatActivity {
             public void onResponse(Call<ApiResponse<List<Object>>> call, Response<ApiResponse<List<Object>>> response) {
                 showLoading(false);
                 sections.clear();
-                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    List<Object> data = response.body().getData();
-                    if (data != null && !data.isEmpty()) {
-                        Gson gson = new Gson();
-                        for (Object obj : data) {
-                            JsonObject json = gson.toJsonTree(obj).getAsJsonObject();
-                            int id = json.has("id") ? json.get("id").getAsInt() : 0;
-                            String nombre = json.has("nombre") ? json.get("nombre").getAsString() : "";
-                            if (id > 0 && !nombre.isEmpty()) sections.add(new SectionInfo(id, nombre));
+                try {
+                    if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                        List<Object> data = response.body().getData();
+                        if (data != null && !data.isEmpty()) {
+                            Gson gson = new Gson();
+                            for (Object obj : data) {
+                                JsonObject json = gson.toJsonTree(obj).getAsJsonObject();
+                                int id = json.has("id") ? json.get("id").getAsInt() : 0;
+                                String nombre = json.has("nombre") ? json.get("nombre").getAsString() : "";
+                                if (id > 0 && !nombre.isEmpty()) sections.add(new SectionInfo(id, nombre));
+                            }
                         }
                     }
+                } catch (Exception e) {
+                    sections.clear();
                 }
                 if (sections.isEmpty()) {
                     sections.add(new SectionInfo(0, "1ro A"));
