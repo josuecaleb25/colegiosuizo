@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 public class LeaderboardEntry {
 
     @SerializedName("persona_id")
-    private int personaId;
+    private String personaId;
 
     @SerializedName("nombres")
     private String nombres;
@@ -34,7 +34,7 @@ public class LeaderboardEntry {
     @SerializedName("salon")
     private String salon;
 
-    public int getPersonaId() { return personaId; }
+    public String getPersonaId() { return personaId; }
     public String getNombres() { return nombres; }
     public String getApellidos() { return apellidos; }
     public String getNombreCompleto() { return nombres + " " + apellidos; }
