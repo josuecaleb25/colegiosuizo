@@ -129,9 +129,7 @@ public class LeaderboardActivity extends AppCompatActivity {
             public void onTabSelected(TabLayout.Tab tab) {
                 currentTipo = tab.getPosition() == 0 ? "puntual" : "asistencia";
                 adapter.setTipo(currentTipo);
-                if (currentSeccionId != -1) {
-                    fetchLeaderboard();
-                }
+                fetchLeaderboard();
             }
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {}

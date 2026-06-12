@@ -92,7 +92,30 @@ router.get('/', async (req, res) => {
 
       secciones = Array.from(seccionesUnicas.values());
 
-    } else {
+    }
+    else if (rol === 'alumno' || rol === 'padre') {
+      // Leaderboard público: todos ven todas las secciones
+      const { data, error } = await supabase
+        .from('secciones')
+        .select(`
+          id,
+          nombre,
+          grados!inner (
+            nombre
+          )
+        `)
+        .order('grados(nombre)', { ascending: true });
+
+      if (!error && data) {
+        secciones = data.map((s: any) => ({
+          id: s.id,
+          nombre: `${s.grados.nombre} ${s.nombre}`,
+          grado: s.grados.nombre,
+          seccion: s.nombre
+        }));
+      }
+    }
+    else {
       // Otros roles no tienen acceso a secciones
       return res.json({
         success: true,

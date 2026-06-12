@@ -905,7 +905,8 @@ router.get('/leaderboard', async (req, res) => {
       .select('persona_id, estado, hora_entrada, fecha')
       .gte('fecha', fechaInicio)
       .lte('fecha', fechaFin)
-      .eq('tipo_persona', 'alumno');
+      .eq('tipo_persona', 'alumno')
+      .limit(5000);
 
     if (asisError) {
       console.error('Error obteniendo asistencias:', asisError);
@@ -932,7 +933,8 @@ router.get('/leaderboard', async (req, res) => {
         asistencia_sesionclase!inner ( fecha )
       `)
       .gte('asistencia_sesionclase.fecha', fechaInicio)
-      .lte('asistencia_sesionclase.fecha', fechaFin);
+      .lte('asistencia_sesionclase.fecha', fechaFin)
+      .limit(5000);
 
     if (!legacyError && legacyData) {
       for (const rec of legacyData) {
