@@ -130,21 +130,15 @@ public class LeaderboardActivity extends AppCompatActivity {
                 showLoading(false);
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     List<Section> data = response.body().getData();
-                    if (data != null && !data.isEmpty()) {
-                        sections = data;
-                        setupSectionSelector();
-                        return;
-                    }
+                    if (data != null) sections = data;
                 }
-                tvEmpty.setVisibility(View.VISIBLE);
-                tvEmpty.setText("No se encontraron secciones");
+                setupSectionSelector();
             }
 
             @Override
             public void onFailure(Call<ApiResponse<List<Section>>> call, Throwable t) {
                 showLoading(false);
-                tvEmpty.setVisibility(View.VISIBLE);
-                tvEmpty.setText("Error de conexión");
+                setupSectionSelector();
             }
         });
     }
