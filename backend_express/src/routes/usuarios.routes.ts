@@ -22,9 +22,8 @@ router.get('/perfil/:id', async (req, res) => {
           nombres,
           apellidos,
           dni,
-          telefono,
-          direccion,
-          fecha_nacimiento
+           telefono,
+           fecha_nacimiento
         )
       `)
       .eq('id', id)
@@ -53,13 +52,12 @@ router.get('/perfil/:id', async (req, res) => {
         apellidos: persona.apellidos,
         dni: persona.dni,
         telefono: persona.telefono,
-        direccion: persona.direccion,
         fecha_nacimiento: persona.fecha_nacimiento
       }
     };
 
-    // Si es alumno, obtener datos adicionales
-    if (usuario.rol === 'ALUMNO') {
+    // Función auxiliar para obtener datos de alumno por persona_id
+    async function obtenerDatosAlumno(personaId: string) {
       const { data: alumno } = await supabase
         .from('alumnos')
         .select(`
@@ -80,7 +78,7 @@ router.get('/perfil/:id', async (req, res) => {
             activo
           )
         `)
-        .eq('persona_id', persona.id)
+        .eq('persona_id', personaId)
         .eq('activo', true)
         .limit(1);
 
@@ -108,14 +106,42 @@ router.get('/perfil/:id', async (req, res) => {
           }
         }
 
+        // Obtener nombre completo del alumno
+        const { data: alumnoPersona } = await supabase
+          .from('personas')
+          .select('nombres, apellidos')
+          .eq('id', personaId)
+          .single();
+
         perfilCompleto.alumno = {
           id: alumno[0].id,
           codigo: alumno[0].codigo,
           seccion: `${grados.nombre} ${secciones.nombre}`,
           seccion_id: secciones.id,
           codigo_qr: qrCodeString,
-          qr_image: qrImage
+          qr_image: qrImage,
+          nombre_completo: alumnoPersona ? `${alumnoPersona.nombres} ${alumnoPersona.apellidos}` : ''
         };
+      }
+    }
+
+    const rolLower = usuario.rol.toLowerCase();
+
+    if (rolLower === 'alumno') {
+      await obtenerDatosAlumno(persona.id);
+    }
+
+    if (rolLower === 'padre') {
+      const { data: relacion } = await supabase
+        .from('padres_alumnos')
+        .select('alumno_id, alumnos!inner(persona_id, estado)')
+        .eq('padre_id', persona.id)
+        .eq('alumnos.estado', 'activo')
+        .maybeSingle();
+
+      if (relacion) {
+        const alumnosData = relacion.alumnos as any;
+        await obtenerDatosAlumno(alumnosData.persona_id);
       }
     }
 
@@ -176,7 +202,7 @@ router.get('/perfil/:id', async (req, res) => {
 router.put('/perfil/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { telefono, direccion } = req.body;
+    const { telefono } = req.body;
 
     // Obtener persona_id del usuario
     const { data: usuario, error: errorUsuario } = await supabase
@@ -198,8 +224,7 @@ router.put('/perfil/:id', async (req, res) => {
     const { data: personaActualizada, error: errorActualizar } = await supabase
       .from('personas')
       .update({
-        telefono,
-        direccion
+        telefono
       })
       .eq('id', usuario.persona_id)
       .select()

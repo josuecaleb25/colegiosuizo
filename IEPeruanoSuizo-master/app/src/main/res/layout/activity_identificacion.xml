@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+    <!-- Header con botón de regreso -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/header_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/btn_back"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="?attr/homeContentBackground"
+            app:cardCornerRadius="15dp"
+            app:cardElevation="0dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_gravity="center"
+                android:src="@drawable/righticon"
+                android:rotation="180"
+                app:tint="?android:attr/textColorPrimary" />
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/potanosansbold"
+            android:text="Mi Identificación"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="18sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/btn_compartir"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="?attr/homeContentBackground"
+            app:cardCornerRadius="15dp"
+            app:cardElevation="0dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_share"
+                app:tint="?android:attr/textColorPrimary" />
+        </androidx.cardview.widget.CardView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- ÁREA DEL FOTOCHECK (Captura y comparte) -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/card_identificacion"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@drawable/bg_identificacion_grid"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/header_layout">
+
+        <!-- Banda Roja Lateral Derecha -->
+        <View
+            android:id="@+id/red_strip"
+            android:layout_width="70dp"
+            android:layout_height="0dp"
+            android:background="#BA1924"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_role"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:rotation="90"
+            android:text="ESTUDIANTE"
+            android:textColor="@android:color/white"
+            android:textSize="42sp"
+            android:fontFamily="@font/poppinssemibold"
+            android:letterSpacing="0.05"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@+id/red_strip"
+            app:layout_constraintStart_toStartOf="@+id/red_strip"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Logo -->
+        <ImageView
+            android:id="@+id/iv_school_logo"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="30dp"
+            android:src="@drawable/logoie"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- QR con Marco Rojo -->
+        <View
+            android:id="@+id/qr_border"
+            android:layout_width="240dp"
+            android:layout_height="250dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/border_red_2dp"
+            app:layout_constraintHorizontal_bias="0.45"
+            app:layout_constraintEnd_toStartOf="@+id/red_strip"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/iv_school_logo" />
+
+        <ImageView
+            android:id="@+id/iv_qr"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:scaleType="fitCenter"
+            app:layout_constraintBottom_toBottomOf="@+id/qr_border"
+            app:layout_constraintEnd_toEndOf="@+id/qr_border"
+            app:layout_constraintStart_toStartOf="@+id/qr_border"
+            app:layout_constraintTop_toTopOf="@+id/qr_border" />
+
+        <ProgressBar
+            android:id="@+id/progress_qr"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/iv_qr"
+            app:layout_constraintEnd_toEndOf="@+id/iv_qr"
+            app:layout_constraintStart_toStartOf="@+id/iv_qr"
+            app:layout_constraintTop_toTopOf="@+id/iv_qr" />
+
+        <!-- Nombre del Alumno -->
+        <TextView
+            android:id="@+id/tv_full_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:gravity="center"
+            android:paddingHorizontal="20dp"
+            android:fontFamily="@font/poppinssemibold"
+            android:textColor="#BA1924"
+            android:textSize="20sp"
+            app:layout_constraintEnd_toStartOf="@+id/red_strip"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/qr_border"
+            tools:text="JUAN PÉREZ GARCÍA" />
+
+        <!-- ID Box -->
+        <LinearLayout
+            android:id="@+id/id_box_container"
+            android:layout_width="160dp"
+            android:layout_height="45dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/border_red_2dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            app:layout_constraintHorizontal_bias="0.45"
+            app:layout_constraintEnd_toStartOf="@+id/red_strip"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_full_name">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinsbold"
+                android:text="ID: "
+                android:textColor="#BA1924"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tv_codigo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinsbold"
+                android:textColor="#000000"
+                android:textSize="18sp"
+                android:letterSpacing="0.2"
+                tools:text="1A0001" />
+        </LinearLayout>
+
+        <!-- Info Detalle -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="35dp"
+            android:layout_marginTop="15dp"
+            android:orientation="vertical"
+            app:layout_constraintEnd_toStartOf="@+id/red_strip"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/id_box_container">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppinsbold"
+                    android:text="Turno: "
+                    android:textColor="#BA1924"
+                    android:textSize="14sp" />
+                <TextView
+                    android:id="@+id/tv_seccion2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppinsregular"
+                    android:textColor="#000000"
+                    android:textSize="14sp"
+                    tools:text="Tarde" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppinsbold"
+                    android:text="Email: "
+                    android:textColor="#BA1924"
+                    android:textSize="14sp" />
+                <TextView
+                    android:id="@+id/tv_email"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppinsregular"
+                    android:textColor="#000000"
+                    android:textSize="12sp"
+                    tools:text="example@peruanosuizo.edu.pe" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Cuadrados decorativos (Efecto Escalera) -->
+        <View
+            android:id="@+id/view_decor_large"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:background="#BA1924"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <View
+            android:id="@+id/view_decor_small"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="#BA1924"
+            app:layout_constraintBottom_toTopOf="@+id/view_decor_large"
+            app:layout_constraintStart_toEndOf="@+id/view_decor_large" />
+
+        <!-- Campos ocultos para compatibilidad -->
+        <TextView android:id="@+id/tv_dni" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" />
+        <ImageView android:id="@+id/iv_photo" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
