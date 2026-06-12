@@ -112,6 +112,12 @@ public interface ApiService {
         @Query("tipo") String tipo,
         @Query("mes") String mes
     );
+
+    @GET("asistencia/leaderboard")
+    Call<ApiResponse<List<com.example.ieperuanosuizoapp.api.models.LeaderboardEntry>>> getLeaderboardAll(
+        @Query("tipo") String tipo,
+        @Query("mes") String mes
+    );
     
     // Perfil de Usuario
     @GET("usuarios/perfil/{user_id}")

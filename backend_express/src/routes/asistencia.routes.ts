@@ -838,41 +838,37 @@ router.get('/leaderboard', async (req, res) => {
   try {
     const { seccion_id, tipo, mes } = req.query;
 
-    if (!seccion_id || !tipo || !mes) {
+    if (!tipo || !mes) {
       return res.status(400).json({
         success: false,
-        message: 'Se requiere seccion_id, tipo y mes'
+        message: 'Se requiere tipo y mes'
       });
     }
 
     const fechaInicio = `${mes}-01`;
     const fechaFin = `${mes}-31`;
 
-    // Obtener alumnos activos en la sección
-    const { data: matriculasData, error: matError } = await supabase
-      .from('matriculas')
-      .select('alumno_id')
-      .eq('seccion_id', seccion_id)
-      .eq('activo', true);
-
-    if (matError) {
-      console.error('Error obteniendo matrículas:', matError);
-      throw matError;
-    }
-
-    if (!matriculasData || matriculasData.length === 0) {
-      return res.json({ success: true, data: [] });
-    }
-
-    const alumnoIds = matriculasData.map(m => m.alumno_id);
-
-    const { data: alumnos, error: alumnosError } = await supabase
+    // Obtener alumnos según seccion_id
+    let query = supabase
       .from('alumnos')
       .select(`
         persona_id,
-        personas ( id, nombres, apellidos )
+        personas ( id, nombres, apellidos ),
+        matriculas!inner (
+          secciones!inner (
+            id,
+            nombre,
+            grados!inner ( nombre )
+          )
+        )
       `)
-      .in('id', alumnoIds);
+      .eq('matriculas.activo', true);
+
+    if (seccion_id && seccion_id !== 'todos') {
+      query = query.eq('matriculas.seccion_id', seccion_id);
+    }
+
+    const { data: alumnos, error: alumnosError } = await query;
 
     if (alumnosError) {
       console.error('Error obteniendo alumnos:', alumnosError);
@@ -903,6 +899,10 @@ router.get('/leaderboard', async (req, res) => {
     // Construir leaderboard
     const leaderboard = alumnos.map(alumno => {
       const persona = alumno.personas as any;
+      const matricula = (alumno.matriculas as any[])?.[0];
+      const seccion = matricula?.secciones;
+      const salon = seccion ? `${seccion.grados?.nombre} ${seccion.nombre}` : '';
+
       const asistenciasAlumno = asistencias?.filter(a => a.persona_id === alumno.persona_id) || [];
       const totalDias = asistenciasAlumno.length;
 
@@ -925,6 +925,7 @@ router.get('/leaderboard', async (req, res) => {
         persona_id: alumno.persona_id,
         nombres: persona?.nombres || '',
         apellidos: persona?.apellidos || '',
+        salon,
         total_dias: totalDias,
         puntual,
         tardanza: totalDias - puntual,

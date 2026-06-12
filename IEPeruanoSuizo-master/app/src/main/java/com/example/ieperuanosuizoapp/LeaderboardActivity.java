@@ -112,13 +112,7 @@ public class LeaderboardActivity extends AppCompatActivity {
     }
 
     private void setupSwipeRefresh() {
-        swipeRefresh.setOnRefreshListener(() -> {
-            if (currentSeccionId != -1) {
-                fetchLeaderboard();
-            } else {
-                swipeRefresh.setRefreshing(false);
-            }
-        });
+        swipeRefresh.setOnRefreshListener(() -> fetchLeaderboard());
         swipeRefresh.setColorSchemeResources(android.R.color.holo_red_dark);
     }
 
@@ -157,6 +151,7 @@ public class LeaderboardActivity extends AppCompatActivity {
 
     private void setupSectionSelector() {
         List<String> names = new ArrayList<>();
+        names.add("Todos");
         for (Section s : sections) {
             names.add(s.getNombre());
         }
@@ -164,27 +159,33 @@ public class LeaderboardActivity extends AppCompatActivity {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, names);
         autoCompleteSection.setAdapter(adapter);
 
-        if (!sections.isEmpty()) {
-            autoCompleteSection.setText(sections.get(0).getNombre(), false);
-            currentSeccionId = sections.get(0).getId();
-            fetchLeaderboard();
-        }
+        autoCompleteSection.setText("Todos", false);
+        currentSeccionId = -1;
+        fetchLeaderboard();
 
         autoCompleteSection.setOnItemClickListener((parent, view, position, id) -> {
-            currentSeccionId = sections.get(position).getId();
+            if (position == 0) {
+                currentSeccionId = -1;
+            } else {
+                currentSeccionId = sections.get(position - 1).getId();
+            }
             fetchLeaderboard();
         });
     }
 
     private void fetchLeaderboard() {
-        if (currentSeccionId == -1) return;
-
         showLoading(true);
         tvEmpty.setVisibility(View.GONE);
         podiumContainer.setVisibility(View.GONE);
 
-        RetrofitClient.getApiService().getLeaderboard(currentSeccionId, currentTipo, currentMes)
-                .enqueue(new Callback<ApiResponse<List<LeaderboardEntry>>>() {
+        retrofit2.Call<ApiResponse<List<LeaderboardEntry>>> call;
+        if (currentSeccionId == -1) {
+            call = RetrofitClient.getApiService().getLeaderboardAll(currentTipo, currentMes);
+        } else {
+            call = RetrofitClient.getApiService().getLeaderboard(currentSeccionId, currentTipo, currentMes);
+        }
+
+        call.enqueue(new Callback<ApiResponse<List<LeaderboardEntry>>>() {
                     @Override
                     public void onResponse(Call<ApiResponse<List<LeaderboardEntry>>> call, Response<ApiResponse<List<LeaderboardEntry>>> response) {
                         showLoading(false);
@@ -221,13 +222,13 @@ public class LeaderboardActivity extends AppCompatActivity {
 
         // Top 1
         LeaderboardEntry first = entries.get(0);
-        tvName1.setText(first.getNombreCompleto());
+        tvName1.setText(first.getPrimerNombre());
         tvScore1.setText(getScoreText(first));
 
         // Top 2
         if (entries.size() > 1) {
             LeaderboardEntry second = entries.get(1);
-            tvName2.setText(second.getNombreCompleto());
+            tvName2.setText(second.getPrimerNombre());
             tvScore2.setText(getScoreText(second));
             findViewById(R.id.podium_2).setVisibility(View.VISIBLE);
         } else {
@@ -237,7 +238,7 @@ public class LeaderboardActivity extends AppCompatActivity {
         // Top 3
         if (entries.size() > 2) {
             LeaderboardEntry third = entries.get(2);
-            tvName3.setText(third.getNombreCompleto());
+            tvName3.setText(third.getPrimerNombre());
             tvScore3.setText(getScoreText(third));
             findViewById(R.id.podium_3).setVisibility(View.VISIBLE);
         } else {
@@ -290,17 +291,17 @@ public class LeaderboardActivity extends AppCompatActivity {
             int rank = adjustedPosition + 1;
 
             holder.tvPosition.setText(String.valueOf(rank));
-            holder.tvName.setText(entry.getNombreCompleto());
+            holder.tvName.setText(entry.getPrimerNombre());
 
             if (tipo == null) return;
             switch (tipo) {
                 case "puntual":
                     holder.tvPercentage.setText(entry.getPuntualidad() + "%");
-                    holder.tvStats.setText(entry.getPuntual() + " de " + entry.getTotalDias() + " días");
+                    holder.tvStats.setText(entry.getSalon() + " · " + entry.getPuntual() + "/" + entry.getTotalDias());
                     break;
                 case "asistencia":
                     holder.tvPercentage.setText(entry.getAsistencia() + "%");
-                    holder.tvStats.setText(entry.getAsistenciaDias() + " de " + entry.getTotalDias() + " días");
+                    holder.tvStats.setText(entry.getSalon() + " · " + entry.getAsistenciaDias() + "/" + entry.getTotalDias());
                     break;
             }
         }
