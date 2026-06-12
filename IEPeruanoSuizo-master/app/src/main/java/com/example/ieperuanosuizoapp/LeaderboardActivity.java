@@ -38,8 +38,8 @@ public class LeaderboardActivity extends AppCompatActivity {
     private TextView tvEmpty;
     private androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipeRefresh;
 
+    private View sectionHeader, statusLayout, podiumContainer;
     private TextView tvName1, tvScore1, tvName2, tvScore2, tvName3, tvScore3;
-    private View podiumContainer;
 
     private String userId;
     private String userRol;
@@ -77,6 +77,8 @@ public class LeaderboardActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progress_bar);
         tvEmpty = findViewById(R.id.tv_empty);
         swipeRefresh = findViewById(R.id.swipe_refresh);
+        sectionHeader = findViewById(R.id.section_header);
+        statusLayout = findViewById(R.id.status_layout);
         podiumContainer = findViewById(R.id.podium_container);
 
         tvName1 = findViewById(R.id.tv_name_1);
@@ -170,6 +172,8 @@ public class LeaderboardActivity extends AppCompatActivity {
     private void fetchLeaderboard() {
         showLoading(true);
         tvEmpty.setVisibility(View.GONE);
+        sectionHeader.setVisibility(View.GONE);
+        statusLayout.setVisibility(View.GONE);
         podiumContainer.setVisibility(View.GONE);
 
         retrofit2.Call<ApiResponse<List<LeaderboardEntry>>> call;
@@ -184,6 +188,8 @@ public class LeaderboardActivity extends AppCompatActivity {
                     public void onResponse(Call<ApiResponse<List<LeaderboardEntry>>> call, Response<ApiResponse<List<LeaderboardEntry>>> response) {
                         showLoading(false);
                         swipeRefresh.setRefreshing(false);
+                        sectionHeader.setVisibility(View.VISIBLE);
+                        statusLayout.setVisibility(View.VISIBLE);
                         if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                             List<LeaderboardEntry> data = response.body().getData();
                             if (data != null && !data.isEmpty()) {
@@ -196,6 +202,7 @@ public class LeaderboardActivity extends AppCompatActivity {
                         }
                         entries.clear();
                         adapter.notifyDataSetChanged();
+                        podiumContainer.setVisibility(View.GONE);
                         tvEmpty.setVisibility(View.VISIBLE);
                         tvEmpty.setText("No hay datos para este período");
                     }
@@ -204,6 +211,9 @@ public class LeaderboardActivity extends AppCompatActivity {
                     public void onFailure(Call<ApiResponse<List<LeaderboardEntry>>> call, Throwable t) {
                         showLoading(false);
                         swipeRefresh.setRefreshing(false);
+                        sectionHeader.setVisibility(View.GONE);
+                        statusLayout.setVisibility(View.GONE);
+                        podiumContainer.setVisibility(View.GONE);
                         tvEmpty.setVisibility(View.VISIBLE);
                         tvEmpty.setText("Error de conexión");
                     }
