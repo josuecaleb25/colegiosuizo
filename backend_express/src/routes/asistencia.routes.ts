@@ -903,64 +903,62 @@ router.get('/leaderboard', async (req, res) => {
     const BATCH_SIZE = 50;
     let allRecords: { persona_id: string; estado: string; hora_entrada: string; fecha: string }[] = [];
 
-    // Obtener asistencias del mes (tabla nueva: asistencias) - en batches de 50
+    // Obtener asistencias del mes (tabla nueva + legacy) en paralelo con batches de 50
+    const batches: Promise<void>[] = [];
+
+    // Batches de asistencias (nueva tabla)
     for (let i = 0; i < personaIds.length; i += BATCH_SIZE) {
       const batch = personaIds.slice(i, i + BATCH_SIZE);
-      const { data: asistencias, error: asisError } = await supabase
-        .from('asistencias')
-        .select('persona_id, estado, hora_entrada, fecha')
-        .in('persona_id', batch)
-        .gte('fecha', fechaInicio)
-        .lte('fecha', fechaFin)
-        .eq('tipo_persona', 'alumno');
-
-      if (asisError) {
-        console.error('Error obteniendo asistencias:', asisError);
-        throw asisError;
-      }
-      if (asistencias) {
-        for (const r of asistencias) {
-          allRecords.push(r);
-        }
-      }
+      batches.push((async () => {
+        const { data, error } = await supabase
+          .from('asistencias')
+          .select('persona_id, estado, hora_entrada, fecha')
+          .in('persona_id', batch)
+          .gte('fecha', fechaInicio)
+          .lte('fecha', fechaFin)
+          .eq('tipo_persona', 'alumno');
+        if (error) throw error;
+        if (data) allRecords.push(...data);
+      })());
     }
 
-    // También obtener de la tabla legacy (asistencia_asistencia) - en batches de 50
+    // Batches de asistencia_asistencia (legacy)
     for (let i = 0; i < alumnoIds.length; i += BATCH_SIZE) {
       const batch = alumnoIds.slice(i, i + BATCH_SIZE);
-      const { data: legacyData, error: legacyError } = await supabase
-        .from('asistencia_asistencia')
-        .select(`
-          alumno_id,
-          estado,
-          hora_registro,
-          asistencia_sesionclase!inner ( fecha )
-        `)
-        .in('alumno_id', batch)
-        .gte('asistencia_sesionclase.fecha', fechaInicio)
-        .lte('asistencia_sesionclase.fecha', fechaFin);
-
-      if (!legacyError && legacyData) {
-        for (const rec of legacyData) {
-          const personaId = alumnoToPersona.get(rec.alumno_id);
-          if (!personaId) continue;
-          const fecha = (rec.asistencia_sesionclase as any)?.fecha;
-
-          let horaEntrada = '';
-          if (rec.hora_registro) {
-            const d = new Date(rec.hora_registro);
-            horaEntrada = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+      batches.push((async () => {
+        const { data, error } = await supabase
+          .from('asistencia_asistencia')
+          .select(`
+            alumno_id,
+            estado,
+            hora_registro,
+            asistencia_sesionclase!inner ( fecha )
+          `)
+          .in('alumno_id', batch)
+          .gte('asistencia_sesionclase.fecha', fechaInicio)
+          .lte('asistencia_sesionclase.fecha', fechaFin);
+        if (error) throw error;
+        if (data) {
+          for (const rec of data) {
+            const personaId = alumnoToPersona.get(rec.alumno_id);
+            if (!personaId) continue;
+            let horaEntrada = '';
+            if (rec.hora_registro) {
+              const d = new Date(rec.hora_registro);
+              horaEntrada = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            }
+            allRecords.push({
+              persona_id: personaId,
+              estado: rec.estado,
+              hora_entrada: horaEntrada,
+              fecha: (rec.asistencia_sesionclase as any)?.fecha || ''
+            });
           }
-
-          allRecords.push({
-            persona_id: personaId,
-            estado: rec.estado,
-            hora_entrada: horaEntrada,
-            fecha
-          });
         }
-      }
+      })());
     }
+
+    await Promise.all(batches);
 
     // Deduplicar: si un mismo día aparece en ambas tablas, priorizar asistencias (nueva)
     const seen = new Set<string>();
