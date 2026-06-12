@@ -853,17 +853,20 @@ router.get('/leaderboard', async (req, res) => {
       .from('alumnos')
       .select(`
         id,
-        persona_id,
-        personas ( id, nombres, apellidos ),
+        personas!inner (
+          id,
+          nombres,
+          apellidos
+        ),
         matriculas!inner (
+          seccion_id,
           secciones!inner (
-            id,
             nombre,
             grados!inner ( nombre )
           )
         )
       `)
-      .eq('matriculas.activo', true);
+      .eq('estado', 'activo');
 
     if (seccion_id && seccion_id !== 'todos') {
       query = query.eq('matriculas.seccion_id', seccion_id);
@@ -880,7 +883,7 @@ router.get('/leaderboard', async (req, res) => {
       return res.json({ success: true, data: [] });
     }
 
-    const personaIds = alumnos.map(a => a.persona_id);
+    const personaIds = alumnos.map((a: any) => a.personas?.id).filter(Boolean);
     const alumnoIds = alumnos.filter(a => a.id).map(a => a.id);
 
     // Obtener asistencias del mes (tabla nueva: asistencias)
@@ -914,8 +917,9 @@ router.get('/leaderboard', async (req, res) => {
       if (!legacyError && legacyData) {
         // Construir mapa alumno_id → persona_id
         const alumnoToPersona = new Map<number, number>();
-        for (const a of alumnos) {
-          if (a.id && a.persona_id) alumnoToPersona.set(a.id, a.persona_id);
+        for (const a of alumnos as any[]) {
+          const pid = a.personas?.id;
+          if (a.id && pid) alumnoToPersona.set(a.id, pid);
         }
 
         for (const rec of legacyData) {
@@ -951,13 +955,13 @@ router.get('/leaderboard', async (req, res) => {
     });
 
     // Construir leaderboard
-    const leaderboard = alumnos.map(alumno => {
-      const persona = alumno.personas as any;
-      const matricula = (alumno.matriculas as any[])?.[0];
+    const leaderboard = (alumnos as any[]).map(alumno => {
+      const personaId = alumno.personas?.id;
+      const matricula = alumno.matriculas?.[0];
       const seccion = matricula?.secciones;
       const salon = seccion ? `${seccion.grados?.nombre} ${seccion.nombre}` : '';
 
-      const asistenciasAlumno = uniqueRecords.filter(a => a.persona_id === alumno.persona_id) || [];
+      const asistenciasAlumno = uniqueRecords.filter(a => a.persona_id === personaId) || [];
       const totalDias = asistenciasAlumno.length;
 
       let puntual = 0;
@@ -984,9 +988,9 @@ router.get('/leaderboard', async (req, res) => {
       const asistenciaPct = totalDias > 0 ? Math.round((asistencia / totalDias) * 100) : 0;
 
       return {
-        persona_id: alumno.persona_id,
-        nombres: persona?.nombres || '',
-        apellidos: persona?.apellidos || '',
+        persona_id: personaId,
+        nombres: alumno.personas?.nombres || '',
+        apellidos: alumno.personas?.apellidos || '',
         salon,
         total_dias: totalDias,
         puntual,
