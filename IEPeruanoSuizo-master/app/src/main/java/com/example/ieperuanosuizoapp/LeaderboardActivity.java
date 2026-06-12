@@ -130,11 +130,6 @@ public class LeaderboardActivity extends AppCompatActivity {
     }
 
     private void setupTabLayout() {
-        // Set icons on tabs
-        TabLayout.Tab tab0 = tabLayout.getTabAt(0);
-        TabLayout.Tab tab1 = tabLayout.getTabAt(1);
-        if (tab0 != null) tab0.setIcon(R.drawable.ic_fire);
-        if (tab1 != null) tab1.setIcon(R.drawable.ic_check_circle);
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
@@ -293,10 +288,9 @@ public class LeaderboardActivity extends AppCompatActivity {
     }
 
     private String getScoreText(LeaderboardEntry e) {
-        if ("asistencia".equals(currentTipo)) {
-            return String.valueOf(e.getAsistenciaDias());
-        }
-        return String.valueOf(e.getPuntual());
+        String emoji = "asistencia".equals(currentTipo) ? "\u2B50" : "\uD83D\uDD25";
+        int count = "asistencia".equals(currentTipo) ? e.getAsistenciaDias() : e.getPuntual();
+        return emoji + " " + count;
     }
 
     private void showLoading(boolean show) {
@@ -340,13 +334,14 @@ public class LeaderboardActivity extends AppCompatActivity {
             holder.tvName.setText(entry.getPrimerNombre());
 
             if (tipo == null) return;
+            String emoji = "asistencia".equals(tipo) ? "\u2B50" : "\uD83D\uDD25";
             switch (tipo) {
                 case "puntual":
-                    holder.tvPercentage.setText(String.valueOf(entry.getPuntual()));
+                    holder.tvPercentage.setText(emoji + " " + entry.getPuntual());
                     holder.tvStats.setText(entry.getSalon());
                     break;
                 case "asistencia":
-                    holder.tvPercentage.setText(String.valueOf(entry.getAsistenciaDias()));
+                    holder.tvPercentage.setText(emoji + " " + entry.getAsistenciaDias());
                     holder.tvStats.setText(entry.getSalon());
                     break;
             }
