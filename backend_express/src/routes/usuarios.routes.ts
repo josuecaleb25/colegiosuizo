@@ -76,11 +76,11 @@ router.get('/perfil/:id', async (req, res) => {
       const secciones = Array.isArray(matriculaActiva.secciones) ? matriculaActiva.secciones[0] : matriculaActiva.secciones;
       const grados = Array.isArray(secciones.grados) ? secciones.grados[0] : secciones.grados;
 
-      // Buscar QR token en tabla codigos_qr
+      // Buscar QR token en tabla codigos_qr (FK por persona_id)
       const { data: qrData } = await supabase
         .from('codigos_qr')
         .select('codigo')
-        .eq('alumno_id', alumnoRow.id)
+        .eq('persona_id', personaId)
         .eq('activo', true)
         .limit(1);
       const qrCodeString = qrData && qrData.length > 0 ? qrData[0].codigo : null;
