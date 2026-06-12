@@ -35,7 +35,7 @@ public class LeaderboardActivity extends AppCompatActivity {
     private com.google.android.material.textfield.MaterialAutoCompleteTextView autoCompleteSection;
     private RecyclerView rvLeaderboard;
     private ProgressBar progressBar;
-    private TextView tvEmpty, tvEmptyInner;
+    private TextView tvEmpty;
     private androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipeRefresh;
 
     private View sectionHeader, statusLayout, podiumContainer;
@@ -76,7 +76,6 @@ public class LeaderboardActivity extends AppCompatActivity {
         rvLeaderboard = findViewById(R.id.rv_leaderboard);
         progressBar = findViewById(R.id.progress_bar);
         tvEmpty = findViewById(R.id.tv_empty);
-        tvEmptyInner = findViewById(R.id.tv_empty_inner);
         swipeRefresh = findViewById(R.id.swipe_refresh);
         sectionHeader = findViewById(R.id.section_header);
         statusLayout = findViewById(R.id.status_layout);
@@ -173,7 +172,6 @@ public class LeaderboardActivity extends AppCompatActivity {
     private void fetchLeaderboard() {
         showLoading(true);
         tvEmpty.setVisibility(View.GONE);
-        tvEmptyInner.setVisibility(View.GONE);
         sectionHeader.setVisibility(View.GONE);
         statusLayout.setVisibility(View.GONE);
         podiumContainer.setVisibility(View.GONE);
@@ -190,7 +188,7 @@ public class LeaderboardActivity extends AppCompatActivity {
                     public void onResponse(Call<ApiResponse<List<LeaderboardEntry>>> call, Response<ApiResponse<List<LeaderboardEntry>>> response) {
                         showLoading(false);
                         swipeRefresh.setRefreshing(false);
-                        if (response.isSuccessful() && response.body() != null && response.body().isSuccess() && response.body().getData() != null && !response.body().getData().isEmpty()) {
+                         if (response.isSuccessful() && response.body() != null && response.body().isSuccess() && response.body().getData() != null && !response.body().getData().isEmpty()) {
                             entries.clear();
                             entries.addAll(response.body().getData());
                             adapter.notifyDataSetChanged();
@@ -201,25 +199,11 @@ public class LeaderboardActivity extends AppCompatActivity {
                             entries.clear();
                             adapter.notifyDataSetChanged();
                             sectionHeader.setVisibility(View.VISIBLE);
-                            statusLayout.setVisibility(View.VISIBLE);
+                            statusLayout.setVisibility(View.GONE);
                             podiumContainer.setVisibility(View.GONE);
-                            tvEmptyInner.setVisibility(View.VISIBLE);
-                            tvEmptyInner.setText("No hay datos para este período");
+                            tvEmpty.setVisibility(View.VISIBLE);
+                            tvEmpty.setText("No hay datos para este período");
                         }
-                    }
-
-                    @Override
-                    public void onFailure(Call<ApiResponse<List<LeaderboardEntry>>> call, Throwable t) {
-                        showLoading(false);
-                        swipeRefresh.setRefreshing(false);
-                        entries.clear();
-                        adapter.notifyDataSetChanged();
-                        sectionHeader.setVisibility(View.GONE);
-                        statusLayout.setVisibility(View.GONE);
-                        podiumContainer.setVisibility(View.GONE);
-                        tvEmpty.setVisibility(View.VISIBLE);
-                        tvEmpty.setText("Sin conexión");
-                    }
                     }
 
                     @Override
@@ -276,10 +260,7 @@ public class LeaderboardActivity extends AppCompatActivity {
 
     private void showLoading(boolean show) {
         progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
-        if (show) {
-            tvEmpty.setVisibility(View.GONE);
-            tvEmptyInner.setVisibility(View.GONE);
-        }
+        if (show) tvEmpty.setVisibility(View.GONE);
     }
 
     // ========== Adapter ==========
