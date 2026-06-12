@@ -887,18 +887,11 @@ router.get('/leaderboard', async (req, res) => {
 
     // Construir mapa persona_id → alumno_id y viceversa
     const personaIdsSet = new Set<string>();
-    const alumnoToPersona = new Map<number, string>();
-    const personaToAlumno = new Map<string, number>();
     for (const a of alumnos as any[]) {
       const pid = a.personas?.id as string;
-      if (a.id && pid) {
-        personaIdsSet.add(pid);
-        alumnoToPersona.set(a.id, pid);
-        personaToAlumno.set(pid, a.id);
-      }
+      if (pid) personaIdsSet.add(pid);
     }
     const personaIds = [...personaIdsSet];
-    const alumnoIds = alumnos.filter((a: any) => a.id).map((a: any) => a.id);
 
     const BATCH_SIZE = 50;
     let allRecords: { persona_id: string; estado: string; hora_entrada: string; fecha: string }[] = [];
@@ -919,42 +912,6 @@ router.get('/leaderboard', async (req, res) => {
           .eq('tipo_persona', 'alumno');
         if (error) throw error;
         if (data) allRecords.push(...data);
-      })());
-    }
-
-    // Batches de asistencia_asistencia (legacy)
-    for (let i = 0; i < alumnoIds.length; i += BATCH_SIZE) {
-      const batch = alumnoIds.slice(i, i + BATCH_SIZE);
-      batches.push((async () => {
-        const { data, error } = await supabase
-          .from('asistencia_asistencia')
-          .select(`
-            alumno_id,
-            estado,
-            hora_registro,
-            asistencia_sesionclase!inner ( fecha )
-          `)
-          .in('alumno_id', batch)
-          .gte('asistencia_sesionclase.fecha', fechaInicio)
-          .lte('asistencia_sesionclase.fecha', fechaFin);
-        if (error) throw error;
-        if (data) {
-          for (const rec of data) {
-            const personaId = alumnoToPersona.get(rec.alumno_id);
-            if (!personaId) continue;
-            let horaEntrada = '';
-            if (rec.hora_registro) {
-              const d = new Date(rec.hora_registro);
-              horaEntrada = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-            }
-            allRecords.push({
-              persona_id: personaId,
-              estado: rec.estado,
-              hora_entrada: horaEntrada,
-              fecha: (rec.asistencia_sesionclase as any)?.fecha || ''
-            });
-          }
-        }
       })());
     }
 
