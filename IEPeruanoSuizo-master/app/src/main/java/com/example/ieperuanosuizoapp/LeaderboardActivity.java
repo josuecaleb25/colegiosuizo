@@ -23,10 +23,8 @@ import com.google.android.material.tabs.TabLayout;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -74,8 +72,7 @@ public class LeaderboardActivity extends AppCompatActivity {
         setupTabLayout();
         setupSwipeRefresh();
         setupRecyclerView();
-        setupSectionSelector();
-        fetchLeaderboard();
+        fetchSections();
     }
 
     private void initViews() {
@@ -157,13 +154,42 @@ public class LeaderboardActivity extends AppCompatActivity {
         rvLeaderboard.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
     }
 
+    private void fetchSections() {
+        showLoading(true);
+        RetrofitClient.getApiService().getSeccionesTyped(userId, userRol).enqueue(new Callback<ApiResponse<List<Section>>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<List<Section>>> call, Response<ApiResponse<List<Section>>> response) {
+                showLoading(false);
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    List<Section> data = response.body().getData();
+                    if (data != null && !data.isEmpty()) {
+                        sections = data;
+                    }
+                }
+                setupSectionSelector();
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<List<Section>>> call, Throwable t) {
+                showLoading(false);
+                setupSectionSelector();
+            }
+        });
+    }
+
     private void setupSectionSelector() {
         List<String> names = new ArrayList<>();
         names.add("Todos");
+        for (Section s : sections) {
+            names.add(s.getNombre());
+        }
+
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, names);
         autoCompleteSection.setAdapter(adapter);
+
         autoCompleteSection.setText("Todos", false);
         currentSeccionId = -1;
+        fetchLeaderboard();
 
         autoCompleteSection.setOnItemClickListener((parent, view, position, id) -> {
             if (position == 0) {
@@ -173,34 +199,6 @@ public class LeaderboardActivity extends AppCompatActivity {
             }
             fetchLeaderboard();
         });
-    }
-
-    private void rebuildSectionSelector(List<LeaderboardEntry> entries) {
-        Map<Integer, String> salonMap = new LinkedHashMap<>();
-        for (LeaderboardEntry e : entries) {
-            int sid = e.getSeccionId();
-            String sName = e.getSalon();
-            if (sid > 0 && sName != null && !sName.isEmpty() && !salonMap.containsKey(sid)) {
-                salonMap.put(sid, sName);
-            }
-        }
-        sections.clear();
-        List<String> names = new ArrayList<>();
-        names.add("Todos");
-        for (Map.Entry<Integer, String> entry : salonMap.entrySet()) {
-            Section sec = new Section();
-            sec.setId(entry.getKey());
-            sec.setNombre(entry.getValue());
-            sections.add(sec);
-            names.add(entry.getValue());
-        }
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, names);
-        autoCompleteSection.setAdapter(adapter);
-        if (currentSeccionId == -1 || !salonMap.containsKey(currentSeccionId)) {
-            autoCompleteSection.setText("Todos", false);
-        } else {
-            autoCompleteSection.setText(salonMap.get(currentSeccionId), false);
-        }
     }
 
     private void fetchLeaderboard() {
@@ -224,7 +222,6 @@ public class LeaderboardActivity extends AppCompatActivity {
                         swipeRefresh.setRefreshing(false);
                          if (response.isSuccessful() && response.body() != null && response.body().isSuccess() && response.body().getData() != null && !response.body().getData().isEmpty()) {
                             List<LeaderboardEntry> data = response.body().getData();
-                            if (currentSeccionId == -1) rebuildSectionSelector(data);
                             entries.clear();
                             entries.addAll(data);
                             adapter.notifyDataSetChanged();

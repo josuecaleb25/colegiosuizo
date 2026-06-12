@@ -28,8 +28,7 @@ router.get('/', async (req, res) => {
           grados!inner (
             nombre
           )
-        `)
-        .order('grados(nombre)', { ascending: true });
+        `);
 
       if (error) throw error;
 
@@ -103,8 +102,7 @@ router.get('/', async (req, res) => {
           grados!inner (
             nombre
           )
-        `)
-        .order('grados(nombre)', { ascending: true });
+        `);
 
       if (!error && data) {
         secciones = data.map((s: any) => ({
