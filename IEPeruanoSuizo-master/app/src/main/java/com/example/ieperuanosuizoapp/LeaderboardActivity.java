@@ -17,14 +17,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.ieperuanosuizoapp.api.RetrofitClient;
 import com.example.ieperuanosuizoapp.api.models.ApiResponse;
 import com.example.ieperuanosuizoapp.api.models.LeaderboardEntry;
-import com.example.ieperuanosuizoapp.api.models.Section;
 import com.google.android.material.tabs.TabLayout;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -33,7 +34,7 @@ import retrofit2.Response;
 public class LeaderboardActivity extends AppCompatActivity {
 
     private TabLayout tabLayout;
-    private com.google.android.material.textfield.MaterialAutoCompleteTextView autoCompleteSection;
+    private AutoCompleteTextView autoCompleteSection;
     private RecyclerView rvLeaderboard;
     private ProgressBar progressBar;
     private TextView tvEmpty;
@@ -48,11 +49,12 @@ public class LeaderboardActivity extends AppCompatActivity {
     private String userRol;
     private String currentTipo = "puntual";
     private String currentMes;
-    private int currentSeccionId = -1;
+    private String currentSalon = null; // null = Todos
     private Calendar currentCalendar;
 
-    private List<Section> sections = new ArrayList<>();
     private List<LeaderboardEntry> entries = new ArrayList<>();
+    private List<LeaderboardEntry> filteredEntries = new ArrayList<>();
+    private List<String> salonNames = new ArrayList<>();
     private LeaderboardAdapter adapter;
 
     @Override
@@ -72,7 +74,8 @@ public class LeaderboardActivity extends AppCompatActivity {
         setupTabLayout();
         setupSwipeRefresh();
         setupRecyclerView();
-        fetchSections();
+        setupSectionSelector();
+        fetchLeaderboard();
     }
 
     private void initViews() {
@@ -149,56 +152,69 @@ public class LeaderboardActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView() {
-        adapter = new LeaderboardAdapter(entries);
+        adapter = new LeaderboardAdapter(filteredEntries);
         rvLeaderboard.setAdapter(adapter);
         rvLeaderboard.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
-    }
-
-    private void fetchSections() {
-        showLoading(true);
-        RetrofitClient.getApiService().getSeccionesTyped(userId, userRol).enqueue(new Callback<ApiResponse<List<Section>>>() {
-            @Override
-            public void onResponse(Call<ApiResponse<List<Section>>> call, Response<ApiResponse<List<Section>>> response) {
-                showLoading(false);
-                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    List<Section> data = response.body().getData();
-                    if (data != null && !data.isEmpty()) {
-                        sections = data;
-                    }
-                }
-                setupSectionSelector();
-            }
-
-            @Override
-            public void onFailure(Call<ApiResponse<List<Section>>> call, Throwable t) {
-                showLoading(false);
-                setupSectionSelector();
-            }
-        });
     }
 
     private void setupSectionSelector() {
         List<String> names = new ArrayList<>();
         names.add("Todos");
-        for (Section s : sections) {
-            names.add(s.getNombre());
-        }
-
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, names);
         autoCompleteSection.setAdapter(adapter);
-
         autoCompleteSection.setText("Todos", false);
-        currentSeccionId = -1;
-        fetchLeaderboard();
 
         autoCompleteSection.setOnItemClickListener((parent, view, position, id) -> {
             if (position == 0) {
-                currentSeccionId = -1;
+                currentSalon = null;
             } else {
-                currentSeccionId = sections.get(position - 1).getId();
+                currentSalon = salonNames.get(position - 1);
             }
-            fetchLeaderboard();
+            applyFilter();
         });
+    }
+
+    private void rebuildSalonSelector(List<LeaderboardEntry> data) {
+        Set<String> unique = new LinkedHashSet<>();
+        for (LeaderboardEntry e : data) {
+            String s = e.getSalon();
+            if (s != null && !s.isEmpty()) unique.add(s);
+        }
+        salonNames.clear();
+        salonNames.addAll(unique);
+        List<String> names = new ArrayList<>();
+        names.add("Todos");
+        names.addAll(salonNames);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, names);
+        autoCompleteSection.setAdapter(adapter);
+        if (currentSalon == null) {
+            autoCompleteSection.setText("Todos", false);
+        } else if (salonNames.contains(currentSalon)) {
+            autoCompleteSection.setText(currentSalon, false);
+        } else {
+            currentSalon = null;
+            autoCompleteSection.setText("Todos", false);
+        }
+    }
+
+    private void applyFilter() {
+        filteredEntries.clear();
+        for (LeaderboardEntry e : entries) {
+            if (currentSalon == null || currentSalon.equals(e.getSalon())) {
+                filteredEntries.add(e);
+            }
+        }
+        adapter.notifyDataSetChanged();
+        sectionHeader.setVisibility(View.VISIBLE);
+        if (filteredEntries.isEmpty()) {
+            statusLayout.setVisibility(View.GONE);
+            podiumContainer.setVisibility(View.GONE);
+            tvEmpty.setVisibility(View.VISIBLE);
+            tvEmpty.setText("No hay datos para este período");
+        } else {
+            statusLayout.setVisibility(View.VISIBLE);
+            updatePodium();
+        }
     }
 
     private void fetchLeaderboard() {
@@ -208,64 +224,63 @@ public class LeaderboardActivity extends AppCompatActivity {
         statusLayout.setVisibility(View.GONE);
         podiumContainer.setVisibility(View.GONE);
 
-        retrofit2.Call<ApiResponse<List<LeaderboardEntry>>> call;
-        if (currentSeccionId == -1) {
-            call = RetrofitClient.getApiService().getLeaderboardAll(currentTipo, currentMes);
-        } else {
-            call = RetrofitClient.getApiService().getLeaderboard(currentSeccionId, currentTipo, currentMes);
-        }
-
-        call.enqueue(new Callback<ApiResponse<List<LeaderboardEntry>>>() {
-                    @Override
-                    public void onResponse(Call<ApiResponse<List<LeaderboardEntry>>> call, Response<ApiResponse<List<LeaderboardEntry>>> response) {
-                        showLoading(false);
-                        swipeRefresh.setRefreshing(false);
-                         if (response.isSuccessful() && response.body() != null && response.body().isSuccess() && response.body().getData() != null && !response.body().getData().isEmpty()) {
-                            List<LeaderboardEntry> data = response.body().getData();
-                            entries.clear();
-                            entries.addAll(data);
-                            adapter.notifyDataSetChanged();
-                            sectionHeader.setVisibility(View.VISIBLE);
-                            statusLayout.setVisibility(View.VISIBLE);
-                            updatePodium();
-                        } else {
-                            entries.clear();
-                            adapter.notifyDataSetChanged();
-                            sectionHeader.setVisibility(View.VISIBLE);
-                            statusLayout.setVisibility(View.GONE);
-                            podiumContainer.setVisibility(View.GONE);
-                            tvEmpty.setVisibility(View.VISIBLE);
-                            tvEmpty.setText("No hay datos para este período");
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<ApiResponse<List<LeaderboardEntry>>> call, Throwable t) {
-                        showLoading(false);
-                        swipeRefresh.setRefreshing(false);
+        RetrofitClient.getApiService().getLeaderboardAll(currentTipo, currentMes)
+            .enqueue(new Callback<ApiResponse<List<LeaderboardEntry>>>() {
+                @Override
+                public void onResponse(Call<ApiResponse<List<LeaderboardEntry>>> call, Response<ApiResponse<List<LeaderboardEntry>>> response) {
+                    showLoading(false);
+                    swipeRefresh.setRefreshing(false);
+                    if (response.isSuccessful() && response.body() != null && response.body().isSuccess() && response.body().getData() != null && !response.body().getData().isEmpty()) {
+                        List<LeaderboardEntry> data = response.body().getData();
                         entries.clear();
+                        entries.addAll(data);
+                        filteredEntries.clear();
+                        filteredEntries.addAll(data);
                         adapter.notifyDataSetChanged();
-                        sectionHeader.setVisibility(View.GONE);
+                        sectionHeader.setVisibility(View.VISIBLE);
+                        statusLayout.setVisibility(View.VISIBLE);
+                        updatePodium();
+                        rebuildSalonSelector(data);
+                    } else {
+                        entries.clear();
+                        filteredEntries.clear();
+                        adapter.notifyDataSetChanged();
+                        sectionHeader.setVisibility(View.VISIBLE);
                         statusLayout.setVisibility(View.GONE);
                         podiumContainer.setVisibility(View.GONE);
                         tvEmpty.setVisibility(View.VISIBLE);
-                        tvEmpty.setText("Sin conexión");
+                        tvEmpty.setText("No hay datos para este período");
                     }
-                });
+                }
+
+                @Override
+                public void onFailure(Call<ApiResponse<List<LeaderboardEntry>>> call, Throwable t) {
+                    showLoading(false);
+                    swipeRefresh.setRefreshing(false);
+                    entries.clear();
+                    filteredEntries.clear();
+                    adapter.notifyDataSetChanged();
+                    sectionHeader.setVisibility(View.GONE);
+                    statusLayout.setVisibility(View.GONE);
+                    podiumContainer.setVisibility(View.GONE);
+                    tvEmpty.setVisibility(View.VISIBLE);
+                    tvEmpty.setText("Sin conexión");
+                }
+            });
     }
 
     private void updatePodium() {
-        if (entries.isEmpty()) return;
+        if (filteredEntries.isEmpty()) return;
         podiumContainer.setVisibility(View.VISIBLE);
 
         // Top 1
-        LeaderboardEntry first = entries.get(0);
+        LeaderboardEntry first = filteredEntries.get(0);
         tvName1.setText(first.getPrimerNombre());
         tvScore1.setText(getScoreText(first));
 
         // Top 2
-        if (entries.size() > 1) {
-            LeaderboardEntry second = entries.get(1);
+        if (filteredEntries.size() > 1) {
+            LeaderboardEntry second = filteredEntries.get(1);
             tvName2.setText(second.getPrimerNombre());
             tvScore2.setText(getScoreText(second));
             findViewById(R.id.podium_2).setVisibility(View.VISIBLE);
@@ -274,8 +289,8 @@ public class LeaderboardActivity extends AppCompatActivity {
         }
 
         // Top 3
-        if (entries.size() > 2) {
-            LeaderboardEntry third = entries.get(2);
+        if (filteredEntries.size() > 2) {
+            LeaderboardEntry third = filteredEntries.get(2);
             tvName3.setText(third.getPrimerNombre());
             tvScore3.setText(getScoreText(third));
             findViewById(R.id.podium_3).setVisibility(View.VISIBLE);
