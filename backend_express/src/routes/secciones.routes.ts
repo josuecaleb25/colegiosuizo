@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
         .select(`
           id,
           nombre,
-          grados!left (
+          grados!inner (
             nombre
           )
         `);
@@ -34,8 +34,8 @@ router.get('/', async (req, res) => {
 
       secciones = data?.map((s: any) => ({
         id: s.id,
-        nombre: s.grados?.nombre ? `${s.grados.nombre} ${s.nombre}` : s.nombre,
-        grado: s.grados?.nombre || '',
+        nombre: `${s.grados.nombre} ${s.nombre}`,
+        grado: s.grados.nombre,
         seccion: s.nombre
       })) || [];
 
@@ -99,7 +99,7 @@ router.get('/', async (req, res) => {
         .select(`
           id,
           nombre,
-          grados!left (
+          grados!inner (
             nombre
           )
         `);
