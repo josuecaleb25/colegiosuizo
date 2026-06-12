@@ -5,10 +5,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ProgressBar;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -34,11 +32,14 @@ import retrofit2.Response;
 public class LeaderboardActivity extends AppCompatActivity {
 
     private TabLayout tabLayout;
-    private Spinner spinnerSection;
+    private com.google.android.material.textfield.MaterialAutoCompleteTextView autoCompleteSection;
     private RecyclerView rvLeaderboard;
     private ProgressBar progressBar;
     private TextView tvEmpty;
     private androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipeRefresh;
+
+    private TextView tvName1, tvScore1, tvName2, tvScore2, tvName3, tvScore3;
+    private View podiumContainer;
 
     private String userId;
     private String userRol;
@@ -71,11 +72,19 @@ public class LeaderboardActivity extends AppCompatActivity {
 
     private void initViews() {
         tabLayout = findViewById(R.id.tab_layout);
-        spinnerSection = findViewById(R.id.spinner_section);
+        autoCompleteSection = findViewById(R.id.auto_complete_section);
         rvLeaderboard = findViewById(R.id.rv_leaderboard);
         progressBar = findViewById(R.id.progress_bar);
         tvEmpty = findViewById(R.id.tv_empty);
         swipeRefresh = findViewById(R.id.swipe_refresh);
+        podiumContainer = findViewById(R.id.podium_container);
+
+        tvName1 = findViewById(R.id.tv_name_1);
+        tvScore1 = findViewById(R.id.tv_score_1);
+        tvName2 = findViewById(R.id.tv_name_2);
+        tvScore2 = findViewById(R.id.tv_score_2);
+        tvName3 = findViewById(R.id.tv_name_3);
+        tvScore3 = findViewById(R.id.tv_score_3);
     }
 
     private void setupBackButton() {
@@ -129,7 +138,7 @@ public class LeaderboardActivity extends AppCompatActivity {
                     List<Section> data = response.body().getData();
                     if (data != null && !data.isEmpty()) {
                         sections = data;
-                        setupSectionSpinner();
+                        setupSectionSelector();
                         return;
                     }
                 }
@@ -146,19 +155,24 @@ public class LeaderboardActivity extends AppCompatActivity {
         });
     }
 
-    private void setupSectionSpinner() {
-        ArrayAdapter<Section> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, sections);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerSection.setAdapter(adapter);
+    private void setupSectionSelector() {
+        List<String> names = new ArrayList<>();
+        for (Section s : sections) {
+            names.add(s.getNombre());
+        }
 
-        spinnerSection.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                currentSeccionId = sections.get(position).getId();
-                fetchLeaderboard();
-            }
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, names);
+        autoCompleteSection.setAdapter(adapter);
+
+        if (!sections.isEmpty()) {
+            autoCompleteSection.setText(sections.get(0).getNombre(), false);
+            currentSeccionId = sections.get(0).getId();
+            fetchLeaderboard();
+        }
+
+        autoCompleteSection.setOnItemClickListener((parent, view, position, id) -> {
+            currentSeccionId = sections.get(position).getId();
+            fetchLeaderboard();
         });
     }
 
@@ -167,6 +181,7 @@ public class LeaderboardActivity extends AppCompatActivity {
 
         showLoading(true);
         tvEmpty.setVisibility(View.GONE);
+        podiumContainer.setVisibility(View.GONE);
 
         RetrofitClient.getApiService().getLeaderboard(currentSeccionId, currentTipo, currentMes)
                 .enqueue(new Callback<ApiResponse<List<LeaderboardEntry>>>() {
@@ -180,6 +195,7 @@ public class LeaderboardActivity extends AppCompatActivity {
                                 entries.clear();
                                 entries.addAll(data);
                                 adapter.notifyDataSetChanged();
+                                updatePodium();
                                 return;
                             }
                         }
@@ -197,6 +213,43 @@ public class LeaderboardActivity extends AppCompatActivity {
                         tvEmpty.setText("Error de conexión");
                     }
                 });
+    }
+
+    private void updatePodium() {
+        if (entries.isEmpty()) return;
+        podiumContainer.setVisibility(View.VISIBLE);
+
+        // Top 1
+        LeaderboardEntry first = entries.get(0);
+        tvName1.setText(first.getNombreCompleto());
+        tvScore1.setText(getScoreText(first));
+
+        // Top 2
+        if (entries.size() > 1) {
+            LeaderboardEntry second = entries.get(1);
+            tvName2.setText(second.getNombreCompleto());
+            tvScore2.setText(getScoreText(second));
+            findViewById(R.id.podium_2).setVisibility(View.VISIBLE);
+        } else {
+            findViewById(R.id.podium_2).setVisibility(View.INVISIBLE);
+        }
+
+        // Top 3
+        if (entries.size() > 2) {
+            LeaderboardEntry third = entries.get(2);
+            tvName3.setText(third.getNombreCompleto());
+            tvScore3.setText(getScoreText(third));
+            findViewById(R.id.podium_3).setVisibility(View.VISIBLE);
+        } else {
+            findViewById(R.id.podium_3).setVisibility(View.INVISIBLE);
+        }
+    }
+
+    private String getScoreText(LeaderboardEntry e) {
+        if ("asistencia".equals(currentTipo)) {
+            return e.getAsistencia() + "%";
+        }
+        return e.getPuntualidad() + "%";
     }
 
     private void showLoading(boolean show) {
@@ -231,8 +284,10 @@ public class LeaderboardActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            LeaderboardEntry entry = items.get(position);
-            int rank = position + 1;
+            int adjustedPosition = position + 3;
+            if (adjustedPosition >= items.size()) return;
+            LeaderboardEntry entry = items.get(adjustedPosition);
+            int rank = adjustedPosition + 1;
 
             holder.tvPosition.setText(String.valueOf(rank));
             holder.tvName.setText(entry.getNombreCompleto());
@@ -241,12 +296,10 @@ public class LeaderboardActivity extends AppCompatActivity {
             switch (tipo) {
                 case "puntual":
                     holder.tvPercentage.setText(entry.getPuntualidad() + "%");
-                    holder.tvLabel.setText("puntualidad");
                     holder.tvStats.setText(entry.getPuntual() + " de " + entry.getTotalDias() + " días");
                     break;
                 case "asistencia":
                     holder.tvPercentage.setText(entry.getAsistencia() + "%");
-                    holder.tvLabel.setText("asistencia");
                     holder.tvStats.setText(entry.getAsistenciaDias() + " de " + entry.getTotalDias() + " días");
                     break;
             }
@@ -254,11 +307,11 @@ public class LeaderboardActivity extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return items.size();
+            return Math.max(0, items.size() - 3);
         }
 
         static class ViewHolder extends RecyclerView.ViewHolder {
-            TextView tvPosition, tvName, tvPercentage, tvStats, tvLabel;
+            TextView tvPosition, tvName, tvPercentage, tvStats;
 
             ViewHolder(View itemView) {
                 super(itemView);
@@ -266,7 +319,6 @@ public class LeaderboardActivity extends AppCompatActivity {
                 tvName = itemView.findViewById(R.id.tv_name);
                 tvPercentage = itemView.findViewById(R.id.tv_percentage);
                 tvStats = itemView.findViewById(R.id.tv_stats);
-                tvLabel = itemView.findViewById(R.id.tv_label);
             }
         }
     }
