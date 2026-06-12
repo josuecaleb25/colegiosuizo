@@ -227,6 +227,7 @@ public class LeaderboardActivity extends AppCompatActivity {
         }
         adapter.notifyDataSetChanged();
         sectionHeader.setVisibility(View.VISIBLE);
+        tvEmpty.setVisibility(View.GONE);
         if (filteredEntries.isEmpty()) {
             statusLayout.setVisibility(View.GONE);
             podiumContainer.setVisibility(View.GONE);
