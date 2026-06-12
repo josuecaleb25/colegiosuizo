@@ -32,7 +32,6 @@
                 android:layout_height="14dp"
                 android:layout_gravity="center"
                 android:src="@drawable/righticon"
-                android:rotation="180"
                 app:tint="?android:attr/textColorPrimary" />
         </androidx.cardview.widget.CardView>
 

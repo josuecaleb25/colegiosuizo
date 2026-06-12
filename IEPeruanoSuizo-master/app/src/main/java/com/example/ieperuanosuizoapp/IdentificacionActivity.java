@@ -14,8 +14,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.cardview.widget.CardView;
-
 import com.example.ieperuanosuizoapp.api.RetrofitClient;
 
 public class IdentificacionActivity extends AppCompatActivity {
@@ -196,7 +194,7 @@ public class IdentificacionActivity extends AppCompatActivity {
     }
 
     private void compartirIdentificacion() {
-        CardView card = findViewById(R.id.card_identificacion);
+        View card = findViewById(R.id.card_identificacion);
         card.setDrawingCacheEnabled(true);
         Bitmap bitmap = Bitmap.createBitmap(card.getDrawingCache());
         card.setDrawingCacheEnabled(false);
