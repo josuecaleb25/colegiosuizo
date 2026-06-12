@@ -85,10 +85,13 @@ router.get('/perfil/:id', async (req, res) => {
         .limit(1);
       const qrCodeString = qrData && qrData.length > 0 ? qrData[0].codigo : null;
 
+      // Si no hay QR en BD, usar el codigo_alumno como contenido
+      const qrContent = qrCodeString || alumnoRow.codigo_alumno || '';
+
       let qrImage = null;
-      if (qrCodeString) {
+      if (qrContent) {
         try {
-          qrImage = await QRCode.toDataURL(qrCodeString, {
+          qrImage = await QRCode.toDataURL(qrContent, {
             width: 300, margin: 2,
             color: { dark: '#000000', light: '#FFFFFF' }
           });
