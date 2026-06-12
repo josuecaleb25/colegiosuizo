@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 public class Section {
 
     @SerializedName("id")
-    private int id;
+    private String id;
 
     @SerializedName("nombre")
     private String nombre;
@@ -16,8 +16,8 @@ public class Section {
     @SerializedName("seccion")
     private String seccion;
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
     public String getGrado() { return grado; }

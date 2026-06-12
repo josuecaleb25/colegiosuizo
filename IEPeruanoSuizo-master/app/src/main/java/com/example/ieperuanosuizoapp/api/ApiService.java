@@ -108,7 +108,7 @@ public interface ApiService {
     // Leaderboard
     @GET("asistencia/leaderboard")
     Call<ApiResponse<List<com.example.ieperuanosuizoapp.api.models.LeaderboardEntry>>> getLeaderboard(
-        @Query("seccion_id") int seccionId,
+        @Query("seccion_id") String seccionId,
         @Query("tipo") String tipo,
         @Query("mes") String mes
     );

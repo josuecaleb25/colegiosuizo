@@ -50,16 +50,16 @@ public class LeaderboardActivity extends AppCompatActivity {
     private String userRol;
     private String currentTipo = "puntual";
     private String currentMes;
-    private int currentSeccionId = -1;
+    private String currentSeccionId = null; // null = Todos
     private Calendar currentCalendar;
 
     private List<LeaderboardEntry> entries = new ArrayList<>();
     private LeaderboardAdapter adapter;
 
     private static class SectionInfo {
-        int id;
+        String id;
         String nombre;
-        SectionInfo(int id, String nombre) { this.id = id; this.nombre = nombre; }
+        SectionInfo(String id, String nombre) { this.id = id; this.nombre = nombre; }
     }
     private List<SectionInfo> sections = new ArrayList<>();
 
@@ -180,9 +180,9 @@ public class LeaderboardActivity extends AppCompatActivity {
                             Gson gson = new Gson();
                             for (Object obj : data) {
                                 JsonObject json = gson.toJsonTree(obj).getAsJsonObject();
-                                int id = json.has("id") ? json.get("id").getAsInt() : 0;
+                                String id = json.has("id") ? json.get("id").getAsString() : "";
                                 String nombre = json.has("nombre") ? json.get("nombre").getAsString() : "";
-                                if (id > 0 && !nombre.isEmpty()) sections.add(new SectionInfo(id, nombre));
+                                if (!id.isEmpty() && !nombre.isEmpty()) sections.add(new SectionInfo(id, nombre));
                             }
                         }
                     }
@@ -190,11 +190,11 @@ public class LeaderboardActivity extends AppCompatActivity {
                     sections.clear();
                 }
                 if (sections.isEmpty()) {
-                    sections.add(new SectionInfo(0, "1ro A"));
-                    sections.add(new SectionInfo(0, "2do B"));
-                    sections.add(new SectionInfo(0, "3ro C"));
-                    sections.add(new SectionInfo(0, "4to A"));
-                    sections.add(new SectionInfo(0, "5to B"));
+                    sections.add(new SectionInfo("", "1ro A"));
+                    sections.add(new SectionInfo("", "2do B"));
+                    sections.add(new SectionInfo("", "3ro C"));
+                    sections.add(new SectionInfo("", "4to A"));
+                    sections.add(new SectionInfo("", "5to B"));
                 }
                 setupSectionSelector();
             }
@@ -203,11 +203,11 @@ public class LeaderboardActivity extends AppCompatActivity {
             public void onFailure(Call<ApiResponse<List<Object>>> call, Throwable t) {
                 showLoading(false);
                 sections.clear();
-                sections.add(new SectionInfo(0, "1ro A"));
-                sections.add(new SectionInfo(0, "2do B"));
-                sections.add(new SectionInfo(0, "3ro C"));
-                sections.add(new SectionInfo(0, "4to A"));
-                sections.add(new SectionInfo(0, "5to B"));
+                sections.add(new SectionInfo("", "1ro A"));
+                sections.add(new SectionInfo("", "2do B"));
+                sections.add(new SectionInfo("", "3ro C"));
+                sections.add(new SectionInfo("", "4to A"));
+                sections.add(new SectionInfo("", "5to B"));
                 setupSectionSelector();
             }
         });
@@ -221,11 +221,11 @@ public class LeaderboardActivity extends AppCompatActivity {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, names);
         autoCompleteSection.setAdapter(adapter);
         autoCompleteSection.setText("Todos", false);
-        currentSeccionId = -1;
+        currentSeccionId = null;
 
         autoCompleteSection.setOnItemClickListener((parent, view, position, id) -> {
             if (position == 0) {
-                currentSeccionId = -1;
+                currentSeccionId = null;
             } else {
                 currentSeccionId = sections.get(position - 1).id;
             }
@@ -242,7 +242,7 @@ public class LeaderboardActivity extends AppCompatActivity {
         podiumContainer.setVisibility(View.GONE);
 
         Call<ApiResponse<List<LeaderboardEntry>>> call;
-        if (currentSeccionId == -1) {
+        if (currentSeccionId == null) {
             call = RetrofitClient.getApiService().getLeaderboardAll(currentTipo, currentMes);
         } else {
             call = RetrofitClient.getApiService().getLeaderboard(currentSeccionId, currentTipo, currentMes);
