@@ -908,6 +908,8 @@ router.get('/leaderboard', async (req, res) => {
 
       let puntual = 0;
       let asistencia = 0;
+      let sumaMinutos = 0;
+      let puntualCount = 0;
 
       for (const a of asistenciasAlumno) {
         if (a.estado === 'presente' || a.estado === 'tardanza') {
@@ -915,9 +917,15 @@ router.get('/leaderboard', async (req, res) => {
         }
         if (a.estado === 'presente') {
           puntual++;
+          const minutos = parseHora(a.hora_entrada);
+          if (minutos !== null) {
+            sumaMinutos += minutos;
+            puntualCount++;
+          }
         }
       }
 
+      const promedio = puntualCount > 0 ? Math.round(sumaMinutos / puntualCount) : 9999;
       const puntualidad = totalDias > 0 ? Math.round((puntual / totalDias) * 100) : 0;
       const asistenciaPct = totalDias > 0 ? Math.round((asistencia / totalDias) * 100) : 0;
 
@@ -931,16 +939,21 @@ router.get('/leaderboard', async (req, res) => {
         tardanza: totalDias - puntual,
         puntualidad,
         asistencia_dias: asistencia,
-        asistencia: asistenciaPct
+        asistencia: asistenciaPct,
+        promedio
       };
     });
 
-    // Ordenar según tipo (por acumulado, no porcentaje)
+    // Ordenar según tipo (por acumulado, desempate por promedio de llegada)
     const ordenado = leaderboard.sort((a, b) => {
       if (tipo === 'puntual') {
-        return b.puntual - a.puntual;
+        const diff = b.puntual - a.puntual;
+        if (diff !== 0) return diff;
+        return a.promedio - b.promedio;
       }
-      return b.asistencia_dias - a.asistencia_dias;
+      const diff = b.asistencia_dias - a.asistencia_dias;
+      if (diff !== 0) return diff;
+      return a.promedio - b.promedio;
     });
 
     res.json({
@@ -956,5 +969,24 @@ router.get('/leaderboard', async (req, res) => {
     });
   }
 });
+
+// Convertir hora a minutos desde medianoche para desempate
+function parseHora(hora: string): number | null {
+  if (!hora) return null;
+  const trimmed = hora.trim().toUpperCase();
+  
+  // Formato HH:MM:SS (24h)
+  const match24 = trimmed.match(/^(\d{1,2}):(\d{2})/);
+  if (match24) {
+    const h = parseInt(match24[1], 10);
+    const m = parseInt(match24[2], 10);
+    // Si parece 12h (ej. "07:22 AM"), detectar AM/PM
+    if (trimmed.includes('PM') && h < 12) return (h + 12) * 60 + m;
+    if (trimmed.includes('AM') && h === 12) return m;
+    return h * 60 + m;
+  }
+  
+  return null;
+}
 
 export default router;
