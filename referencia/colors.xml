@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Backgrounds (White premium theme) -->
+    <color name="bg_dark">#FFFFFF</color> <!-- Premium completely white background -->
+    <color name="bg_card">#FFFFFF</color> <!-- Clean white cards -->
+    <color name="bg_card_top">#F8FAFC</color> <!-- Soft slate gray header / accent background -->
+    <color name="bg_light_gray">#F1F5F9</color> <!-- Light slate gray -->
+    
+    <!-- Fine Border & Divider Line Colors -->
+    <color name="border_light">#E2E8F0</color> <!-- 1dp high fidelity light borders -->
+    <color name="divider_color">#E2E8F0</color> <!-- Sleek light gray divider -->
+    
+    <!-- Rank Specific Colors (Championship Palette - Clear Light) -->
+    <color name="gold_crown">#F59E0B</color> <!-- Warm amber-gold -->
+    <color name="gold_crown_dark">#B45309</color>
+    <color name="silver_crown">#64748B</color> <!-- High end slate silver -->
+    <color name="silver_crown_dark">#334155</color>
+    <color name="bronze_crown">#D97706</color> <!-- Elegant bronze-coral -->
+    <color name="bronze_crown_dark">#7C2D12</color>
+
+    <!-- Ultra High-Contrast Accents -->
+    <color name="purple_dark">#4F46E5</color> <!-- Deep indigo primary -->
+    <color name="neon_cyan">#6366F1</color> <!-- Indigo accent -->
+    <color name="neon_pink">#EF4444</color> <!-- Trading crimson down-trend -->
+    <color name="emerald">#10B981</color> <!-- Trading emerald up-trend -->
+    
+    <!-- Typography tokens (Tailored for white background readability) -->
+    <color name="text_white">#0F172A</color> <!-- High contrast slate dark body -->
+    <color name="text_gray">#64748B</color> <!-- Beautiful slate secondary gray -->
+    <color name="text_gold">#B45309</color>
+    <color name="text_cyan">#4F46E5</color>
+    
+    <!-- Standard colors -->
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+</resources>

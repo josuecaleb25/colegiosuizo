@@ -1,0 +1,41 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+
+    <!-- Laurel Leaves Left Side (Engraved High-Contrast Rich Dark Brown) -->
+    <path
+        android:fillColor="#8078350F"
+        android:pathData="M24,44 C20,44 14,35 16,28 C19,29 22,35 24,39" />
+    <path
+        android:fillColor="#8078350F"
+        android:pathData="M22,35 C17,34 11,26 14,19 C17,21 19,27 22,30" />
+    <path
+        android:fillColor="#8078350F"
+        android:pathData="M23,25 C19,22 15,14 19,8 C21,11 22,17 23,20" />
+
+    <!-- Laurel Leaves Right Side (Engraved High-Contrast Rich Dark Brown) -->
+    <path
+        android:fillColor="#8078350F"
+        android:pathData="M40,44 C44,44 50,35 48,28 C45,29 42,35 40,39" />
+    <path
+        android:fillColor="#8078350F"
+        android:pathData="M42,35 C47,34 53,26 50,19 C47,21 45,27 42,30" />
+    <path
+        android:fillColor="#8078350F"
+        android:pathData="M41,25 C45,22 49,14 45,8 C43,11 42,17 41,20" />
+
+    <!-- Ribbon / Base Connection -->
+    <path
+        android:fillColor="#A078350F"
+        android:pathData="M26,45 L38,45 L32,50 Z" />
+
+    <!-- Giant Central Number 1 (Premium Deep Dark Amber Brown) -->
+    <path
+        android:fillColor="#FF451A03"
+        android:pathData="M29,24 L35,24 L35,42 L29,42 Z" />
+    <path
+        android:fillColor="#FF451A03"
+        android:pathData="M29,24 L33,20 L35,24 Z" />
+</vector>

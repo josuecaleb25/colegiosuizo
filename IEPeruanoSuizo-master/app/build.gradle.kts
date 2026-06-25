@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.ieperuanosuizoapp"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -59,6 +59,16 @@ dependencies {
 
     // Gson para parsear JSON
     implementation("com.google.code.gson:gson:2.10.1")
+
+    // Apache POI para generar Excel (.xlsx) con gráficos
+    implementation("org.apache.poi:poi:5.2.5")
+    implementation("org.apache.poi:poi-ooxml:5.2.5") {
+        exclude(group = "org.apache.poi", module = "poi-ooxml-lite")
+        exclude(group = "stax")
+        exclude(group = "xml-apis")
+        exclude(group = "org.apache.logging.log4j")
+    }
+    implementation("org.apache.poi:poi-ooxml-full:5.2.5")
 
     // Firebase BoM (Bill of Materials)
     implementation(platform("com.google.firebase:firebase-bom:34.13.0"))

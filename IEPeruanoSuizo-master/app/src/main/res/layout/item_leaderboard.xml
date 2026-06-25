@@ -1,90 +1,138 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/bg_card_row"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="12dp"
     android:layout_marginBottom="8dp"
-    app:cardBackgroundColor="#FFFFFF"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="0dp">
+    android:clickable="true"
+    android:focusable="true">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/tv_rank"
+        android:layout_width="32dp"
         android:layout_height="wrap_content"
-        android:padding="12dp">
+        android:gravity="center"
+        android:textColor="@color/text_cyan"
+        android:textStyle="bold"
+        android:textSize="15sp" />
 
-        <!-- Posición (4, 5, 6...) -->
+    <FrameLayout
+        android:id="@+id/avatar_frame"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:background="@drawable/bg_circle_default"
+        android:layout_marginRight="12dp">
+
         <TextView
-            android:id="@+id/tv_position"
-            android:layout_width="35dp"
-            android:layout_height="wrap_content"
+            android:id="@+id/tv_avatar_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:gravity="center"
-            android:fontFamily="@font/poppinsbold"
-            android:textColor="#9E9E9E"
-            android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="4" />
+            android:textColor="@color/text_white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </FrameLayout>
 
-        <!-- Avatar -->
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/iv_avatar"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:layout_marginStart="8dp"
-            android:src="@drawable/emptyphoto"
-            app:shapeAppearanceOverlay="@style/CircleImage"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@id/tv_position"
-            app:layout_constraintTop_toTopOf="parent" />
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-        <!-- Nombre y Detalle -->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:orientation="vertical"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/tv_percentage"
-            app:layout_constraintStart_toEndOf="@id/iv_avatar"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <TextView
-                android:id="@+id/tv_name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/poppinssemibold"
-                android:textColor="#333333"
-                android:textSize="14sp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                tools:text="Nombre del Alumno" />
-
-            <TextView
-                android:id="@+id/tv_stats"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/poppinsregular"
-                android:textColor="#9E9E9E"
-                android:textSize="11sp"
-                tools:text="Subtítulo de estado" />
-        </LinearLayout>
-
-        <!-- Puntos (Estrella o Fuego) -->
         <TextView
-            android:id="@+id/tv_percentage"
+            android:id="@+id/tv_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/poppinsbold"
-            android:textColor="#333333"
+            android:textColor="@color/text_white"
             android:textSize="14sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="⭐ 12" />
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="2dp">
 
-</androidx.cardview.widget.CardView>
+            <TextView
+                android:id="@+id/tv_level_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/neon_pink"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_gray"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="end"
+        android:layout_marginRight="8dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tv_score"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_white"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_score_suffix"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_gray"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layout_trend_capsule"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="4dp"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:background="@drawable/bg_trend_up_capsule"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/iv_trend_icon"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginRight="4dp"
+                android:contentDescription="Trend" />
+
+            <TextView
+                android:id="@+id/tv_trend_arrow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/emerald"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

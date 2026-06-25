@@ -16,6 +16,7 @@ import comunicadosRoutes from './routes/comunicados.routes';
 import usuariosRoutes from './routes/usuarios.routes';
 import adminRoutes from './routes/admin.routes';
 import seccionesRoutes from './routes/secciones.routes';
+import notificacionesRoutes from './routes/notificaciones.routes';
 
 dotenv.config();
 
@@ -71,6 +72,7 @@ app.use('/api/comunicados', comunicadosRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/secciones', seccionesRoutes);
+app.use('/api/notificaciones', notificacionesRoutes);
 
 // Endpoint de prueba para FCM
 app.post('/api/test-fcm', (req, res) => {

@@ -6,19 +6,40 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.ieperuanosuizoapp.api.ApiConfig;
+import com.example.ieperuanosuizoapp.api.ApiService;
+import com.example.ieperuanosuizoapp.api.models.Notificacion;
+import com.example.ieperuanosuizoapp.api.models.NotificacionesResponse;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class NotificationsActivity extends AppCompatActivity {
 
+    private RecyclerView rv;
+    private NotifAdapter adapter;
+    private List<NotifItem> items = new ArrayList<>();
+    private View layoutEmpty;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Cargar tema
         SharedPreferences sharedPreferences = getSharedPreferences("theme_prefs", MODE_PRIVATE);
         boolean isDarkMode = sharedPreferences.getBoolean("isDarkMode", false);
         int colorScheme = sharedPreferences.getInt("colorScheme", 0);
@@ -38,30 +59,90 @@ public class NotificationsActivity extends AppCompatActivity {
 
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
 
-        RecyclerView rv = findViewById(R.id.rv_notifications);
+        rv = findViewById(R.id.rv_notifications);
         rv.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new NotifAdapter(items);
+        rv.setAdapter(adapter);
 
-        // Datos de ejemplo para mostrar el diseño estilo Instagram
-        List<NotifItem> list = new ArrayList<>();
-        list.add(new NotifItem("Hoy", true));
-        list.add(new NotifItem("La Dirección publicó un nuevo comunicado: 'Protocolo de Invierno'. 2h", false));
-        list.add(new NotifItem("Prof. Ricardo Huaman subió material al curso de Computación. 5h", false));
-        
-        list.add(new NotifItem("Ayer", true));
-        list.add(new NotifItem("Tu asistencia del martes 22 ha sido registrada como 'A tiempo'. 1d", false));
-        list.add(new NotifItem("Nuevo comunicado de Salón: 'Reunión de Padres de Familia'. 1d", false));
-        
-        list.add(new NotifItem("Últimos 7 días", true));
-        list.add(new NotifItem("Se ha actualizado el horario de clases para el mes de Mayo. 4d", false));
-        list.add(new NotifItem("Bienvenido a la nueva App del Colegio Peruano Suizo. 1sem", false));
+        layoutEmpty = findViewById(R.id.layout_empty_notif);
 
-        rv.setAdapter(new NotifAdapter(list));
+        cargarNotificaciones();
+    }
+
+    private void cargarNotificaciones() {
+        SharedPreferences userPrefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        String estudianteId = userPrefs.getString("estudiante_id", null);
+
+        if (estudianteId == null) {
+            layoutEmpty.setVisibility(View.VISIBLE);
+            rv.setVisibility(View.GONE);
+            return;
+        }
+
+        Retrofit retrofit = new Retrofit.Builder()
+            .baseUrl(ApiConfig.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build();
+
+        ApiService api = retrofit.create(ApiService.class);
+        api.getNotificaciones(estudianteId, 1, 50).enqueue(new Callback<NotificacionesResponse>() {
+            @Override
+            public void onResponse(Call<NotificacionesResponse> call, Response<NotificacionesResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    List<Notificacion> notificaciones = response.body().getData();
+                    items.clear();
+                    if (notificaciones != null && !notificaciones.isEmpty()) {
+                        rv.setVisibility(View.VISIBLE);
+                        layoutEmpty.setVisibility(View.GONE);
+                        String currentGroup = "";
+                        SimpleDateFormat todayFmt = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+                        String today = todayFmt.format(new Date());
+
+                        for (Notificacion n : notificaciones) {
+                            String fechaStr = n.getFechaEnvio();
+                            if (fechaStr != null && fechaStr.length() >= 10) {
+                                String fechaDay = fechaStr.substring(0, 10);
+                                if (!fechaDay.equals(currentGroup)) {
+                                    currentGroup = fechaDay;
+                                    String label = fechaDay.equals(today) ? "Hoy" : formatearFecha(fechaStr);
+                                    items.add(new NotifItem(label, true, null));
+                                }
+                            }
+                            String text = n.getTitulo() + ". " + n.getMensaje();
+                            items.add(new NotifItem(text, false, n));
+                        }
+                    } else {
+                        rv.setVisibility(View.GONE);
+                        layoutEmpty.setVisibility(View.VISIBLE);
+                    }
+                    adapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<NotificacionesResponse> call, Throwable t) {
+                layoutEmpty.setVisibility(View.VISIBLE);
+                rv.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private String formatearFecha(String fechaIso) {
+        try {
+            SimpleDateFormat iso = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+            Date d = iso.parse(fechaIso);
+            SimpleDateFormat fmt = new SimpleDateFormat("d 'de' MMMM", new Locale("es", "PE"));
+            return fmt.format(d);
+        } catch (Exception e) {
+            return fechaIso.length() >= 10 ? fechaIso.substring(0, 10) : fechaIso;
+        }
     }
 
     private static class NotifItem {
         String text;
         boolean isHeader;
-        NotifItem(String t, boolean h) { text = t; isHeader = h; }
+        Notificacion notificacion;
+        NotifItem(String t, boolean h, Notificacion n) { text = t; isHeader = h; notificacion = n; }
     }
 
     private class NotifAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -87,10 +168,11 @@ public class NotificationsActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+            NotifItem item = items.get(position);
             if (holder instanceof HeaderVH) {
-                ((HeaderVH) holder).tv.setText(items.get(position).text);
+                ((HeaderVH) holder).tv.setText(item.text);
             } else {
-                ((NotifVH) holder).tv.setText(items.get(position).text);
+                ((NotifVH) holder).tv.setText(item.text);
             }
         }
 

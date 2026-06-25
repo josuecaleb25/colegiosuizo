@@ -6,6 +6,9 @@ import com.example.ieperuanosuizoapp.api.models.AsistenciaAlumno;
 import com.example.ieperuanosuizoapp.api.models.EscanearQrData;
 import com.example.ieperuanosuizoapp.api.models.LoginRequest;
 import com.example.ieperuanosuizoapp.api.models.LoginResponse;
+import com.example.ieperuanosuizoapp.api.models.Notificacion;
+import com.example.ieperuanosuizoapp.api.models.NotificacionesNoLeidasResponse;
+import com.example.ieperuanosuizoapp.api.models.NotificacionesResponse;
 
 import java.util.List;
 import java.util.Map;
@@ -14,6 +17,8 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
+import retrofit2.http.PUT;
+import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public interface ApiService {
@@ -207,5 +212,26 @@ public interface ApiService {
     Call<ApiResponse<com.example.ieperuanosuizoapp.api.models.Calificacion>> actualizarCalificacion(
         @retrofit2.http.Path("id") String calificacionId,
         @Body Map<String, Object> datos
+    );
+
+    // ============================================
+    // NOTIFICACIONES (Historial)
+    // ============================================
+
+    @GET("notificaciones")
+    Call<NotificacionesResponse> getNotificaciones(
+        @Query("estudiante_id") String estudianteId,
+        @Query("page") Integer page,
+        @Query("limit") Integer limit
+    );
+
+    @GET("notificaciones/no-leidas")
+    Call<NotificacionesNoLeidasResponse> getNotificacionesNoLeidas(
+        @Query("estudiante_id") String estudianteId
+    );
+
+    @PUT("notificaciones/{id}/leer")
+    Call<ApiResponse<Object>> marcarNotificacionLeida(
+        @Path("id") String notificacionId
     );
 }

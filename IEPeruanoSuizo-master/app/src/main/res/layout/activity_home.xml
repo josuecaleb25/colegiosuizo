@@ -98,13 +98,31 @@
                 app:layout_constraintTop_toTopOf="@+id/btn_menu"
                 app:layout_constraintBottom_toBottomOf="@+id/btn_menu">
 
-                <ImageView
-                    android:layout_width="23dp"
-                    android:layout_height="23dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/notificationdark"
-                    app:tint="?android:attr/textColorPrimary" />
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
 
+                    <ImageView
+                        android:layout_width="23dp"
+                        android:layout_height="23dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/notificationdark"
+                        app:tint="?android:attr/textColorPrimary" />
+
+                    <TextView
+                        android:id="@+id/notification_badge"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="top|end"
+                        android:background="@drawable/bg_notification_badge"
+                        android:gravity="center"
+                        android:textColor="#FFFFFF"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        tools:text="3" />
+
+                </FrameLayout>
             </androidx.cardview.widget.CardView>
 
             <androidx.constraintlayout.widget.ConstraintLayout

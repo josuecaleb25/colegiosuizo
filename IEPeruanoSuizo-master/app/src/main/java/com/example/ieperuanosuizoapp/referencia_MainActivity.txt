@@ -1,0 +1,479 @@
+package com.example;
+
+import android.animation.ValueAnimator;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.widget.ImageView;
+import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import com.example.R;
+import com.google.android.material.tabs.TabLayout;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class MainActivity extends AppCompatActivity {
+
+    // Filter Controls
+    private AutoCompleteTextView dropdownMonth;
+    private TabLayout tabLayoutLeaderboard;
+    private com.google.android.material.switchmaterial.SwitchMaterial switchClassroomFilter;
+    private boolean filterClassroomActive = false;
+    private final String activeUserAulaId = "AULA_101";
+
+    // Leaderboard Lists & Adapters
+    private RecyclerView recyclerViewLeaderboard;
+    private LeaderboardAdapter leaderboardAdapter;
+
+    // Podium UI Views
+    // Rank 1 (Gold)
+    private TextView tvPodiumName1, tvPodiumScore1, tvPodiumAvatarText1, tvPodiumSuffix1, tvPodiumTrendText1;
+    private ImageView ivPodiumTrendIcon1;
+    private View layoutPodiumTrendCapsule1;
+
+    // Rank 2 (Silver)
+    private TextView tvPodiumName2, tvPodiumScore2, tvPodiumAvatarText2, tvPodiumSuffix2, tvPodiumTrendText2;
+    private ImageView ivPodiumTrendIcon2;
+    private View layoutPodiumTrendCapsule2;
+
+    // Rank 3 (Bronze)
+    private TextView tvPodiumName3, tvPodiumScore3, tvPodiumAvatarText3, tvPodiumSuffix3, tvPodiumTrendText3;
+    private ImageView ivPodiumTrendIcon3;
+    private View layoutPodiumTrendCapsule3;
+
+    // Simulation Dataset Maps: Month -> Map of Metric -> List of Players
+    private final Map<String, Map<String, List<Player>>> monthlyMetricData = new HashMap<>();
+    private String selectedMonth = "Junio 2026";
+    private String selectedMetric = "asistencia"; // asistencia, puntualidad
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Bind layout controls safely
+        initViews();
+
+        // Seed rich mock dataset for all variations
+        seedAllLeaderboardData();
+
+        // Setup the tabs
+        setupTabLayout();
+
+        // Setup drop-down month selection
+        setupMonthDropdown();
+
+        // Setup recycler properties
+        setupRecyclerView();
+
+        // Populate initial leaderboard state
+        renderLeaderboard();
+    }
+
+    private void initViews() {
+        dropdownMonth = findViewById(R.id.dropdown_month);
+        tabLayoutLeaderboard = findViewById(R.id.tab_layout_leaderboard);
+        recyclerViewLeaderboard = findViewById(R.id.recycler_view_leaderboard);
+        switchClassroomFilter = findViewById(R.id.switch_classroom_filter);
+        if (switchClassroomFilter != null) {
+            switchClassroomFilter.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                filterClassroomActive = isChecked;
+                renderLeaderboard();
+            });
+        }
+
+        // Podium: Gold (Rank 1)
+        tvPodiumName1 = findViewById(R.id.podium_name_1);
+        tvPodiumScore1 = findViewById(R.id.podium_score_1);
+        tvPodiumAvatarText1 = findViewById(R.id.podium_avatar_text_1);
+        tvPodiumSuffix1 = findViewById(R.id.podium_suffix_1);
+        tvPodiumTrendText1 = findViewById(R.id.podium_trend_text_1);
+        ivPodiumTrendIcon1 = findViewById(R.id.podium_trend_icon_1);
+        layoutPodiumTrendCapsule1 = findViewById(R.id.podium_trend_capsule_1);
+
+        // Podium: Silver (Rank 2)
+        tvPodiumName2 = findViewById(R.id.podium_name_2);
+        tvPodiumScore2 = findViewById(R.id.podium_score_2);
+        tvPodiumAvatarText2 = findViewById(R.id.podium_avatar_text_2);
+        tvPodiumSuffix2 = findViewById(R.id.podium_suffix_2);
+        tvPodiumTrendText2 = findViewById(R.id.podium_trend_text_2);
+        ivPodiumTrendIcon2 = findViewById(R.id.podium_trend_icon_2);
+        layoutPodiumTrendCapsule2 = findViewById(R.id.podium_trend_capsule_2);
+
+        // Podium: Bronze (Rank 3)
+        tvPodiumName3 = findViewById(R.id.podium_name_3);
+        tvPodiumScore3 = findViewById(R.id.podium_score_3);
+        tvPodiumAvatarText3 = findViewById(R.id.podium_avatar_text_3);
+        tvPodiumSuffix3 = findViewById(R.id.podium_suffix_3);
+        tvPodiumTrendText3 = findViewById(R.id.podium_trend_text_3);
+        ivPodiumTrendIcon3 = findViewById(R.id.podium_trend_icon_3);
+        layoutPodiumTrendCapsule3 = findViewById(R.id.podium_trend_capsule_3);
+    }
+
+    private void setupTabLayout() {
+        TabLayout.Tab tabAsistencia = tabLayoutLeaderboard.newTab().setText("Asistencia");
+        TabLayout.Tab tabPuntualidad = tabLayoutLeaderboard.newTab().setText("Puntualidad");
+
+        tabLayoutLeaderboard.addTab(tabAsistencia);
+        tabLayoutLeaderboard.addTab(tabPuntualidad);
+
+        tabLayoutLeaderboard.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                if (tab.getPosition() == 0) {
+                    selectedMetric = "asistencia";
+                } else {
+                    selectedMetric = "puntualidad";
+                }
+                renderLeaderboard();
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {}
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
+        });
+    }
+
+    private void setupMonthDropdown() {
+        List<String> months = new ArrayList<>();
+        months.add("Junio 2026");
+        months.add("Mayo 2026");
+        months.add("Abril 2026");
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, months);
+        if (dropdownMonth != null) {
+            dropdownMonth.setAdapter(adapter);
+            dropdownMonth.setOnItemClickListener((parent, view, position, id) -> {
+                selectedMonth = months.get(position);
+                renderLeaderboard();
+            });
+        }
+    }
+
+    private void setupRecyclerView() {
+        recyclerViewLeaderboard.setLayoutManager(new LinearLayoutManager(this));
+        leaderboardAdapter = new LeaderboardAdapter();
+        recyclerViewLeaderboard.setAdapter(leaderboardAdapter);
+    }
+
+    private void renderLeaderboard() {
+        Map<String, List<Player>> metricsMap = monthlyMetricData.get(selectedMonth);
+        if (metricsMap == null) return;
+
+        List<Player> originalList = metricsMap.get(selectedMetric);
+        if (originalList == null) return;
+
+        // Make deep copy of the mock records lists to avoid reference mutations
+        List<Player> players = new ArrayList<>();
+        for (Player p : originalList) {
+            players.add(p.copy());
+        }
+
+        // Apply classroom filtering and sorting if toggle is active
+        if (filterClassroomActive) {
+            List<Player> filtered = new ArrayList<>();
+            for (Player p : players) {
+                if (activeUserAulaId.equals(p.getAulaId())) {
+                    filtered.add(p);
+                }
+            }
+            players = filtered;
+            
+            // Sort remaining filtered list descending by score to ensure correct order
+            Collections.sort(players, (p1, p2) -> Integer.compare(p2.getScore(), p1.getScore()));
+        }
+
+        // Apply dynamic consecutive ranks of local display scope (1 to N)
+        for (int i = 0; i < players.size(); i++) {
+            players.get(i).setRank(i + 1);
+        }
+
+        // Bind Suffix based on metric selection
+        String suffix = "asistencia".equals(selectedMetric) ? " días" : " días temprano";
+
+        // Register suffix dynamically inside the adapter
+        leaderboardAdapter.setMetricSuffix(suffix);
+
+        // Bind Podium items safely matching available items size
+        if (players.size() >= 1) {
+            Player rank1 = players.get(0);
+            tvPodiumName1.setText(rank1.getName());
+            tvPodiumAvatarText1.setText(rank1.getAvatarInitials());
+            tvPodiumScore1.setText(String.valueOf(rank1.getScore()));
+            tvPodiumSuffix1.setText(suffix);
+            tvPodiumTrendText1.setText(rank1.getTrendText());
+            layoutPodiumTrendCapsule1.setVisibility(View.VISIBLE);
+            setTrendPodiumCapsule(layoutPodiumTrendCapsule1, ivPodiumTrendIcon1, tvPodiumTrendText1, rank1.getTrendType());
+        } else {
+            tvPodiumName1.setText("Sem Datos");
+            tvPodiumAvatarText1.setText("?");
+            tvPodiumScore1.setText("");
+            tvPodiumSuffix1.setText("");
+            tvPodiumTrendText1.setText("");
+            layoutPodiumTrendCapsule1.setVisibility(View.INVISIBLE);
+        }
+
+        if (players.size() >= 2) {
+            Player rank2 = players.get(1);
+            tvPodiumName2.setText(rank2.getName());
+            tvPodiumAvatarText2.setText(rank2.getAvatarInitials());
+            tvPodiumScore2.setText(String.valueOf(rank2.getScore()));
+            tvPodiumSuffix2.setText(suffix);
+            tvPodiumTrendText2.setText(rank2.getTrendText());
+            layoutPodiumTrendCapsule2.setVisibility(View.VISIBLE);
+            setTrendPodiumCapsule(layoutPodiumTrendCapsule2, ivPodiumTrendIcon2, tvPodiumTrendText2, rank2.getTrendType());
+        } else {
+            tvPodiumName2.setText("");
+            tvPodiumAvatarText2.setText("");
+            tvPodiumScore2.setText("");
+            tvPodiumSuffix2.setText("");
+            tvPodiumTrendText2.setText("");
+            layoutPodiumTrendCapsule2.setVisibility(View.INVISIBLE);
+        }
+
+        if (players.size() >= 3) {
+            Player rank3 = players.get(2);
+            tvPodiumName3.setText(rank3.getName());
+            tvPodiumAvatarText3.setText(rank3.getAvatarInitials());
+            tvPodiumScore3.setText(String.valueOf(rank3.getScore()));
+            tvPodiumSuffix3.setText(suffix);
+            tvPodiumTrendText3.setText(rank3.getTrendText());
+            layoutPodiumTrendCapsule3.setVisibility(View.VISIBLE);
+            setTrendPodiumCapsule(layoutPodiumTrendCapsule3, ivPodiumTrendIcon3, tvPodiumTrendText3, rank3.getTrendType());
+        } else {
+            tvPodiumName3.setText("");
+            tvPodiumAvatarText3.setText("");
+            tvPodiumScore3.setText("");
+            tvPodiumSuffix3.setText("");
+            tvPodiumTrendText3.setText("");
+            layoutPodiumTrendCapsule3.setVisibility(View.INVISIBLE);
+        }
+
+        // 3. Bind Remaining lists items to the adapter
+        List<Player> remainingPlayers = new ArrayList<>();
+        if (players.size() > 3) {
+            remainingPlayers.addAll(players.subList(3, players.size()));
+        }
+
+        leaderboardAdapter.submitList(remainingPlayers);
+        leaderboardAdapter.notifyDataSetChanged();
+    }
+
+    private void setTrendPodiumCapsule(View capsule, ImageView iv, TextView tv, int trendType) {
+        if (trendType > 0) {
+            if (iv != null) iv.setImageResource(R.drawable.ic_arrow_up_green);
+            if (tv != null) {
+                tv.setTextColor(Color.parseColor("#10B981")); // Emerald green
+            }
+            if (capsule != null) {
+                capsule.setBackgroundResource(R.drawable.bg_trend_up_capsule);
+            }
+        } else if (trendType < 0) {
+            if (iv != null) iv.setImageResource(R.drawable.ic_arrow_down_red);
+            if (tv != null) {
+                tv.setTextColor(Color.parseColor("#EF4444")); // Crimson red
+            }
+            if (capsule != null) {
+                capsule.setBackgroundResource(R.drawable.bg_trend_down_capsule);
+            }
+        } else {
+            if (iv != null) iv.setImageResource(R.drawable.ic_stable_gray);
+            if (tv != null) {
+                tv.setTextColor(Color.parseColor("#64748B")); // Slate secondary gray
+            }
+            if (capsule != null) {
+                capsule.setBackgroundResource(R.drawable.bg_trend_stable_capsule);
+            }
+        }
+    }
+
+    private void seedAllLeaderboardData() {
+        monthlyMetricData.clear();
+
+        // ------------------ JUNIO 2026 ------------------
+        Map<String, List<Player>> juneMap = new HashMap<>();
+
+        // June - Asistencia (Días Asistidos Acumulados)
+        // Regla de Prioridad: Se prioriza asistencia perfecta + puntualidad temprana.
+        // Marcus Wolf (p6) has 21 days attended but registered frequent tardiness, 
+        // which penalizes him and lowers him in the ranking below Sofia Rossi who has 20 days.
+        List<Player> juneAsistencia = new ArrayList<>();
+        juneAsistencia.add(new Player("p1", "Esteban S.", 25, 24, "Líder de Asistencia", "AULA_101"));
+        juneAsistencia.add(new Player("p2", "Ana Gómez", 24, 18, "Asistencia Perfecta", "AULA_102"));
+        juneAsistencia.add(new Player("p3", "Mike Miller", 23, 15, "Asistente Senior", "AULA_101"));
+        juneAsistencia.add(new Player("p4", "Alejandro P.", 22, 12, "Miembro Destacado", "AULA_102"));
+        juneAsistencia.add(new Player("p5", "Sofia Rossi", 20, 19, "Asistente Consistente", "AULA_101"));
+        juneAsistencia.add(new Player("p6", "Marcus Wolf", 21, 21, "Sancionado por Tardanza", "AULA_102"));
+        juneAsistencia.add(new Player("p7", "Elena Rostova", 19, 14, "Miembro Regular", "AULA_101"));
+        juneAsistencia.add(new Player("p8", "Kai Zen", 18, 11, "Colaborador", "AULA_102"));
+        juneAsistencia.add(new Player("p9", "Silvia M.", 17, 9, "Miembro Activo", "AULA_101"));
+        juneAsistencia.add(new Player("p10", "Zoe Clara", 15, 8, "Asistente Junior", "AULA_102"));
+
+        // Add interesting dynamic trend lines and Lucide indicator triggers
+        setPlayerTrend(juneAsistencia.get(0), "ESTABLE", 0);
+        setPlayerTrend(juneAsistencia.get(1), "▲ 1 POS", 1);
+        setPlayerTrend(juneAsistencia.get(2), "▼ -1 POS", -1);
+        setPlayerTrend(juneAsistencia.get(3), "▲ 3 POS", 1);
+        setPlayerTrend(juneAsistencia.get(4), "ESTABLE", 0);
+        setPlayerTrend(juneAsistencia.get(5), "▼ -2 POS", -1);
+        setPlayerTrend(juneAsistencia.get(6), "ESTABLE", 0);
+        setPlayerTrend(juneAsistencia.get(7), "▲ 1 POS", 1);
+        setPlayerTrend(juneAsistencia.get(8), "▼ -1 POS", -1);
+        setPlayerTrend(juneAsistencia.get(9), "ESTABLE", 0);
+        juneMap.put("asistencia", juneAsistencia);
+
+        // June - Puntualidad (Récord de Días Temprano)
+        List<Player> junePuntualidad = new ArrayList<>();
+        junePuntualidad.add(new Player("p2", "Ana Gómez", 22, 18, "Puntualidad Elite", "AULA_102"));
+        junePuntualidad.add(new Player("p5", "Sofia Rossi", 21, 19, "Puntualidad Destacada", "AULA_101"));
+        junePuntualidad.add(new Player("p1", "Esteban S.", 20, 24, "Líder Puntual", "AULA_101"));
+        junePuntualidad.add(new Player("p8", "Kai Zen", 18, 11, "Miembro Puntual", "AULA_102"));
+        junePuntualidad.add(new Player("p3", "Mike Miller", 17, 15, "Siempre Temprano", "AULA_101"));
+        junePuntualidad.add(new Player("p6", "Marcus Wolf", 16, 21, "Constancia Mediana", "AULA_102"));
+        junePuntualidad.add(new Player("p4", "Alejandro P.", 15, 12, "Puntual Activo", "AULA_102"));
+        junePuntualidad.add(new Player("p7", "Elena Rostova", 14, 14, "Miembro Común", "AULA_101"));
+        junePuntualidad.add(new Player("p10", "Zoe Clara", 11, 8, "Puntual en Crecimiento", "AULA_102"));
+        junePuntualidad.add(new Player("p9", "Silvia M.", 10, 9, "Puntual Inicial", "AULA_101"));
+
+        setPlayerTrend(junePuntualidad.get(0), "▲ 2 POS", 1);
+        setPlayerTrend(junePuntualidad.get(1), "▲ 1 POS", 1);
+        setPlayerTrend(junePuntualidad.get(2), "▼ -2 POS", -1);
+        setPlayerTrend(junePuntualidad.get(3), "ESTABLE", 0);
+        setPlayerTrend(junePuntualidad.get(4), "▼ -1 POS", -1);
+        setPlayerTrend(junePuntualidad.get(5), "▲ 2 POS", 1);
+        setPlayerTrend(junePuntualidad.get(6), "▼ -2 POS", -1);
+        setPlayerTrend(junePuntualidad.get(7), "ESTABLE", 0);
+        setPlayerTrend(junePuntualidad.get(8), "▲ 1 POS", 1);
+        setPlayerTrend(junePuntualidad.get(9), "▼ -1 POS", -1);
+        juneMap.put("puntualidad", junePuntualidad);
+
+        monthlyMetricData.put("Junio 2026", juneMap);
+
+
+        // ------------------ MAYO 2026 ------------------
+        Map<String, List<Player>> mayMap = new HashMap<>();
+
+        // May - Asistencia
+        List<Player> mayAsistencia = new ArrayList<>();
+        mayAsistencia.add(new Player("p3", "Mike Miller", 24, 15, "Líder de Asistencia", "AULA_101"));
+        mayAsistencia.add(new Player("p1", "Esteban S.", 23, 24, "Asistencia Perfecta", "AULA_101"));
+        mayAsistencia.add(new Player("p2", "Ana Gómez", 21, 18, "Asistente Cumplido", "AULA_102"));
+        mayAsistencia.add(new Player("p6", "Marcus Wolf", 20, 21, "Presencia Constante", "AULA_102"));
+        mayAsistencia.add(new Player("p5", "Sofia Rossi", 19, 19, "Asistente Regular", "AULA_101"));
+        mayAsistencia.add(new Player("p4", "Alejandro P.", 18, 12, "Asistente Colaborador", "AULA_102"));
+        mayAsistencia.add(new Player("p7", "Elena Rostova", 17, 14, "Miembro Activo", "AULA_101"));
+        mayAsistencia.add(new Player("p9", "Silvia M.", 15, 9, "Presencia Regular", "AULA_101"));
+        mayAsistencia.add(new Player("p8", "Kai Zen", 14, 11, "Colaborador", "AULA_102"));
+        mayAsistencia.add(new Player("p10", "Zoe Clara", 12, 8, "Asistente Junior", "AULA_102"));
+
+        setPlayerTrend(mayAsistencia.get(0), "ESTABLE", 0);
+        setPlayerTrend(mayAsistencia.get(1), "▼ -1 POS", -1);
+        setPlayerTrend(mayAsistencia.get(2), "▲ 1 POS", 1);
+        setPlayerTrend(mayAsistencia.get(3), "▲ 2 POS", 1);
+        setPlayerTrend(mayAsistencia.get(4), "▼ -1 POS", -1);
+        setPlayerTrend(mayAsistencia.get(5), "▼ -1 POS", -1);
+        setPlayerTrend(mayAsistencia.get(6), "ESTABLE", 0);
+        setPlayerTrend(mayAsistencia.get(7), "▲ 1 POS", 1);
+        setPlayerTrend(mayAsistencia.get(8), "▼ -1 POS", -1);
+        setPlayerTrend(mayAsistencia.get(9), "ESTABLE", 0);
+        mayMap.put("asistencia", mayAsistencia);
+
+        // May - Puntualidad
+        List<Player> mayPuntualidad = new ArrayList<>();
+        mayPuntualidad.add(new Player("p1", "Esteban S.", 22, 24, "Puntualidad Elite", "AULA_101"));
+        mayPuntualidad.add(new Player("p3", "Mike Miller", 21, 15, "Asistente Senior", "AULA_101"));
+        mayPuntualidad.add(new Player("p4", "Alejandro P.", 20, 12, "Puntual Coordinador", "AULA_102"));
+        mayPuntualidad.add(new Player("p2", "Ana Gómez", 18, 18, "Puntualidad Alta", "AULA_102"));
+        mayPuntualidad.add(new Player("p5", "Sofia Rossi", 17, 19, "Puntual Colaborador", "AULA_101"));
+        mayPuntualidad.add(new Player("p8", "Kai Zen", 16, 11, "Miembro Puntual", "AULA_102"));
+        mayPuntualidad.add(new Player("p6", "Marcus Wolf", 15, 21, "Miembro Activo", "AULA_102"));
+        mayPuntualidad.add(new Player("p7", "Elena Rostova", 14, 14, "Miembro Regular", "AULA_101"));
+        mayPuntualidad.add(new Player("p9", "Silvia M.", 12, 9, "Puntual Consistente", "AULA_101"));
+        mayPuntualidad.add(new Player("p10", "Zoe Clara", 10, 8, "Puntual Junior", "AULA_102"));
+
+        setPlayerTrend(mayPuntualidad.get(0), "▲ 1 POS", 1);
+        setPlayerTrend(mayPuntualidad.get(1), "▲ 1 POS", 1);
+        setPlayerTrend(mayPuntualidad.get(2), "▼ -2 POS", -1);
+        setPlayerTrend(mayPuntualidad.get(3), "▲ 1 POS", 1);
+        setPlayerTrend(mayPuntualidad.get(4), "▼ -1 POS", -1);
+        setPlayerTrend(mayPuntualidad.get(5), "ESTABLE", 0);
+        setPlayerTrend(mayPuntualidad.get(6), "ESTABLE", 0);
+        setPlayerTrend(mayPuntualidad.get(7), "▲ 1 POS", 1);
+        setPlayerTrend(mayPuntualidad.get(8), "▼ -1 POS", -1);
+        setPlayerTrend(mayPuntualidad.get(9), "ESTABLE", 0);
+        mayMap.put("puntualidad", mayPuntualidad);
+
+        monthlyMetricData.put("Mayo 2026", mayMap);
+
+
+        // ------------------ ABRIL 2026 ------------------
+        Map<String, List<Player>> aprMap = new HashMap<>();
+
+        // April - Asistencia
+        List<Player> aprAsistencia = new ArrayList<>();
+        aprAsistencia.add(new Player("p1", "Esteban S.", 23, 24, "Líder de Asistencia", "AULA_101"));
+        aprAsistencia.add(new Player("p6", "Marcus Wolf", 22, 21, "Asistencia Destacada", "AULA_102"));
+        aprAsistencia.add(new Player("p3", "Mike Miller", 20, 15, "Asistente Senior", "AULA_101"));
+        aprAsistencia.add(new Player("p4", "Alejandro P.", 19, 12, "Colaborador Activo", "AULA_102"));
+        aprAsistencia.add(new Player("p2", "Ana Gómez", 18, 18, "Miembro Regular", "AULA_102"));
+        aprAsistencia.add(new Player("p5", "Sofia Rossi", 17, 19, "Asistente Consistente", "AULA_101"));
+        aprAsistencia.add(new Player("p7", "Elena Rostova", 16, 14, "Miembro Activo", "AULA_101"));
+        aprAsistencia.add(new Player("p8", "Kai Zen", 15, 11, "Colaborador", "AULA_102"));
+        aprAsistencia.add(new Player("p10", "Zoe Clara", 13, 8, "Asistente Junior", "AULA_102"));
+        aprAsistencia.add(new Player("p9", "Silvia M.", 12, 9, "Asistente Inicial", "AULA_101"));
+
+        setPlayerTrend(aprAsistencia.get(0), "▲ 1 POS", 1);
+        setPlayerTrend(aprAsistencia.get(1), "▼ -1 POS", -1);
+        setPlayerTrend(aprAsistencia.get(2), "ESTABLE", 0);
+        setPlayerTrend(aprAsistencia.get(3), "▲ 2 POS", 1);
+        setPlayerTrend(aprAsistencia.get(4), "▼ -1 POS", -1);
+        setPlayerTrend(aprAsistencia.get(5), "▼ -1 POS", -1);
+        setPlayerTrend(aprAsistencia.get(6), "ESTABLE", 0);
+        setPlayerTrend(aprAsistencia.get(7), "▲ 1 POS", 1);
+        setPlayerTrend(aprAsistencia.get(8), "▼ -1 POS", -1);
+        setPlayerTrend(aprAsistencia.get(9), "ESTABLE", 0);
+        aprMap.put("asistencia", aprAsistencia);
+
+        // April - Puntualidad
+        List<Player> aprPuntualidad = new ArrayList<>();
+        aprPuntualidad.add(new Player("p4", "Alejandro P.", 20, 12, "Asistente Elite", "AULA_102"));
+        aprPuntualidad.add(new Player("p1", "Esteban S.", 19, 24, "Líder de Puntualidad", "AULA_101"));
+        aprPuntualidad.add(new Player("p2", "Ana Gómez", 18, 18, "Puntual Destacado", "AULA_102"));
+        aprPuntualidad.add(new Player("p3", "Mike Miller", 16, 15, "Asistente Senior", "AULA_101"));
+        aprPuntualidad.add(new Player("p5", "Sofia Rossi", 15, 19, "Puntual Regular", "AULA_101"));
+        aprPuntualidad.add(new Player("p6", "Marcus Wolf", 14, 21, "Miembro Activo", "AULA_102"));
+        aprPuntualidad.add(new Player("p8", "Kai Zen", 13, 11, "Puntual Inicial", "AULA_102"));
+        aprPuntualidad.add(new Player("p7", "Elena Rostova", 12, 14, "Miembro Regular", "AULA_101"));
+        aprPuntualidad.add(new Player("p10", "Zoe Clara", 10, 8, "Puntual en Crecimiento", "AULA_102"));
+        aprPuntualidad.add(new Player("p9", "Silvia M.", 9, 9, "Puntual Inicial", "AULA_101"));
+
+        setPlayerTrend(aprPuntualidad.get(0), "ESTABLE", 0);
+        setPlayerTrend(aprPuntualidad.get(1), "ESTABLE", 0);
+        setPlayerTrend(aprPuntualidad.get(2), "ESTABLE", 0);
+        setPlayerTrend(aprPuntualidad.get(3), "▲ 1 POS", 1);
+        setPlayerTrend(aprPuntualidad.get(4), "▼ -1 POS", -1);
+        setPlayerTrend(aprPuntualidad.get(5), "ESTABLE", 0);
+        setPlayerTrend(aprPuntualidad.get(6), "▲ 1 POS", 1);
+        setPlayerTrend(aprPuntualidad.get(7), "▼ -1 POS", -1);
+        setPlayerTrend(aprPuntualidad.get(8), "ESTABLE", 0);
+        setPlayerTrend(aprPuntualidad.get(9), "ESTABLE", 0);
+        aprMap.put("puntualidad", aprPuntualidad);
+
+        monthlyMetricData.put("Abril 2026", aprMap);
+    }
+
+    private void setPlayerTrend(Player p, String text, int type) {
+        p.setTrendText(text);
+        p.setTrendType(type);
+    }
+}

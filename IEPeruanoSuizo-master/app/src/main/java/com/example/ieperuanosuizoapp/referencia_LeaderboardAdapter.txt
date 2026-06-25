@@ -1,0 +1,142 @@
+package com.example;
+
+import android.animation.ValueAnimator;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
+import android.widget.ImageView;
+import android.widget.TextView;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
+import androidx.recyclerview.widget.RecyclerView;
+import com.example.R;
+import java.util.HashMap;
+import java.util.Map;
+
+public class LeaderboardAdapter extends ListAdapter<Player, LeaderboardAdapter.ViewHolder> {
+
+    // Keep history of scores per player ID to enable count-up animations on changes
+    private final Map<String, Integer> scoreHistory = new HashMap<>();
+    private String metricSuffix = " días";
+
+    public LeaderboardAdapter() {
+        super(new DiffUtil.ItemCallback<Player>() {
+            @Override
+            public boolean areItemsTheSame(@NonNull Player oldItem, @NonNull Player newItem) {
+                // Compares object identity of competitor
+                return oldItem.getId().equals(newItem.getId());
+            }
+
+            @Override
+            public boolean areContentsTheSame(@NonNull Player oldItem, @NonNull Player newItem) {
+                // Full data state verification
+                return oldItem.equals(newItem);
+            }
+        });
+    }
+
+    public void setMetricSuffix(String suffix) {
+        this.metricSuffix = suffix;
+    }
+
+    @NonNull
+    @Override
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_leaderboard, parent, false);
+        return new ViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        Player player = getItem(position);
+        int rankValue = player.getRank();
+        holder.bind(player, rankValue, scoreHistory, metricSuffix);
+    }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        private final TextView tvRank;
+        private final TextView tvAvatarText;
+        private final TextView tvName;
+        private final TextView tvLevelBadge;
+        private final TextView tvTitle;
+        private final TextView tvScore;
+        private final TextView tvScoreSuffix;
+        private final TextView tvTrendArrow;
+        private final ImageView ivTrendIcon;
+        private final View layoutTrendCapsule;
+
+        public ViewHolder(@NonNull View itemView) {
+            super(itemView);
+            tvRank = itemView.findViewById(R.id.tv_rank);
+            tvAvatarText = itemView.findViewById(R.id.tv_avatar_text);
+            tvName = itemView.findViewById(R.id.tv_name);
+            tvLevelBadge = itemView.findViewById(R.id.tv_level_badge);
+            tvTitle = itemView.findViewById(R.id.tv_title);
+            tvScore = itemView.findViewById(R.id.tv_score);
+            tvScoreSuffix = itemView.findViewById(R.id.tv_score_suffix);
+            tvTrendArrow = itemView.findViewById(R.id.tv_trend_arrow);
+            ivTrendIcon = itemView.findViewById(R.id.iv_trend_icon);
+            layoutTrendCapsule = itemView.findViewById(R.id.layout_trend_capsule);
+        }
+
+        public void bind(Player player, int rankValue, Map<String, Integer> scoreHistory, String suffix) {
+            tvRank.setText(String.valueOf(rankValue));
+            tvAvatarText.setText(player.getAvatarInitials());
+            tvName.setText(player.getName());
+            tvLevelBadge.setText("LV " + player.getLevel());
+            tvTitle.setText(player.getTitle());
+            if (tvScoreSuffix != null) {
+                tvScoreSuffix.setText(suffix);
+            }
+
+            // 1. Smoothly Animate Score Text Number (Counting Up Effect)
+            int currentScore = player.getScore();
+            int previousScore = scoreHistory.containsKey(player.getId()) ? scoreHistory.get(player.getId()) : currentScore;
+            
+            // Store current value for future updates
+            scoreHistory.put(player.getId(), currentScore);
+
+            if (previousScore != currentScore) {
+                ValueAnimator animator = ValueAnimator.ofInt(previousScore, currentScore);
+                animator.setDuration(500); // 500ms beautiful rollup
+                animator.setInterpolator(new DecelerateInterpolator());
+                animator.addUpdateListener(animation -> {
+                    tvScore.setText(animation.getAnimatedValue().toString());
+                });
+                animator.start();
+            } else {
+                tvScore.setText(String.valueOf(currentScore));
+            }
+
+            // 2. Interactive Trend Icons & Colors (Premium Style)
+            tvTrendArrow.setText(player.getTrendText());
+            if (player.getTrendType() > 0) {
+                if (ivTrendIcon != null) {
+                    ivTrendIcon.setImageResource(R.drawable.ic_arrow_up_green);
+                }
+                if (layoutTrendCapsule != null) {
+                    layoutTrendCapsule.setBackgroundResource(R.drawable.bg_trend_up_capsule);
+                }
+                tvTrendArrow.setTextColor(itemView.getContext().getResources().getColor(R.color.emerald));
+            } else if (player.getTrendType() < 0) {
+                if (ivTrendIcon != null) {
+                    ivTrendIcon.setImageResource(R.drawable.ic_arrow_down_red);
+                }
+                if (layoutTrendCapsule != null) {
+                    layoutTrendCapsule.setBackgroundResource(R.drawable.bg_trend_down_capsule);
+                }
+                tvTrendArrow.setTextColor(itemView.getContext().getResources().getColor(R.color.neon_pink));
+            } else {
+                if (ivTrendIcon != null) {
+                    ivTrendIcon.setImageResource(R.drawable.ic_stable_gray);
+                }
+                if (layoutTrendCapsule != null) {
+                    layoutTrendCapsule.setBackgroundResource(R.drawable.bg_trend_stable_capsule);
+                }
+                tvTrendArrow.setTextColor(itemView.getContext().getResources().getColor(R.color.text_gray));
+            }
+        }
+    }
+}

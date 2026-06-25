@@ -223,27 +223,10 @@ public class GestionAsistenciaActivity extends AppCompatActivity {
     }
 
     private void mostrarDetalleDia(AsistenciaDiaResumen resumen) {
-        View v = LayoutInflater.from(this).inflate(R.layout.dialog_asistencia_dia_detalle, null);
-
-        TextView tvTitulo = v.findViewById(R.id.tv_dialog_titulo);
-        TextView tvTotal = v.findViewById(R.id.tv_dialog_total);
-        TextView tvPresentes = v.findViewById(R.id.tv_dialog_presentes);
-        TextView tvTardanza = v.findViewById(R.id.tv_dialog_tardanza);
-        TextView tvAusentes = v.findViewById(R.id.tv_dialog_ausentes);
-        RecyclerView rv = v.findViewById(R.id.rv_dialog_alumnos);
-        MaterialButton btnCsv = v.findViewById(R.id.btn_dialog_csv);
-
-        tvTitulo.setText(formatTituloLargo(resumen.fechaIso));
-        tvTotal.setText(String.valueOf(resumen.alumnos.size()));
-        tvPresentes.setText(String.valueOf(resumen.presentesAtiempo));
-        tvTardanza.setText(String.valueOf(resumen.tardanzas));
-        tvAusentes.setText(String.valueOf(resumen.ausentes));
-
-        rv.setLayoutManager(new LinearLayoutManager(this));
-        rv.setAdapter(new AlumnosAsistenciaAdapter(resumen.alumnos));
-        btnCsv.setOnClickListener(x -> descargarCsv(resumen));
-
-        new MaterialAlertDialogBuilder(this).setView(v).show();
+        DetalleAsistenciaActivity.dataTransfer = resumen.alumnos;
+        DetalleAsistenciaActivity.dateTransfer = resumen.fechaIso;
+        Intent intent = new Intent(this, DetalleAsistenciaActivity.class);
+        startActivity(intent);
     }
 
     private void confirmarEliminarRegistroLocal(AsistenciaDiaResumen resumen) {

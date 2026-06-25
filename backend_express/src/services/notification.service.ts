@@ -70,6 +70,8 @@ class NotificationService {
 
       const resultados = await Promise.all(promesas);
       const exitosos = resultados.filter(r => r !== null).length;
+
+      await this.guardarHistorial(estudianteId, notificacion);
       
       console.log(`✅ Notificación enviada a estudiante ${estudianteId}: ${exitosos}/${tokens.length} dispositivos`);
       return { success: true, enviados: exitosos, total: tokens.length };
@@ -92,7 +94,7 @@ class NotificationService {
       // Buscar todos los tokens
       const { data: tokens, error } = await supabase
         .from('device_tokens')
-        .select('token')
+        .select('token, estudiante_id')
         .in('estudiante_id', estudianteIds);
 
       if (error) throw error;
@@ -129,7 +131,12 @@ class NotificationService {
 
       const resultados = await Promise.all(promesas);
       const exitosos = resultados.filter(r => r !== null).length;
-      
+
+      const idsUnicos = [...new Set(tokens.map(t => t.estudiante_id))];
+      for (const id of idsUnicos) {
+        await this.guardarHistorial(id, notificacion);
+      }
+
       console.log(`✅ Notificaciones enviadas: ${exitosos}/${tokens.length}`);
       return { success: true, enviados: exitosos, total: tokens.length };
       
@@ -150,7 +157,6 @@ class NotificationService {
     try {
       console.log(`🔍 Buscando alumnos de sección ID: ${seccionId}`);
       
-      // Obtener todos los alumnos de la sección a través de matriculas
       const { data: matriculas, error } = await supabase
         .from('matriculas')
         .select('alumno_id')
@@ -199,7 +205,6 @@ class NotificationService {
         return { success: false, message: 'No hay dispositivos registrados' };
       }
 
-      // Enviar en lotes de 500 (límite de FCM)
       const lotes = this.dividirEnLotes(tokens.map(t => t.token), 500);
       let totalEnviados = 0;
       
@@ -229,12 +234,28 @@ class NotificationService {
         totalEnviados += resultados.filter(r => r !== null).length;
       }
 
+      await this.guardarHistorial(null, notificacion);
+
       console.log(`✅ Notificación enviada a ${totalEnviados}/${tokens.length} dispositivos`);
       return { success: true, enviados: totalEnviados, total: tokens.length };
       
     } catch (error: any) {
       console.error('Error al enviar a todos:', error.message);
       return { success: false, error: error.message };
+    }
+  }
+
+  private async guardarHistorial(estudianteId: string | null, notificacion: NotificationData) {
+    try {
+      await supabase.from('notificaciones_historial').insert({
+        estudiante_id: estudianteId,
+        tipo: notificacion.tipo,
+        titulo: notificacion.titulo,
+        mensaje: notificacion.mensaje,
+        datos: notificacion.datos || null
+      });
+    } catch (err: any) {
+      console.error('Error al guardar en historial:', err.message);
     }
   }
 

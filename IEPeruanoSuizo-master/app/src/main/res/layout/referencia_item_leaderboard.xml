@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_card_row"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="12dp"
+    android:layout_marginBottom="8dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- 1. Rank Placement Text -->
+    <TextView
+        android:id="@+id/tv_rank"
+        android:layout_width="32dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="4"
+        android:textColor="@color/text_cyan"
+        android:textStyle="bold"
+        android:textSize="15sp" />
+
+    <!-- 2. Profile Avatar Frame -->
+    <FrameLayout
+        android:id="@+id/avatar_frame"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:background="@drawable/bg_circle_default"
+        android:layout_marginRight="12dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_person_placeholder"
+            android:contentDescription="User profile placeholder" />
+
+        <TextView
+            android:id="@+id/tv_avatar_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="AP"
+            android:textColor="@color/text_white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <!-- 3. Player Identity Details -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Alex Pro"
+            android:textColor="@color/text_white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="2dp">
+
+            <!-- Level badge -->
+            <TextView
+                android:id="@+id/tv_level_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LV 12"
+                android:textColor="@color/neon_pink"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <!-- Spacer bullet -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="@color/text_gray"
+                android:textSize="10sp"
+                android:visibility="gone" />
+
+            <!-- Title/Achievement tag -->
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Gladiator"
+                android:textColor="@color/text_gray"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 4. Score points Section -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="end"
+        android:layout_marginRight="8dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tv_score"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2800"
+                android:textColor="@color/text_white"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_score_suffix"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" días"
+                android:textColor="@color/text_gray"
+                android:textSize="11sp" />
+        </LinearLayout>
+        
+        <!-- Climb/Fall indication -->
+        <LinearLayout
+            android:id="@+id/layout_trend_capsule"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="4dp"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:background="@drawable/bg_trend_up_capsule">
+
+            <ImageView
+                android:id="@+id/iv_trend_icon"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginRight="4dp"
+                android:src="@drawable/ic_arrow_up_green"
+                android:contentDescription="Trend status" />
+
+            <TextView
+                android:id="@+id/tv_trend_arrow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="▲ 2 ranks"
+                android:textColor="@color/emerald"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

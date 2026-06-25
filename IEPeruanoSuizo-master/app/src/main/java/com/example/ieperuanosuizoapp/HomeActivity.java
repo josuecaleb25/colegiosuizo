@@ -24,12 +24,22 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.navigation.NavigationView;
 
+import com.example.ieperuanosuizoapp.api.ApiConfig;
+import com.example.ieperuanosuizoapp.api.ApiService;
+import com.example.ieperuanosuizoapp.api.models.NotificacionesNoLeidasResponse;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -114,7 +124,9 @@ public class HomeActivity extends AppCompatActivity {
             startActivity(intent);
             overridePendingTransition(0, 0);
         });
-        
+
+        cargarBadgeNoLeidas();
+
         // Botón "Ver completo" para ir a Horarios
         findViewById(R.id.btn_ver_completo_horario).setOnClickListener(v -> {
             Intent intent = new Intent(HomeActivity.this, HorariosActivity.class);
@@ -374,6 +386,46 @@ public class HomeActivity extends AppCompatActivity {
 
         cargarComunicados();
         actualizarVisibilidadMenuLateral();
+        cargarBadgeNoLeidas();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        cargarBadgeNoLeidas();
+    }
+
+    private void cargarBadgeNoLeidas() {
+        SharedPreferences userPrefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        String estudianteId = userPrefs.getString("estudiante_id", null);
+        if (estudianteId == null) return;
+
+        TextView badge = findViewById(R.id.notification_badge);
+        if (badge == null) return;
+
+        Retrofit retrofit = new Retrofit.Builder()
+            .baseUrl(ApiConfig.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build();
+        ApiService api = retrofit.create(ApiService.class);
+        api.getNotificacionesNoLeidas(estudianteId).enqueue(new Callback<NotificacionesNoLeidasResponse>() {
+            @Override
+            public void onResponse(Call<NotificacionesNoLeidasResponse> call, Response<NotificacionesNoLeidasResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    int count = response.body().getNoLeidas();
+                    if (count > 0) {
+                        badge.setText(String.valueOf(count));
+                        badge.setVisibility(View.VISIBLE);
+                    } else {
+                        badge.setVisibility(View.GONE);
+                    }
+                }
+            }
+            @Override
+            public void onFailure(Call<NotificacionesNoLeidasResponse> call, Throwable t) {
+                badge.setVisibility(View.GONE);
+            }
+        });
     }
 
     private void actualizarVisibilidadMenuLateral() {

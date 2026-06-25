@@ -1,0 +1,590 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/bg_gradient_main"
+    android:fitsSystemWindows="true">
+
+    <!-- 1. Header Row (Compact & High Density) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Clasificación"
+                android:textColor="@color/text_white"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.02" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Rendimiento del Alumnado"
+                android:textColor="@color/text_gray"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Modern Exposed Dropdown TextInputLayout -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/menu_month_layout"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="145dp"
+            android:layout_height="wrap_content"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxStrokeColor="@color/purple_dark"
+            app:boxStrokeWidth="1dp"
+            app:endIconTint="@color/text_gray"
+            android:textColorHint="@color/text_gray">
+
+            <AutoCompleteTextView
+                android:id="@+id/dropdown_month"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="Junio 2026"
+                android:textColor="@color/text_white"
+                android:textSize="13sp"
+                android:paddingVertical="10dp"
+                android:background="@android:color/transparent" />
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+
+    <!-- Kept to prevent compile errors for hidden legacy UI variables -->
+    <Spinner
+        android:id="@+id/spinner_month"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
+    <TextView
+        android:id="@+id/tv_streak_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+
+    <!-- 2. HIGH contrast Navigation Tabs (Cyber styling) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/bg_tab_background"
+        android:padding="4dp">
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tab_layout_leaderboard"
+            android:layout_width="match_parent"
+            android:layout_height="38dp"
+            android:background="@android:color/transparent"
+            app:tabIndicatorHeight="2dp"
+            app:tabIndicatorColor="@color/emerald"
+            app:tabSelectedTextColor="@color/emerald"
+            app:tabTextColor="@color/text_gray"
+            app:tabRippleColor="@null"
+            app:tabMode="fixed"
+            app:tabGravity="fill" />
+    </LinearLayout>
+
+    <!-- Modern Classroom Switch Filter (Design-crafted row with fine borders) -->
+    <LinearLayout
+        android:id="@+id/layout_classroom_filter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="12dp"
+        android:padding="12dp"
+        android:background="@drawable/bg_card_row">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_person_placeholder"
+            app:tint="@color/text_gray"
+            android:layout_marginEnd="10dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Filtrar por mi aula"
+                android:textColor="@color/text_white"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_active_classroom_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ver solo compañeros del Aula 101"
+                android:textColor="@color/text_gray"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_classroom_filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:thumbTint="@color/purple_dark"
+            app:trackTint="@color/border_light" />
+    </LinearLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
+
+            <!-- 3. PREMIUM 3D PODIUM SECTION IN CONSTRAINTLAYOUT -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="310dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp">
+
+                <!-- [RANK 2 - SILVER (LEFT COLUMN)] -->
+                <LinearLayout
+                    android:id="@+id/col_rank_2"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toLeftOf="@id/col_rank_1"
+                    app:layout_constraintHorizontal_weight="1.0">
+
+                    <!-- Profile Info floating above the 3D surface -->
+                    <FrameLayout
+                        android:layout_width="52dp"
+                        android:layout_height="52dp"
+                        android:background="@drawable/bg_circle_silver"
+                        android:padding="2dp">
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_circle_default">
+
+                            <TextView
+                                android:id="@+id/podium_avatar_text_2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:text="AG"
+                                android:textColor="@color/black"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+                        </FrameLayout>
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/podium_name_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Ana Gómez"
+                        android:textColor="@color/text_white"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+
+                    <!-- Score Text -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="1dp">
+
+                        <TextView
+                            android:id="@+id/podium_score_2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="4500"
+                            android:textColor="@color/silver_crown"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/podium_suffix_2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text=" PTS"
+                            android:textColor="@color/text_gray"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
+                    <!-- Trading style trend pill -->
+                    <LinearLayout
+                        android:id="@+id/podium_trend_capsule_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="2dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="8dp"
+                        android:background="@drawable/bg_trend_up_capsule">
+
+                        <ImageView
+                            android:id="@+id/podium_trend_icon_2"
+                            android:layout_width="8dp"
+                            android:layout_height="8dp"
+                            android:src="@drawable/ic_arrow_up_green" />
+
+                        <TextView
+                            android:id="@+id/podium_trend_text_2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="2dp"
+                            android:text="▲ 1 POS"
+                            android:textColor="@color/emerald"
+                            android:textSize="8sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Real 3D Pedestal Solid (Layered Cap + Front) -->
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="100dp">
+
+                        <!-- Front rectangular block -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_marginTop="12dp"
+                            android:background="@drawable/bg_3d_podium_silver_front" />
+
+                        <!-- Top isometric cap -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="24dp"
+                            android:background="@drawable/bg_3d_podium_silver_top" />
+
+                        <!-- Giant "2" Championship Insignia inside front face -->
+                        <ImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_gravity="center_horizontal|bottom"
+                            android:layout_marginBottom="12dp"
+                            android:src="@drawable/ic_trophy_badge_2" />
+                    </FrameLayout>
+                </LinearLayout>
+
+                <!-- [RANK 1 - GOLD (CENTER COLUMN - TALLER & OVERLAPPING)] -->
+                <LinearLayout
+                    android:id="@+id/col_rank_1"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    android:elevation="8dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toRightOf="@id/col_rank_2"
+                    app:layout_constraintRight_toLeftOf="@id/col_rank_3"
+                    app:layout_constraintHorizontal_weight="1.15">
+
+                    <!-- Profile Info floating above the 3D surface -->
+                    <FrameLayout
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:background="@drawable/bg_circle_gold"
+                        android:padding="2dp">
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_circle_default">
+
+                            <TextView
+                                android:id="@+id/podium_avatar_text_1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:text="ES"
+                                android:textColor="@color/black"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+                        </FrameLayout>
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/podium_name_1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Esteban S."
+                        android:textColor="@color/text_white"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+
+                    <!-- Score Text -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="1dp">
+
+                        <TextView
+                            android:id="@+id/podium_score_1"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="5900"
+                            android:textColor="@color/gold_crown"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/podium_suffix_1"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text=" PTS"
+                            android:textColor="@color/text_gray"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
+                    <!-- Trading style trend pill -->
+                    <LinearLayout
+                        android:id="@+id/podium_trend_capsule_1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="2dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="8dp"
+                        android:background="@drawable/bg_trend_stable_capsule">
+
+                        <ImageView
+                            android:id="@+id/podium_trend_icon_1"
+                            android:layout_width="8dp"
+                            android:layout_height="8dp"
+                            android:src="@drawable/ic_stable_gray" />
+
+                        <TextView
+                            android:id="@+id/podium_trend_text_1"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="2dp"
+                            android:text="—"
+                            android:textColor="@color/text_gray"
+                            android:textSize="8sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Real 3D Pedestal Solid (Layered Cap + Front) -->
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="140dp">
+
+                        <!-- Front rectangular block -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_marginTop="12dp"
+                            android:background="@drawable/bg_3d_podium_gold_front" />
+
+                        <!-- Top isometric cap -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="24dp"
+                            android:background="@drawable/bg_3d_podium_gold_top" />
+
+                        <!-- Giant "1" Championship Insignia inside front face -->
+                        <ImageView
+                            android:layout_width="54dp"
+                            android:layout_height="54dp"
+                            android:layout_gravity="center_horizontal|bottom"
+                            android:layout_marginBottom="16dp"
+                            android:src="@drawable/ic_trophy_badge_1" />
+                    </FrameLayout>
+                </LinearLayout>
+
+                <!-- [RANK 3 - BRONZE (RIGHT COLUMN)] -->
+                <LinearLayout
+                    android:id="@+id/col_rank_3"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toRightOf="@id/col_rank_1"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintHorizontal_weight="1.0">
+
+                    <!-- Profile Info floating above the 3D surface -->
+                    <FrameLayout
+                        android:layout_width="52dp"
+                        android:layout_height="52dp"
+                        android:background="@drawable/bg_circle_bronze"
+                        android:padding="2dp">
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_circle_default">
+
+                            <TextView
+                                android:id="@+id/podium_avatar_text_3"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:text="MM"
+                                android:textColor="@color/black"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+                        </FrameLayout>
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/podium_name_3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Mike Miller"
+                        android:textColor="@color/text_white"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+
+                    <!-- Score Text -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="1dp">
+
+                        <TextView
+                            android:id="@+id/podium_score_3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="3900"
+                            android:textColor="@color/bronze_crown"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/podium_suffix_3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text=" PTS"
+                            android:textColor="@color/text_gray"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
+                    <!-- Trading style trend pill -->
+                    <LinearLayout
+                        android:id="@+id/podium_trend_capsule_3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="2dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="8dp"
+                        android:background="@drawable/bg_trend_down_capsule">
+
+                        <ImageView
+                            android:id="@+id/podium_trend_icon_3"
+                            android:layout_width="8dp"
+                            android:layout_height="8dp"
+                            android:src="@drawable/ic_arrow_down_red" />
+
+                        <TextView
+                            android:id="@+id/podium_trend_text_3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="2dp"
+                            android:text="▼ 1 POS"
+                            android:textColor="@color/neon_pink"
+                            android:textSize="8sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Real 3D Pedestal Solid (Layered Cap + Front) -->
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="75dp">
+
+                        <!-- Front rectangular block -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_marginTop="12dp"
+                            android:background="@drawable/bg_3d_podium_bronze_front" />
+
+                        <!-- Top isometric cap -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="24dp"
+                            android:background="@drawable/bg_3d_podium_bronze_top" />
+
+                        <!-- Giant "3" Championship Insignia inside front face -->
+                        <ImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_gravity="center_horizontal|bottom"
+                            android:layout_marginBottom="8dp"
+                            android:src="@drawable/ic_trophy_badge_3" />
+                    </FrameLayout>
+                </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Divider line -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/divider_color"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginVertical="12dp" />
+
+            <!-- Remaining leaderboard List (Ranks 4+) -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_view_leaderboard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:overScrollMode="never"
+                android:nestedScrollingEnabled="false"
+                android:layout_marginHorizontal="16dp" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>
