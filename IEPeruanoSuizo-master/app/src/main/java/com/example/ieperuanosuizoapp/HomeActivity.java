@@ -391,7 +391,7 @@ public class HomeActivity extends AppCompatActivity {
 
     private void cargarBadgeNoLeidas() {
         SharedPreferences userPrefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
-        String estudianteId = userPrefs.getString("estudiante_id", null);
+        String estudianteId = userPrefs.getString("user_id", null);
         if (estudianteId == null) return;
 
         TextView badge = findViewById(R.id.notification_badge);

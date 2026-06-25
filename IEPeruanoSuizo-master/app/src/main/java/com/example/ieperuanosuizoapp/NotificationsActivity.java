@@ -71,7 +71,7 @@ public class NotificationsActivity extends AppCompatActivity {
 
     private void cargarNotificaciones() {
         SharedPreferences userPrefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
-        String estudianteId = userPrefs.getString("estudiante_id", null);
+        String estudianteId = userPrefs.getString("user_id", null);
 
         if (estudianteId == null) {
             layoutEmpty.setVisibility(View.VISIBLE);
