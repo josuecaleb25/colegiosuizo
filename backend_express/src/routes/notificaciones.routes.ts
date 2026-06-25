@@ -18,7 +18,7 @@ router.get('/', async (req: Request, res: Response) => {
     let query = supabase
       .from('notificaciones_historial')
       .select('*', { count: 'exact' })
-      .eq('estudiante_id', estudiante_id)
+      .or(`estudiante_id.eq.${estudiante_id},estudiante_id.is.null`)
       .order('fecha_envio', { ascending: false })
       .range(offset, offset + limitNum - 1);
 
@@ -57,7 +57,7 @@ router.get('/no-leidas', async (req: Request, res: Response) => {
     const { count, error } = await supabase
       .from('notificaciones_historial')
       .select('*', { count: 'exact', head: true })
-      .eq('estudiante_id', estudiante_id)
+      .or(`estudiante_id.eq.${estudiante_id},estudiante_id.is.null`)
       .eq('leida', false);
 
     if (error) throw error;

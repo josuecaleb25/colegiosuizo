@@ -389,12 +389,6 @@ public class HomeActivity extends AppCompatActivity {
         cargarBadgeNoLeidas();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        cargarBadgeNoLeidas();
-    }
-
     private void cargarBadgeNoLeidas() {
         SharedPreferences userPrefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         String estudianteId = userPrefs.getString("estudiante_id", null);
@@ -1610,6 +1604,8 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        cargarBadgeNoLeidas();
 
         // Cargar datos cacheados al instante antes de cualquier API
         cargarHorarioDesdeCache();
