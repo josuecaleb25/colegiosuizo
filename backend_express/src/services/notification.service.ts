@@ -25,6 +25,8 @@ class NotificationService {
    * Enviar notificación a un estudiante específico
    */
   async enviarAEstudiante(estudianteId: string, notificacion: NotificationData) {
+    await this.guardarHistorial(estudianteId, notificacion);
+
     if (!this.isFirebaseAvailable()) {
       return { success: false, message: 'Firebase no disponible' };
     }
@@ -70,8 +72,6 @@ class NotificationService {
 
       const resultados = await Promise.all(promesas);
       const exitosos = resultados.filter(r => r !== null).length;
-
-      await this.guardarHistorial(estudianteId, notificacion);
       
       console.log(`✅ Notificación enviada a estudiante ${estudianteId}: ${exitosos}/${tokens.length} dispositivos`);
       return { success: true, enviados: exitosos, total: tokens.length };
@@ -86,6 +86,11 @@ class NotificationService {
    * Enviar notificación a múltiples estudiantes
    */
   async enviarAMultiplesEstudiantes(estudianteIds: string[], notificacion: NotificationData) {
+    const idsUnicos = [...new Set(estudianteIds)];
+    for (const id of idsUnicos) {
+      await this.guardarHistorial(id, notificacion);
+    }
+
     if (!this.isFirebaseAvailable()) {
       return { success: false, message: 'Firebase no disponible' };
     }
@@ -131,11 +136,6 @@ class NotificationService {
 
       const resultados = await Promise.all(promesas);
       const exitosos = resultados.filter(r => r !== null).length;
-
-      const idsUnicos = [...new Set(tokens.map(t => t.estudiante_id))];
-      for (const id of idsUnicos) {
-        await this.guardarHistorial(id, notificacion);
-      }
 
       console.log(`✅ Notificaciones enviadas: ${exitosos}/${tokens.length}`);
       return { success: true, enviados: exitosos, total: tokens.length };
@@ -190,6 +190,8 @@ class NotificationService {
    * Enviar notificación a TODOS los usuarios
    */
   async enviarATodos(notificacion: NotificationData) {
+    await this.guardarHistorial(null, notificacion);
+
     if (!this.isFirebaseAvailable()) {
       return { success: false, message: 'Firebase no disponible' };
     }
@@ -233,8 +235,6 @@ class NotificationService {
         const resultados = await Promise.all(promesas);
         totalEnviados += resultados.filter(r => r !== null).length;
       }
-
-      await this.guardarHistorial(null, notificacion);
 
       console.log(`✅ Notificación enviada a ${totalEnviados}/${tokens.length} dispositivos`);
       return { success: true, enviados: totalEnviados, total: tokens.length };
