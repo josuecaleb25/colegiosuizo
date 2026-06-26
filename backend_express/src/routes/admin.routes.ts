@@ -51,7 +51,6 @@ router.get('/alumnos', async (req, res) => {
       const seccionNombre = secciones && grados ? `${grados.nombre} ${secciones.nombre}` : 'Sin sección';
 
       // Obtener código QR de la tabla codigos_qr usando persona.id
-      console.log('Buscando QR para persona_id:', persona.id);
       const { data: codigoQR, error: qrError } = await supabase
         .from('codigos_qr')
         .select('codigo')
@@ -59,10 +58,7 @@ router.get('/alumnos', async (req, res) => {
         .eq('activo', true)
         .single();
 
-      console.log('QR encontrado:', codigoQR, 'Error:', qrError);
-
       const qrCodeString = codigoQR?.codigo || alumno.codigo_alumno;
-      console.log('QR Code String:', qrCodeString);
       
       // Generar imagen QR en base64
       let qrImage = '';

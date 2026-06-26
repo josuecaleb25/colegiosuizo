@@ -465,6 +465,167 @@ const alumnos5E = [
   { apellidos: 'ZAVALETA GARRIDO', nombres: 'KEVIN STEVEN', email: 'zavaletagarrido@peruanosuizo.edu.pe' }
 ];
 
+const alumnos2A = [
+  { apellidos: 'AGUIRRE VASQUEZ', nombres: 'VALERY ABIGAIL', email: 'aguirrevasquez@peruanosuizo.edu.pe' },
+  { apellidos: 'AMAND RIOS', nombres: 'GAELNOVAK', email: 'amandrios@peruanosuizo.edu.pe' },
+  { apellidos: 'ARRIETA INOÑAN', nombres: 'ABIGAIL CELESTE', email: 'abigailceleste@peruanosuizo.edu.pe' },
+  { apellidos: 'BABILONIA GONZALES', nombres: 'NAOMI JANETH', email: 'babiloniagonzales@peruanosuizo.edu.pe' },
+  { apellidos: 'BERNARDO LIÑAN', nombres: 'ARTURO ESTEBAN', email: 'arturoesteban@peruanosuizo.edu.pe' },
+  { apellidos: 'BORJA PALACIOS', nombres: 'MARIA ELIZABETH', email: 'borjapalacios@peruanosuizo.edu.pe' },
+  { apellidos: 'CABALLERO MORENO', nombres: 'LUANA MELINA', email: 'caballeromoreno@peruanosuizo.edu.pe' },
+  { apellidos: 'CASTILLO RODRIGUEZ', nombres: 'JEANELYNN RAPHANY', email: 'castillorodriguez@peruanosuizo.edu.pe' },
+  { apellidos: 'CERNA OLIVOS', nombres: 'FACUNDO', email: 'cernaolivos@peruanosuizo.edu.pe' },
+  { apellidos: 'CHAVARRIA LAZARO', nombres: 'THIAGO SAID', email: 'chavarrialazaro@peruanosuizo.edu.pe' },
+  { apellidos: 'CORDOVA VILLACORTA', nombres: 'SUSANA', email: 'cordovavillacorta@peruanosuizo.edu.pe' },
+  { apellidos: 'DELGADO SICHES', nombres: 'SOPHIA LUANA', email: 'delgadosiches@peruanosuizo.edu.pe' },
+  { apellidos: 'DIAZ QUISPE', nombres: 'BECKY KIMBERLY', email: 'diazquispe@peruanosuizo.edu.pe' },
+  { apellidos: 'HUAMAN PAUCAR', nombres: 'JHOSEP FERNANDO', email: 'huamanpaucar@peruanosuizo.edu.pe' },
+  { apellidos: 'LOPEZ CERNA', nombres: 'YEICO ANDREW', email: 'lopezcerna@peruanosuizo.edu.pe' },
+  { apellidos: 'MALLQUI IZQUIERDO', nombres: 'DANIEL ALEXANDER', email: 'mallquiizquierdo@peruanosuizo.edu.pe' },
+  { apellidos: 'MEDINA CHICLLA', nombres: 'SHANIN LI', email: 'medinachiclla@peruanosuizo.edu.pe' },
+  { apellidos: 'MENDOZA CHUNQUI', nombres: 'MILAGROS FABIANA', email: 'mendozachunqui@peruanosuizo.edu.pe' },
+  { apellidos: 'MEZTANZA GONZALEZ', nombres: 'NEYMAR ALDAIR', email: 'meztanzagonzalez@peruanosuizo.edu.pe' },
+  { apellidos: 'MILLA ORTIZ', nombres: 'VALENTINO', email: 'millaortiz@peruanosuizo.edu.pe' },
+  { apellidos: 'POSAICO GALVEZ', nombres: 'JHONNY STEVENS', email: 'posaicogalvez@peruanosuizo.edu.pe' },
+  { apellidos: 'RAFAEL TRUJILLO', nombres: 'JACK STIJN', email: 'rafaeltrujillo@peruanosuizo.edu.pe' },
+  { apellidos: 'RODRIGUEZ ALVAREZ', nombres: 'CHRISTOPHER DANIEL', email: 'rodriguezalvarez@peruanosuizo.edu.pe' },
+  { apellidos: 'ROJAS SANTILLAN', nombres: 'THIAGO MARCELO', email: 'rojassantillan@peruanosuizo.edu.pe' },
+  { apellidos: 'SALAZAR BECERRA', nombres: 'AKIL ANHIL', email: 'salazarbecerra@peruanosuizo.edu.pe' },
+  { apellidos: 'SALCEDO VILLANUEVA', nombres: 'JUAN DIEGO BENJAMIN', email: 'salcedovillanueva@peruanosuizo.edu.pe' },
+  { apellidos: 'VALDEZ GAYTAN', nombres: 'BRYONY EMILY', email: 'valdezgaytan@peruanosuizo.edu.pe' },
+  { apellidos: 'VILCA OSORIO', nombres: 'GRAYS ZARAY', email: 'vilcaosorio@peruanosuizo.edu.pe' },
+  { apellidos: 'VILLA SILVA', nombres: 'GABRIEL FABRIZZIO', email: 'gabrielfabrizzio@peruanosuizo.edu.pe' },
+  { apellidos: 'ZAPATA VALLEJOS', nombres: 'LUHANA MICAELA', email: 'zapatavallejos@peruanosuizo.edu.pe' }
+];
+
+const alumnos2B = [
+  { apellidos: 'AGREDA VASQUEZ', nombres: 'KAELA ARAZUMI', email: 'agredavasquez@peruanosuizo.edu.pe' },
+  { apellidos: 'APOLINARIO RAMIREZ', nombres: 'LENYN JADEEL', email: 'apolinarioramirez@peruanosuizo.edu.pe' },
+  { apellidos: 'ASENCIOS QUISPE', nombres: 'LUCIANA VALENTINA', email: 'asenciosquispe@peruanosuizo.edu.pe' },
+  { apellidos: 'BARRETO SUCLUPE', nombres: 'EDGAR ADRIAM', email: 'edgaradriam@peruanosuizo.edu.pe' },
+  { apellidos: 'BAUTISTA MACHUCA', nombres: 'AARON SMITH', email: 'bautistamachuca@peruanosuizo.edu.pe' },
+  { apellidos: 'BRICEÑO MORALES', nombres: 'FABIANA GUADALUPE', email: 'fabianaguadalupe@peruanosuizo.edu.pe' },
+  { apellidos: 'CARO ANGELES', nombres: 'DANILO MOISES', email: 'caroangeles@peruanosuizo.edu.pe' },
+  { apellidos: 'CHAVEZ CABRERA', nombres: 'DOMINIC NICOLAS', email: 'chavezcabrera@peruanosuizo.edu.pe' },
+  { apellidos: 'CORDOVA MARTINEZ', nombres: 'MARIAM CAMILA', email: 'cordovamartinez@peruanosuizo.edu.pe' },
+  { apellidos: 'ESPARRAGOSA TERAN', nombres: 'JOSMARLY ORIANA', email: 'esparragosateran@peruanosuizo.edu.pe' },
+  { apellidos: 'GOMEZ GRANDA', nombres: 'JESUS ANTONIO', email: 'gomezgranda@peruanosuizo.edu.pe' },
+  { apellidos: 'LEVANO SOTO', nombres: 'CIELO ARIANA', email: 'levanosoto@peruanosuizo.edu.pe' },
+  { apellidos: 'LINAN DIAZ', nombres: 'MARIANA CHANNEL', email: 'linandiaz@peruanosuizo.edu.pe' },
+  { apellidos: 'LUQUE VALLADOLID', nombres: 'FERNANDO MIGUEL', email: 'luquevalladolid@peruanosuizo.edu.pe' },
+  { apellidos: 'MEJIA EGOAVIL', nombres: 'DEYAMIRA ADELEYSCE', email: 'mejiaegoavil@peruanosuizo.edu.pe' },
+  { apellidos: 'MORENO CABEZAS', nombres: 'SAMUEL ALEJANDRO', email: 'morenocabezas@peruanosuizo.edu.pe' },
+  { apellidos: 'NUÑEZ LOPEZ', nombres: 'ASTRID MICHELL', email: 'astridmichell@peruanosuizo.edu.pe' },
+  { apellidos: 'PEZO DEL AGUILA', nombres: 'THOMAS FERNANDO', email: 'pezodelaguila@peruanosuizo.edu.pe' },
+  { apellidos: 'QUIROZ PALACIOS', nombres: 'ANAIS JEANYLU', email: 'quirozpalacios@peruanosuizo.edu.pe' },
+  { apellidos: 'RAMOS ANGULO', nombres: 'ALESSANDRA RAFAELA', email: 'ramosangulo@peruanosuizo.edu.pe' },
+  { apellidos: 'RICSE VALDEZ', nombres: 'JOSE PABLO', email: 'josepablo@peruanosuizo.edu.pe' },
+  { apellidos: 'RUFASTO VEGA', nombres: 'DASHA ADALI', email: 'rufastovega@peruanosuizo.edu.pe' },
+  { apellidos: 'SALAZAR CORDOVA', nombres: 'MARIANA ODALYS', email: 'salazarcordova@peruanosuizo.edu.pe' },
+  { apellidos: 'SILVA GONZALES', nombres: 'NELY SARITA', email: 'silvagonzales@peruanosuizo.edu.pe' },
+  { apellidos: 'VALENCIA RIEGA', nombres: 'ANGEL DANIEL', email: 'valenciariega@peruanosuizo.edu.pe' },
+  { apellidos: 'VARGAS HUAMAN', nombres: 'IANN GAEL PAUL', email: 'vargashuaman@peruanosuizo.edu.pe' },
+  { apellidos: 'YAURI SALAZAR', nombres: 'LEYDI', email: 'yaurisalazar@peruanosuizo.edu.pe' }
+];
+
+const alumnos2C = [
+  { apellidos: 'ALDAVE TELLO', nombres: 'ARIANA CELESTE', email: 'aldavetello@peruanosuizo.edu.pe' },
+  { apellidos: 'ARCILA CUEVA', nombres: 'SAYUMI YADIRA', email: 'sayumiyadira@peruanosuizo.edu.pe' },
+  { apellidos: 'BARRETO SUCLUPE', nombres: 'EMELIN', email: 'emelin@peruanosuizo.edu.pe' },
+  { apellidos: 'CARDENAS CONISLLA', nombres: 'XIOMARA MASSIEL', email: 'cardenasconislla@peruanosuizo.edu.pe' },
+  { apellidos: 'CHUMPITAZ CORDOVA', nombres: 'CAMILA', email: 'chumpitazcordova@peruanosuizo.edu.pe' },
+  { apellidos: 'FERNANEZ PRADA TORRES', nombres: 'ANGELO', email: 'fernanezpradatorres@peruanosuizo.edu.pe' },
+  { apellidos: 'GUERRERO CORDOVA', nombres: 'FATIMA YANIRA', email: 'guerrerocordova@peruanosuizo.edu.pe' },
+  { apellidos: 'HERRERA SALAZAR', nombres: 'DYLAN VALENTIN', email: 'herrerasalazar@peruanosuizo.edu.pe' },
+  { apellidos: 'IQUIAPAZA YALLI', nombres: 'ANGELA YARITZA', email: 'iquiapazayalli@peruanosuizo.edu.pe' },
+  { apellidos: 'LAZARO BRAVO', nombres: 'NAYELI ALESSANDRA', email: 'lazarobravo@peruanosuizo.edu.pe' },
+  { apellidos: 'LOPEZ MARCELO', nombres: 'CRISTOPHER AARON', email: 'lopezmarcelo@peruanosuizo.edu.pe' },
+  { apellidos: 'LUCAS COPITAN', nombres: 'BRENDA', email: 'lucascopitan@peruanosuizo.edu.pe' },
+  { apellidos: 'MAYOR SANDOVAL', nombres: 'ADIANEZ', email: 'mayorsandoval@peruanosuizo.edu.pe' },
+  { apellidos: 'MENA SEGURA', nombres: 'ELVITA ALMENDRA', email: 'menasegura@peruanosuizo.edu.pe' },
+  { apellidos: 'MENDOZA SERVAN', nombres: 'JHESSENA', email: 'mendozaservan@peruanosuizo.edu.pe' },
+  { apellidos: 'NAMUCHE ROBLES', nombres: 'DANA BERENICE', email: 'namucherobles@peruanosuizo.edu.pe' },
+  { apellidos: 'ORE CASTRO', nombres: 'GAELA FERNANDA', email: 'orecastro@peruanosuizo.edu.pe' },
+  { apellidos: 'PADILLA NORIEGA', nombres: 'LEANDRO SEBASTIAN', email: 'padillanoriega@peruanosuizo.edu.pe' },
+  { apellidos: 'PENA CABALLERO', nombres: 'DIOSMEL JORGE VALENTINO', email: 'penacaballero@peruanosuizo.edu.pe' },
+  { apellidos: 'PINEDO IPANAQUE', nombres: 'MATHIAS DAVID', email: 'pinedoipanaque@peruanosuizo.edu.pe' },
+  { apellidos: 'QUISPE CORDOVA', nombres: 'AARÃ"N AMÃ"S', email: 'quispecordova@peruanosuizo.edu.pe' },
+  { apellidos: 'RAMOS VILLALVA', nombres: 'ANDRE FABIANO', email: 'ramosvillalva@peruanosuizo.edu.pe' },
+  { apellidos: 'RODRIGUEZ VILLAFUERTE', nombres: 'FELIX VALENTINO', email: 'rodriguezvillafuerte@peruanosuizo.edu.pe' },
+  { apellidos: 'ROJAS OROZCO', nombres: 'HELBERTH', email: 'rojasorozco@peruanosuizo.edu.pe' },
+  { apellidos: 'RUIZ HERRERA', nombres: 'ALEJANDRO', email: 'ruizherrera@peruanosuizo.edu.pe' },
+  { apellidos: 'SANCHEZ CALDERON', nombres: 'ANGELOES MIT', email: 'sanchezcalderon@peruanosuizo.edu.pe' },
+  { apellidos: 'SOTIL  SUEL', nombres: 'JASSIEL ALESKA', email: 'sotilsuel@peruanosuizo.edu.pe' },
+  { apellidos: 'TAVARA CORONACION', nombres: 'JOSHUA ESTEBAN', email: 'tavaracoronacion@peruanosuizo.edu.pe' },
+  { apellidos: 'VILCA LLANCO SEGURO', nombres: 'MECANTENY', email: 'vilcallancoseguro@peruanosuizo.edu.pe' },
+  { apellidos: 'YNGA LAZO', nombres: 'PAOLO ANDRES', email: 'yngalazo@peruanosuizo.edu.pe' }
+];
+
+const alumnos2D = [
+  { apellidos: 'ABAL OYOLA', nombres: 'JORGE LUIS', email: 'abaloyola@peruanosuizo.edu.pe' },
+  { apellidos: 'ARIAS RAFAEL', nombres: 'ANDREA CELESTE', email: 'ariarafael@peruanosuizo.edu.pe' },
+  { apellidos: 'ARICA SANCHEZ', nombres: 'JHORDAN GAEL', email: 'aricasanchez@peruanosuizo.edu.pe' },
+  { apellidos: 'AZABACHE LIMO', nombres: 'JUAN ALEXANDER', email: 'aguilaracosta@peruanosuizo.edu.pe' },
+  { apellidos: 'BARZOLA SALAZAR', nombres: 'CIELO ANABEL', email: 'barzolasalazar@peruanosuizo.edu.pe' },
+  { apellidos: 'CACHIQUE VALLEJOS', nombres: 'JEAN LUIGUI', email: 'cachiquevallejos@peruanosuizo.edu.pe' },
+  { apellidos: 'DIONICIO MELGAREJO', nombres: 'NOELIA ESTEFANI', email: 'dioniciomelgarejo@peruanosuizo.edu.pe' },
+  { apellidos: 'EGUZQUIZA MEZA', nombres: 'LUIS ENRIQUE', email: 'eguzquizameza@peruanosuizo.edu.pe' },
+  { apellidos: 'FIGUEREDO LINARES', nombres: 'ANDRÃ‰ MICHAEL', email: 'figueredolinares@peruanosuizo.edu.pe' },
+  { apellidos: 'GUTARRA PAEZ', nombres: 'ANHELEN DAYLIN', email: 'gutarrapaez@peruanosuizo.edu.pe' },
+  { apellidos: 'ISLA SOLORZANO', nombres: 'KENDRICK JHUS', email: 'islasolorzano@peruanosuizo.edu.pe' },
+  { apellidos: 'LUNA MARTINEZ', nombres: 'SCARLET YOSNEIDI VICTORIA', email: 'lunamartinez@peruanosuizo.edu.pe' },
+  { apellidos: 'MEDINA ARBOLEDA', nombres: 'SHEYLA MILAGRITOS', email: 'medinaarboleda@peruanosuizo.edu.pe' },
+  { apellidos: 'PAUCAR  CHUMPITAZ', nombres: 'LUHANA NAOMY', email: 'paucarchumpitaz@peruanosuizo.edu.pe' },
+  { apellidos: 'POCO APARCO', nombres: 'SEBASTIAN JOSUE PERCY', email: 'pocoaparco@peruanosuizo.edu.pe' },
+  { apellidos: 'PONCIANO JUAREZ', nombres: 'KENDRICH', email: 'poncianojuarez@peruanosuizo.edu.pe' },
+  { apellidos: 'RAMIREZ ALVARADO', nombres: 'ABRAHAM SET', email: 'ramirezalvarado@peruanosuizo.edu.pe' },
+  { apellidos: 'RAMIREZ CONTRERAS', nombres: 'TERRY AHMED', email: 'ramirezcontreras@peruanosuizo.edu.pe' },
+  { apellidos: 'RICRA SUELDO', nombres: 'JOSHUA DAVID', email: 'ricrasueldo@peruanosuizo.edu.pe' },
+  { apellidos: 'SANTIBANEZ SATO', nombres: 'BRIANA SYRELLE', email: 'santibanezsato@peruanosuizo.edu.pe' },
+  { apellidos: 'SANTOS QUISPE', nombres: 'JUAN MANUEL', email: 'santosquispe@peruanosuizo.edu.pe' },
+  { apellidos: 'SIHUINTA RUIZ', nombres: 'MILENKA DAYLIN', email: 'sihuintaruiz@peruanosuizo.edu.pe' },
+  { apellidos: 'SUKASACA RABANAL', nombres: 'RIHANNA', email: 'sukasacarabanal@peruanosuizo.edu.pe' },
+  { apellidos: 'TENORIO RABANAL', nombres: 'THIAGO FABRICIO', email: 'tenoriorabanal@peruanosuizo.edu.pe' },
+  { apellidos: 'TICONA VELAZCO', nombres: 'ANDERSON JESUS', email: 'ticonavelazco@peruanosuizo.edu.pe' },
+  { apellidos: 'TORRES ZAVALA MARKO', nombres: 'LEONEL', email: 'torreszavalamarko@peruanosuizo.edu.pe' },
+  { apellidos: 'VALVERDE EDONES', nombres: 'LUCIANA HARUMI', email: 'valverdeedones@peruanosuizo.edu.pe' },
+  { apellidos: 'YOVERA GARAY', nombres: 'SHANTAL CATALELLA', email: 'yoveragaray@peruanosuizo.edu.pe' }
+];
+
+const alumnos2E = [
+  { apellidos: 'AHUANARI  PEÑA', nombres: 'MIRIAM LIZBETH', email: 'ahuanaripena@peruanosuizo.edu.pe' },
+  { apellidos: 'ALEGRIA POSAYCO', nombres: 'THIAGO VALENTINO', email: 'alegriaposayco@peruanosuizo.edu.pe' },
+  { apellidos: 'ALIAGA DIAZ', nombres: 'DAYARA HALI', email: 'aliagadiaz@peruanosuizo.edu.pe' },
+  { apellidos: 'ARISTA ESCALANTE', nombres: 'NICOLAS STEVEN', email: 'aristaescalante@peruanosuizo.edu.pe' },
+  { apellidos: 'AURIS PICON', nombres: 'FABBIAN ESTEBAN', email: 'aurispicon@peruanosuizo.edu.pe' },
+  { apellidos: 'BRICEÑO TORO', nombres: 'ALESSIA VICTORIA', email: 'bricenotoro@peruanosuizo.edu.pe' },
+  { apellidos: 'CHINGUEL GUAMAN', nombres: 'ANA PAULA', email: 'chinguelguaman@peruanosuizo.edu.pe' },
+  { apellidos: 'COMITIVOS BERROSPI', nombres: 'LOANY MAYTE', email: 'comitivosberrospi@peruanosuizo.edu.pe' },
+  { apellidos: 'DAVILA MANAY', nombres: 'JEREMY JERAO', email: 'davilamanay@peruanosuizo.edu.pe' },
+  { apellidos: 'DEXTRE CALDERON', nombres: 'JENKO SHARIK YURI', email: 'dextrecalderon@peruanosuizo.edu.pe' },
+  { apellidos: 'ERAZO ROMERO', nombres: 'LUCAS MATEO', email: 'erazoromero@peruanosuizo.edu.pe' },
+  { apellidos: 'FERNANDEZ YAURI', nombres: 'SANTIAGO VALENTINO', email: 'fernandezyauri@peruanosuizo.edu.pe' },
+  { apellidos: 'GARCIA TAPIA', nombres: 'DERECK DIONYSIUS', email: 'garciatapia@peruanosuizo.edu.pe' },
+  { apellidos: 'IDROGO HUAYCAMA', nombres: 'HILDA MISHEL', email: 'idrogohuaycama@peruanosuizo.edu.pe' },
+  { apellidos: 'MELGARE JORAMIREZ', nombres: 'DAYRON ADRIANO', email: 'melgarejoramirez@peruanosuizo.edu.pe' },
+  { apellidos: 'PALACIOS MATEO', nombres: 'DERECK JHADIER', email: 'palaciosmateo@peruanosuizo.edu.pe' },
+  { apellidos: 'PAREDES CHAVEZ', nombres: 'YARITZA ESTHEFANY', email: 'paredeschavez@peruanosuizo.edu.pe' },
+  { apellidos: 'PARRA TORRES', nombres: 'JHARIASLEY JOCSNELI', email: 'parratorres@peruanosuizo.edu.pe' },
+  { apellidos: 'PENA MOZOMBITE', nombres: 'RODRIGUEZ SMITH', email: 'penamozombite@peruanosuizo.edu.pe' },
+  { apellidos: 'PIÑA AHUITE', nombres: 'CHELSI ARACELY', email: 'pinaahuite@peruanosuizo.edu.pe' },
+  { apellidos: 'PONTE SICHI', nombres: 'BRISSA VICTORIA', email: 'pontesichi@peruanosuizo.edu.pe' },
+  { apellidos: 'PORTOCARRERO CARRASCO', nombres: 'LEONARDO', email: 'portocarrerocarrasco@peruanosuizo.edu.pe' },
+  { apellidos: 'RAMIREZ MORENO', nombres: 'MEL MARYSA', email: 'ramirezmoreno@peruanosuizo.edu.pe' },
+  { apellidos: 'ROJAS TARICUARIMA', nombres: 'RAFAELLA', email: 'rojastaricuarima@peruanosuizo.edu.pe' },
+  { apellidos: 'SALAS FLORES', nombres: 'JENIFFER ESTRELLA', email: 'salasflores@peruanosuizo.edu.pe' },
+  { apellidos: 'SALVA WONG', nombres: 'INANOL ALEXANDER ELIÃš', email: 'salvawong@peruanosuizo.edu.pe' },
+  { apellidos: 'SANCHEZ HERNANDEZ', nombres: 'MATHIAS ALEXANDER', email: 'sanchezhernandez@peruanosuizo.edu.pe' },
+  { apellidos: 'SIMON YAURI', nombres: 'SHERLYN ITZEL', email: 'simonyauri@peruanosuizo.edu.pe' },
+  { apellidos: 'TUHAMA RIVERA', nombres: 'AXEL DANIEL', email: 'tuhamarivera@peruanosuizo.edu.pe' },
+  { apellidos: 'VEGA MENDOZA', nombres: 'AMIR SEBASTIAN', email: 'vegamendoza@peruanosuizo.edu.pe' },
+  { apellidos: 'VILLEGAS  TORO', nombres: 'JOSE ABEL', email: 'villegastoro@peruanosuizo.edu.pe' }
+];
+
 async function cargarAlumnos() {
   try {
     console.log('🚀 Iniciando carga de alumnos...\n');
@@ -510,7 +671,30 @@ async function cargarAlumnos() {
     const seccion1D = secciones1ro?.find(s => s.nombre === 'D');
     const seccion1E = secciones1ro?.find(s => s.nombre === 'E');
 
-    // 3. Obtener secciones de 4to
+    // 3. Obtener secciones de 2do
+    const { data: secciones2do, error: secciones2doError } = await supabase
+      .from('secciones')
+      .select(`
+        id,
+        nombre,
+        grados!inner (nombre)
+      `)
+      .eq('grados.nombre', '2do');
+
+    if (secciones2doError) {
+      console.error('❌ Error al buscar secciones de 2do:', secciones2doError);
+      throw new Error('No se pudo acceder a las secciones de 2do');
+    }
+
+    console.log('✅ Secciones de 2do encontradas:', secciones2do?.length);
+
+    const seccion2A = secciones2do?.find(s => s.nombre === 'A');
+    const seccion2B = secciones2do?.find(s => s.nombre === 'B');
+    const seccion2C = secciones2do?.find(s => s.nombre === 'C');
+    const seccion2D = secciones2do?.find(s => s.nombre === 'D');
+    const seccion2E = secciones2do?.find(s => s.nombre === 'E');
+
+    // 4. Obtener secciones de 4to
     const { data: secciones4to, error: secciones4toError } = await supabase
       .from('secciones')
       .select(`
@@ -582,71 +766,103 @@ async function cargarAlumnos() {
 
     console.log('⏭️  Saltando 1ro (ya cargado)\n');
 
-    // 10. Cargar 4to A
-    if (seccion4A) {
-      console.log('📚 Cargando 4to A...');
-      await cargarSeccion(alumnos4A, seccion4A.id, anio.id, '4A');
-      console.log('✅ 4to A: 31 alumnos cargados\n');
+    // Cargar 2do A
+    if (seccion2A) {
+      console.log('📚 Cargando 2do A...');
+      await cargarSeccion(alumnos2A, seccion2A.id, anio.id, '2A');
+      console.log('✅ 2do A: 30 alumnos cargados\n');
     }
 
-    // 11. Cargar 4to B
-    if (seccion4B) {
-      console.log('📚 Cargando 4to B...');
-      await cargarSeccion(alumnos4B, seccion4B.id, anio.id, '4B');
-      console.log('✅ 4to B: 29 alumnos cargados\n');
+    // Cargar 2do B
+    if (seccion2B) {
+      console.log('📚 Cargando 2do B...');
+      await cargarSeccion(alumnos2B, seccion2B.id, anio.id, '2B');
+      console.log('✅ 2do B: 27 alumnos cargados\n');
     }
 
-    // 12. Cargar 4to C
-    if (seccion4C) {
-      console.log('📚 Cargando 4to C...');
-      await cargarSeccion(alumnos4C, seccion4C.id, anio.id, '4C');
-      console.log('✅ 4to C: 31 alumnos cargados\n');
+    // Cargar 2do C
+    if (seccion2C) {
+      console.log('📚 Cargando 2do C...');
+      await cargarSeccion(alumnos2C, seccion2C.id, anio.id, '2C');
+      console.log('✅ 2do C: 30 alumnos cargados\n');
     }
 
-    // 13. Cargar 4to D
-    if (seccion4D) {
-      console.log('📚 Cargando 4to D...');
-      await cargarSeccion(alumnos4D, seccion4D.id, anio.id, '4D');
-      console.log('✅ 4to D: 29 alumnos cargados\n');
+    // Cargar 2do D
+    if (seccion2D) {
+      console.log('📚 Cargando 2do D...');
+      await cargarSeccion(alumnos2D, seccion2D.id, anio.id, '2D');
+      console.log('✅ 2do D: 28 alumnos cargados\n');
     }
 
-    // 14. Cargar 5to A
-    if (seccion5A) {
-      console.log('📚 Cargando 5to A...');
-      await cargarSeccion(alumnos5A, seccion5A.id, anio.id, '5A');
-      console.log('✅ 5to A: 27 alumnos cargados\n');
+    // Cargar 2do E
+    if (seccion2E) {
+      console.log('📚 Cargando 2do E...');
+      await cargarSeccion(alumnos2E, seccion2E.id, anio.id, '2E');
+      console.log('✅ 2do E: 31 alumnos cargados\n');
     }
 
-    // 15. Cargar 5to B
-    if (seccion5B) {
-      console.log('📚 Cargando 5to B...');
-      await cargarSeccion(alumnos5B, seccion5B.id, anio.id, '5B');
-      console.log('✅ 5to B: 29 alumnos cargados\n');
-    }
+    // COMENTADO: 4to ya está cargado
+    // if (seccion4A) {
+    //   console.log('📚 Cargando 4to A...');
+    //   await cargarSeccion(alumnos4A, seccion4A.id, anio.id, '4A');
+    //   console.log('✅ 4to A: 31 alumnos cargados\n');
+    // }
 
-    // 16. Cargar 5to C
-    if (seccion5C) {
-      console.log('📚 Cargando 5to C...');
-      await cargarSeccion(alumnos5C, seccion5C.id, anio.id, '5C');
-      console.log('✅ 5to C: 25 alumnos cargados\n');
-    }
+    // if (seccion4B) {
+    //   console.log('📚 Cargando 4to B...');
+    //   await cargarSeccion(alumnos4B, seccion4B.id, anio.id, '4B');
+    //   console.log('✅ 4to B: 29 alumnos cargados\n');
+    // }
 
-    // 17. Cargar 5to D
-    if (seccion5D) {
-      console.log('📚 Cargando 5to D...');
-      await cargarSeccion(alumnos5D, seccion5D.id, anio.id, '5D');
-      console.log('✅ 5to D: 32 alumnos cargados\n');
-    }
+    // if (seccion4C) {
+    //   console.log('📚 Cargando 4to C...');
+    //   await cargarSeccion(alumnos4C, seccion4C.id, anio.id, '4C');
+    //   console.log('✅ 4to C: 31 alumnos cargados\n');
+    // }
 
-    // 18. Cargar 5to E
-    if (seccion5E) {
-      console.log('📚 Cargando 5to E...');
-      await cargarSeccion(alumnos5E, seccion5E.id, anio.id, '5E');
-      console.log('✅ 5to E: 31 alumnos cargados\n');
-    }
+    // if (seccion4D) {
+    //   console.log('📚 Cargando 4to D...');
+    //   await cargarSeccion(alumnos4D, seccion4D.id, anio.id, '4D');
+    //   console.log('✅ 4to D: 29 alumnos cargados\n');
+    // }
+
+    console.log('⏭️  Saltando 4to (ya cargado)\n');
+
+    // COMENTADO: 5to ya está cargado
+    // if (seccion5A) {
+    //   console.log('📚 Cargando 5to A...');
+    //   await cargarSeccion(alumnos5A, seccion5A.id, anio.id, '5A');
+    //   console.log('✅ 5to A: 27 alumnos cargados\n');
+    // }
+
+    // if (seccion5B) {
+    //   console.log('📚 Cargando 5to B...');
+    //   await cargarSeccion(alumnos5B, seccion5B.id, anio.id, '5B');
+    //   console.log('✅ 5to B: 29 alumnos cargados\n');
+    // }
+
+    // if (seccion5C) {
+    //   console.log('📚 Cargando 5to C...');
+    //   await cargarSeccion(alumnos5C, seccion5C.id, anio.id, '5C');
+    //   console.log('✅ 5to C: 25 alumnos cargados\n');
+    // }
+
+    // if (seccion5D) {
+    //   console.log('📚 Cargando 5to D...');
+    //   await cargarSeccion(alumnos5D, seccion5D.id, anio.id, '5D');
+    //   console.log('✅ 5to D: 32 alumnos cargados\n');
+    // }
+
+    // if (seccion5E) {
+    //   console.log('📚 Cargando 5to E...');
+    //   await cargarSeccion(alumnos5E, seccion5E.id, anio.id, '5E');
+    //   console.log('✅ 5to E: 31 alumnos cargados\n');
+    // }
+
+    console.log('⏭️  Saltando 5to (ya cargado)\n');
 
     console.log('🎉 ¡Seed completado exitosamente!');
-    console.log('📊 Total: 422 alumnos cargados (1ro: 158, 4to: 120, 5to: 144)');
+    console.log('📊 Total: 146 alumnos de 2do grado cargados (2A: 30, 2B: 27, 2C: 30, 2D: 28, 2E: 31)');
   } catch (error) {
     console.error('❌ Error:', error);
   }
@@ -668,6 +884,11 @@ async function cargarSeccion(
   else if (codigoPrefix === '1C') dniBase = 64;   // 00000065-00000096
   else if (codigoPrefix === '1D') dniBase = 96;   // 00000097-00000127
   else if (codigoPrefix === '1E') dniBase = 127;  // 00000128-00000158
+  else if (codigoPrefix === '2A') dniBase = 422;  // 00000423-00000452
+  else if (codigoPrefix === '2B') dniBase = 452;  // 00000453-00000479
+  else if (codigoPrefix === '2C') dniBase = 479;  // 00000480-00000509
+  else if (codigoPrefix === '2D') dniBase = 509;  // 00000510-00000537
+  else if (codigoPrefix === '2E') dniBase = 537;  // 00000538-00000568
   else if (codigoPrefix === '4A') dniBase = 158;  // 00000159-00000189
   else if (codigoPrefix === '4B') dniBase = 189;  // 00000190-00000218
   else if (codigoPrefix === '4C') dniBase = 218;  // 00000219-00000249
