@@ -43,7 +43,7 @@ public class UsuariosActivity extends AppCompatActivity implements UsuariosAdapt
     
     private UsuariosAdapter adapter;
     private List<Usuario> todosLosUsuarios = new ArrayList<>();
-    private String filtroSeccionActual = "Todos";
+    private String filtroSeccionActual = "1ro A";
     private String busquedaActual = "";
 
     @Override
@@ -96,7 +96,6 @@ public class UsuariosActivity extends AppCompatActivity implements UsuariosAdapt
 
     private void setupFilters() {
         String[] salones = {
-            "Todos", 
             "1ro A", "1ro B", "1ro C", "1ro D", "1ro E",
             "2do A", "2do B", "2do C", "2do D", "2do E",
             "4to A", "4to B", "4to C", "4to D",
@@ -106,9 +105,10 @@ public class UsuariosActivity extends AppCompatActivity implements UsuariosAdapt
                 this,
                 android.R.layout.simple_dropdown_item_1line, salones);
         auto_complete_salon_filter.setAdapter(adapterSalones);
+        auto_complete_salon_filter.setText("1ro A", false); // Establecer valor inicial
         auto_complete_salon_filter.setOnItemClickListener((parent, view, position, id) -> {
             filtroSeccionActual = salones[position];
-            filtrarUsuarios();
+            cargarUsuarios(); // Recargar desde el servidor con el nuevo filtro
         });
     }
 
@@ -116,7 +116,7 @@ public class UsuariosActivity extends AppCompatActivity implements UsuariosAdapt
         mostrarCargando(true);
 
         RetrofitClient.getApiService()
-                .getUsuariosAdmin(null, null, 500)
+                .getUsuariosAdmin(null, filtroSeccionActual, 100)
                 .enqueue(new Callback<ApiResponse<List<Usuario>>>() {
                     @Override
                     public void onResponse(Call<ApiResponse<List<Usuario>>> call, 
@@ -153,15 +153,12 @@ public class UsuariosActivity extends AppCompatActivity implements UsuariosAdapt
         List<Usuario> usuariosFiltrados = new ArrayList<>();
 
         for (Usuario usuario : todosLosUsuarios) {
-            boolean cumpleFiltroSeccion = filtroSeccionActual.equals("Todos") || 
-                    usuario.getSeccion().contains(filtroSeccionActual);
-
             boolean cumpleBusqueda = busquedaActual.isEmpty() ||
                     usuario.getNombreCompleto().toLowerCase().contains(busquedaActual.toLowerCase()) ||
                     usuario.getCodigoAlumno().toLowerCase().contains(busquedaActual.toLowerCase()) ||
                     usuario.getSeccion().toLowerCase().contains(busquedaActual.toLowerCase());
 
-            if (cumpleFiltroSeccion && cumpleBusqueda) {
+            if (cumpleBusqueda) {
                 usuariosFiltrados.add(usuario);
             }
         }

@@ -40,8 +40,22 @@ router.get('/alumnos', async (req, res) => {
 
     if (error) throw error;
 
-    // Formatear datos y generar QR codes
-    const alumnosFormateados = await Promise.all(alumnos?.map(async (alumno: any) => {
+    // Filtrar ANTES de generar QR
+    let alumnosFiltrados = alumnos || [];
+
+    if (seccion) {
+      alumnosFiltrados = alumnosFiltrados.filter((alumno: any) => {
+        const matriculas = Array.isArray(alumno.matriculas) ? alumno.matriculas : [alumno.matriculas];
+        const matriculaActiva = matriculas[0];
+        const secciones = Array.isArray(matriculaActiva?.secciones) ? matriculaActiva.secciones[0] : matriculaActiva?.secciones;
+        const grados = Array.isArray(secciones?.grados) ? secciones.grados[0] : secciones?.grados;
+        const seccionNombre = secciones && grados ? `${grados.nombre} ${secciones.nombre}` : '';
+        return seccionNombre.toLowerCase().includes(seccion.toString().toLowerCase());
+      });
+    }
+
+    // Ahora sí, generar QR solo de los filtrados
+    const alumnosFormateados = await Promise.all(alumnosFiltrados.map(async (alumno: any) => {
       const persona = Array.isArray(alumno.personas) ? alumno.personas[0] : alumno.personas;
       const matriculas = Array.isArray(alumno.matriculas) ? alumno.matriculas : [alumno.matriculas];
       const matriculaActiva = matriculas[0];
@@ -90,18 +104,12 @@ router.get('/alumnos', async (req, res) => {
       };
     }) || []);
 
-    // Aplicar filtros en memoria
-    let alumnosFiltrados = alumnosFormateados;
-
-    if (seccion && seccion !== 'Todos') {
-      alumnosFiltrados = alumnosFiltrados.filter((a: any) => 
-        a.seccion.toLowerCase().includes(seccion.toString().toLowerCase())
-      );
-    }
+    // Aplicar búsqueda si existe
+    let alumnosFinales = alumnosFormateados;
 
     if (search) {
       const searchLower = search.toString().toLowerCase();
-      alumnosFiltrados = alumnosFiltrados.filter((a: any) =>
+      alumnosFinales = alumnosFinales.filter((a: any) =>
         a.nombre_completo.toLowerCase().includes(searchLower) ||
         a.codigo_alumno.toLowerCase().includes(searchLower) ||
         a.seccion.toLowerCase().includes(searchLower) ||
@@ -112,13 +120,13 @@ router.get('/alumnos', async (req, res) => {
     // Limitar resultados
     const limitNum = Number(limit);
     if (limitNum > 0) {
-      alumnosFiltrados = alumnosFiltrados.slice(0, limitNum);
+      alumnosFinales = alumnosFinales.slice(0, limitNum);
     }
 
     res.json({
       success: true,
-      data: alumnosFiltrados,
-      total: alumnosFiltrados.length
+      data: alumnosFinales,
+      total: alumnosFinales.length
     });
   } catch (error: any) {
     res.status(500).json({
