@@ -8,6 +8,8 @@ const router = Router();
 router.get('/alumnos', async (req, res) => {
   try {
     const { seccion, search, limit = 100 } = req.query;
+    
+    console.log('📊 Petición recibida:', { seccion, search, limit });
 
     let query = supabase
       .from('alumnos')
@@ -42,6 +44,8 @@ router.get('/alumnos', async (req, res) => {
 
     // Filtrar ANTES de generar QR
     let alumnosFiltrados = alumnos || [];
+    
+    console.log(`📚 Alumnos totales: ${alumnos?.length || 0}`);
 
     if (seccion) {
       alumnosFiltrados = alumnosFiltrados.filter((alumno: any) => {
@@ -52,6 +56,7 @@ router.get('/alumnos', async (req, res) => {
         const seccionNombre = secciones && grados ? `${grados.nombre} ${secciones.nombre}` : '';
         return seccionNombre.toLowerCase().includes(seccion.toString().toLowerCase());
       });
+      console.log(`🎯 Después de filtrar por "${seccion}": ${alumnosFiltrados.length} alumnos`);
     }
 
     // Ahora sí, generar QR solo de los filtrados
