@@ -116,7 +116,7 @@ public class UsuariosActivity extends AppCompatActivity implements UsuariosAdapt
         mostrarCargando(true);
 
         RetrofitClient.getApiService()
-                .getUsuariosAdmin(null, filtroSeccionActual, 100)
+                .getUsuariosAdmin(filtroSeccionActual, null, 100)
                 .enqueue(new Callback<ApiResponse<List<Usuario>>>() {
                     @Override
                     public void onResponse(Call<ApiResponse<List<Usuario>>> call, 
