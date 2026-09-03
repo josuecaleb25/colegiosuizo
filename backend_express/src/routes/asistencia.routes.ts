@@ -602,19 +602,33 @@ router.post('/eliminar-batch', async (req, res) => {
       });
     }
 
-    // Eliminar todos los IDs en una sola query
-    const { data: eliminadas, error } = await supabase
-      .from('asistencias')
-      .delete()
-      .in('id', ids)
-      .select('id');
+    // Eliminar los IDs por lotes para no exceder el límite de PostgREST
+    // con grandes cantidades (ej: 700+ asistencias en un día).
+    const LOTE_TAMANO = 100;
+    let totalEliminadas = 0;
+    let ultimoError: any = null;
 
-    if (error) {
-      console.error('Error eliminando asistencias batch:', error);
-      throw error;
+    for (let i = 0; i < ids.length; i += LOTE_TAMANO) {
+      const lote = ids.slice(i, i + LOTE_TAMANO);
+      const { data: eliminadas, error } = await supabase
+        .from('asistencias')
+        .delete()
+        .in('id', lote)
+        .select('id');
+
+      if (error) {
+        console.error('Error eliminando asistencias batch (lote):', error);
+        ultimoError = error;
+        break;
+      }
+
+      totalEliminadas += eliminadas?.length || 0;
     }
 
-    const totalEliminadas = eliminadas?.length || 0;
+    if (ultimoError) {
+      throw ultimoError;
+    }
+
     console.log(`✅ ${totalEliminadas} asistencias eliminadas`);
 
     res.json({
