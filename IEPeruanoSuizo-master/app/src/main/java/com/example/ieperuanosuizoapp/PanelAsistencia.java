@@ -42,7 +42,9 @@ import androidx.transition.TransitionManager;
 import com.example.ieperuanosuizoapp.api.RetrofitClient;
 import com.example.ieperuanosuizoapp.api.models.ApiResponse;
 import com.example.ieperuanosuizoapp.api.models.AsistenciaAlumno;
+import com.example.ieperuanosuizoapp.api.models.AsistenciaVivo;
 import com.example.ieperuanosuizoapp.api.models.EscanearQrData;
+import com.example.ieperuanosuizoapp.api.models.SesionAsistencia;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -102,6 +104,21 @@ public class PanelAsistencia extends AppCompatActivity {
 
     private boolean sesionComenzada = false;
     private int registrosEnSesion = 0;
+
+    // ========== TIEMPO REAL COMPARTIDO ==========
+    private String sesionActualId = null;
+    private Handler pollingHandler = new Handler();
+    private boolean pollingActivo = false;
+    private static final int POLLING_INTERVALO_MS = 3000;
+    private final Runnable pollingRunnable = new Runnable() {
+        @Override
+        public void run() {
+            sincronizarAsistencias();
+            if (pollingActivo) {
+                pollingHandler.postDelayed(this, POLLING_INTERVALO_MS);
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -205,6 +222,7 @@ public class PanelAsistencia extends AppCompatActivity {
     }
 
     private void limpiarTodosDatos() {
+        detenerPolling();
         listaCompleta.clear();
         listaActiva.clear();
         listaFiltrada.clear();
@@ -216,35 +234,116 @@ public class PanelAsistencia extends AppCompatActivity {
     }
 
     private void verificarAsistenciaExistenteHoy() {
-        String hoy = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
-        
-        RetrofitClient.getApiService().getAsistenciaPorFecha(hoy).enqueue(new retrofit2.Callback<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<com.example.ieperuanosuizoapp.api.models.AsistenciaAlumno>>>() {
+        // Buscar la sesión activa del día
+        RetrofitClient.getApiService().getSesionActiva().enqueue(new retrofit2.Callback<ApiResponse<SesionAsistencia>>() {
             @Override
-            public void onResponse(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<com.example.ieperuanosuizoapp.api.models.AsistenciaAlumno>>> call, retrofit2.Response<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<com.example.ieperuanosuizoapp.api.models.AsistenciaAlumno>>> response) {
+            public void onResponse(retrofit2.Call<ApiResponse<SesionAsistencia>> call, retrofit2.Response<ApiResponse<SesionAsistencia>> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    List<com.example.ieperuanosuizoapp.api.models.AsistenciaAlumno> asistencias = response.body().getData();
-                    
-                    if (asistencias != null && !asistencias.isEmpty()) {
-                        // Ya existe asistencia HOY, mostrar diálogo y bloquear
-                        mostrarDialogoAsistenciaYaCompletada();
+                    SesionAsistencia sesion = response.body().getData();
+                    if (sesion != null) {
+                        // Hay sesión activa → unirse y ver quiénes ya escanearon
+                        sesionActualId = sesion.getId();
+                        sesionComenzada = true;
+                        cargarAlumnosDesdeBackend();
+                        iniciarPolling();
+                        Toast.makeText(PanelAsistencia.this, "Te uniste a la sesión de asistencia activa", Toast.LENGTH_SHORT).show();
                     } else {
-                        // No hay asistencia HOY, cargar alumnos y permitir iniciar nueva sesión
+                        // No hay sesión activa → permitir iniciar una nueva
                         cargarAlumnosDesdeBackend();
                         mostrarDialogoInicioAsistencia();
                     }
                 } else {
-                    // Error o no hay datos, cargar alumnos y permitir iniciar sesión
+                    // Error consultando la sesión → intentar iniciar directamente
                     cargarAlumnosDesdeBackend();
                     mostrarDialogoInicioAsistencia();
                 }
             }
 
             @Override
-            public void onFailure(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<com.example.ieperuanosuizoapp.api.models.AsistenciaAlumno>>> call, Throwable t) {
-                // Error de conexión, cargar alumnos y permitir iniciar sesión de todas formas
-                Toast.makeText(PanelAsistencia.this, "No se pudo verificar asistencia previa", Toast.LENGTH_SHORT).show();
+            public void onFailure(retrofit2.Call<ApiResponse<SesionAsistencia>> call, Throwable t) {
+                Toast.makeText(PanelAsistencia.this, "No se pudo verificar sesión de asistencia", Toast.LENGTH_SHORT).show();
                 cargarAlumnosDesdeBackend();
                 mostrarDialogoInicioAsistencia();
+            }
+        });
+    }
+
+    private void crearSesionEnBackend(Runnable onSuccess) {
+        HashMap<String, String> body = new HashMap<>();
+        RetrofitClient.getApiService().crearSesion(body).enqueue(new retrofit2.Callback<ApiResponse<SesionAsistencia>>() {
+            @Override
+            public void onResponse(retrofit2.Call<ApiResponse<SesionAsistencia>> call, retrofit2.Response<ApiResponse<SesionAsistencia>> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    SesionAsistencia sesion = response.body().getData();
+                    if (sesion != null) {
+                        sesionActualId = sesion.getId();
+                    }
+                    onSuccess.run();
+                } else {
+                    // 409 = ya existe sesión activa, alguien más la creó. Igual podemos continuar.
+                    Toast.makeText(PanelAsistencia.this, "Ya hay una sesión activa iniciada", Toast.LENGTH_SHORT).show();
+                    onSuccess.run();
+                }
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<ApiResponse<SesionAsistencia>> call, Throwable t) {
+                // Si no podemos crear, igual permitimos escanear (modo local)
+                Toast.makeText(PanelAsistencia.this, "Sin conexión: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                onSuccess.run();
+            }
+        });
+    }
+
+    private void iniciarPolling() {
+        if (pollingActivo) return;
+        pollingActivo = true;
+        pollingHandler.postDelayed(pollingRunnable, POLLING_INTERVALO_MS);
+    }
+
+    private void detenerPolling() {
+        pollingActivo = false;
+        pollingHandler.removeCallbacks(pollingRunnable);
+    }
+
+    private void sincronizarAsistencias() {
+        String hoy = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
+        String sesionId = sesionActualId;
+
+        RetrofitClient.getApiService().getAsistenciasDelDia(hoy, sesionId).enqueue(new retrofit2.Callback<ApiResponse<List<AsistenciaVivo>>>() {
+            @Override
+            public void onResponse(retrofit2.Call<ApiResponse<List<AsistenciaVivo>>> call, retrofit2.Response<ApiResponse<List<AsistenciaVivo>>> response) {
+                if (!response.isSuccessful() || response.body() == null || !response.body().isSuccess()) {
+                    return;
+                }
+                List<AsistenciaVivo> asistencias = response.body().getData();
+                if (asistencias == null) return;
+
+                // Construir mapa de persona_id -> asistencia
+                java.util.Map<String, AsistenciaVivo> mapa = new java.util.HashMap<>();
+                for (AsistenciaVivo a : asistencias) {
+                    if (a.getPersona_id() != null) {
+                        mapa.put(a.getPersona_id(), a);
+                    }
+                }
+
+                // Actualizar la lista local marcando quiénes escanearon, incluso los de otros dispositivos
+                for (Alumno alumno : listaCompleta) {
+                    AsistenciaVivo as = mapa.get(alumno.persona_id);
+                    if (as != null) {
+                        alumno.hora = as.getHora_entrada();
+                        alumno.estado = as.getEstado();
+                        if (!listaActiva.contains(alumno)) {
+                            listaActiva.add(alumno);
+                        }
+                    }
+                }
+                actualizarVistaTabla();
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<ApiResponse<List<AsistenciaVivo>>> call, Throwable t) {
+                // Silencioso: el polling simplemente reintenta en la siguiente iteración
             }
         });
     }
@@ -281,10 +380,14 @@ public class PanelAsistencia extends AppCompatActivity {
 
         dialogView.findViewById(R.id.btn_comenzar_asistencia).setOnClickListener(v -> {
             dialog.dismiss();
-            sesionComenzada = true;
-            registrosEnSesion = 0;
-            cargarAlumnosDesdeBackend(); // Refrescar para mostrar datos reales del día
-            checkCameraPermissionAndStartOnly();
+            // Crear la sesión en el backend para que otros puedan unirse
+            crearSesionEnBackend(() -> {
+                sesionComenzada = true;
+                registrosEnSesion = 0;
+                cargarAlumnosDesdeBackend(); // Refrescar para mostrar datos reales del día
+                iniciarPolling();
+                checkCameraPermissionAndStartOnly();
+            });
         });
 
         dialog.show();
@@ -300,12 +403,31 @@ public class PanelAsistencia extends AppCompatActivity {
                 .setNegativeButton("Cancelar", (d, w) -> d.dismiss())
                 .setPositiveButton("Culminar", (d, w) -> {
                     d.dismiss();
+                    detenerPolling();
                     stopCamera();
+                    cerrarSesionEnBackend();
                     String fechaIso = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Calendar.getInstance().getTime());
                     List<AsistenciaAlumno> snapshot = construirListaConfirmacionDesdeAlumnos();
                     mostrarModalConfirmacionAsistenciaDia(fechaIso, snapshot);
                 })
                 .show();
+    }
+
+    private void cerrarSesionEnBackend() {
+        if (sesionActualId == null) return;
+        final String id = sesionActualId;
+        sesionActualId = null;
+        RetrofitClient.getApiService().cerrarSesion(id).enqueue(new retrofit2.Callback<ApiResponse<SesionAsistencia>>() {
+            @Override
+            public void onResponse(retrofit2.Call<ApiResponse<SesionAsistencia>> call, retrofit2.Response<ApiResponse<SesionAsistencia>> response) {
+                // Silencioso, la sesión se cierra en el backend
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<ApiResponse<SesionAsistencia>> call, Throwable t) {
+                // Silencioso
+            }
+        });
     }
 
     private void checkCameraPermissionAndStartOnly() {
@@ -332,6 +454,9 @@ public class PanelAsistencia extends AppCompatActivity {
         procesandoQr = true;
         HashMap<String, String> body = new HashMap<>();
         body.put("qr_token", token);
+        if (sesionActualId != null) {
+            body.put("sesion_id", sesionActualId);
+        }
         RetrofitClient.getApiService().escanearQrAsistencia(body).enqueue(new Callback<ApiResponse<EscanearQrData>>() {
             @Override
             public void onResponse(Call<ApiResponse<EscanearQrData>> call, Response<ApiResponse<EscanearQrData>> response) {
@@ -823,6 +948,7 @@ public class PanelAsistencia extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        detenerPolling();
         cameraExecutor.shutdown();
         barcodeScanner.close();
     }

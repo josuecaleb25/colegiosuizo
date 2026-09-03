@@ -54,32 +54,53 @@ router.post('/login', async (req, res) => {
 
     const persona = personas[0];
 
-    // Determinar rol y contraseña esperada
-    let rol = 'padre';
-    let passwordEsperada = 'Suizo2026*';
+    // Determinar rol y contraseña esperada (fallback al sistema anterior)
+    const rolFallback = () => {
+      if (email === 'admin@colegio.com') return 'administrador';
+      if (email === 'profesor@colegio.com' || (persona.docentes && persona.docentes.length > 0)) return 'profesor';
+      return 'padre';
+    };
 
-    // Verificar si es admin
-    if (email === 'admin@colegio.com') {
-      rol = 'administrador';
-      passwordEsperada = 'admin123';
-    }
-    // Verificar si es profesor
-    else if (email === 'profesor@colegio.com' || (persona.docentes && persona.docentes.length > 0)) {
-      rol = 'profesor';
-      passwordEsperada = 'profesor123';
-    }
-    // Si tiene alumno asociado, es un padre (no alumno)
-    else if (persona.alumnos && persona.alumnos.length > 0) {
-      rol = 'padre';
-      passwordEsperada = 'Suizo2026*';
-    }
+    const passwordFallback = {
+      administrador: 'admin123',
+      profesor: 'profesor123',
+      padre: 'Suizo2026*'
+    } as Record<string, string>;
 
-    // Verificar contraseña (comparación directa por ahora)
-    if (password !== passwordEsperada) {
-      return res.status(401).json({
-        success: false,
-        message: 'Credenciales incorrectas'
-      });
+    // Verificar contraseña contra la tabla usuarios (bcrypt) si existe un hash real
+    let rol: string;
+    let passwordOk = false;
+
+    const { data: usuario } = await supabase
+      .from('usuarios')
+      .select('id, email, rol, activo, password')
+      .eq('email', email)
+      .maybeSingle();
+
+    const esHashReal = (h: string | null | undefined) =>
+      !!h && (h.startsWith('$2a$') || h.startsWith('$2b$') || h.startsWith('$2y$')) && !h.includes('placeholder');
+
+    if (usuario && esHashReal(usuario.password)) {
+      // Usuario con hash real en la BD -> verificar con bcrypt
+      if (usuario.activo === false) {
+        return res.status(401).json({ success: false, message: 'Usuario inactivo' });
+      }
+      try {
+        passwordOk = await bcrypt.compare(password, usuario.password);
+      } catch {
+        passwordOk = false;
+      }
+      if (!passwordOk) {
+        return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+      }
+      rol = usuario.rol || rolFallback();
+    } else {
+      // No existe en usuarios (o hash inválido) -> fallback al sistema anterior
+      rol = rolFallback();
+      passwordOk = password === passwordFallback[rol];
+      if (!passwordOk) {
+        return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+      }
     }
 
     // Generar token

@@ -1005,6 +1005,187 @@ router.get('/leaderboard', async (req, res) => {
   }
 });
 
+// ============================================
+// SESIONES DE ASISTENCIA (tiempo real compartido)
+// ============================================
+
+// Obtener las asistencias del día de forma LIVIANA (para polling en vivo)
+// Devuelve SOLO persona_id + hora + estado + sesion_id, no los alumnos.
+router.get('/del-dia', async (req, res) => {
+  try {
+    const fecha = req.query.fecha as string;
+    const sesionId = req.query.sesion_id as string;
+
+    if (!fecha) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere el parámetro fecha'
+      });
+    }
+
+    let query = supabase
+      .from('asistencias')
+      .select('id, persona_id, fecha, hora_entrada, estado, sesion_id')
+      .eq('fecha', fecha)
+      .eq('tipo_persona', 'alumno');
+
+    if (sesionId) {
+      query = query.eq('sesion_id', sesionId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data: data || [],
+      total: data?.length || 0
+    });
+  } catch (error: any) {
+    console.error('Error obteniendo asistencias del día:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener asistencias del día',
+      error: error.message
+    });
+  }
+});
+
+// Obtener la sesión activa del día (si existe)
+router.get('/sesiones/activa', async (req, res) => {
+  try {
+    const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
+
+    const { data, error } = await supabase
+      .from('asistencia_sesiones')
+      .select('*')
+      .eq('fecha', hoy)
+      .eq('estado', 'abierta')
+      .order('creado_en', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data: data || null,
+      message: data ? 'Sesión activa encontrada' : 'No hay sesión activa'
+    });
+  } catch (error: any) {
+    console.error('Error obteniendo sesión activa:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener sesión activa',
+      error: error.message
+    });
+  }
+});
+
+// Crear una sesión de asistencia (solo si no hay una activa hoy)
+router.post('/sesiones', async (req, res) => {
+  try {
+    const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
+    const creadoPor = req.body?.creado_por || null;
+
+    // Verificar si ya existe una sesión activa hoy
+    const { data: existente, error: checkError } = await supabase
+      .from('asistencia_sesiones')
+      .select('id')
+      .eq('fecha', hoy)
+      .eq('estado', 'abierta')
+      .limit(1);
+
+    if (checkError) throw checkError;
+
+    if (existente && existente.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: 'Ya existe una sesión de asistencia activa para hoy',
+        data: existente[0]
+      });
+    }
+
+    const { data, error } = await supabase
+      .from('asistencia_sesiones')
+      .insert({
+        fecha: hoy,
+        estado: 'abierta',
+        creado_por: creadoPor
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.status(201).json({
+      success: true,
+      message: 'Sesión de asistencia creada correctamente',
+      data
+    });
+  } catch (error: any) {
+    console.error('Error creando sesión:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al crear sesión de asistencia',
+      error: error.message
+    });
+  }
+});
+
+// Cerrar una sesión de asistencia
+router.put('/sesiones/:id/cerrar', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const ahora = new Date().toISOString();
+
+    // Verificar que la sesión exista y esté abierta
+    const { data: sesion, error: getError } = await supabase
+      .from('asistencia_sesiones')
+      .select('id, estado')
+      .eq('id', id)
+      .single();
+
+    if (getError || !sesion) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sesión no encontrada'
+      });
+    }
+
+    if (sesion.estado === 'cerrada') {
+      return res.status(200).json({
+        success: true,
+        message: 'La sesión ya estaba cerrada',
+        data: sesion
+      });
+    }
+
+    const { data, error } = await supabase
+      .from('asistencia_sesiones')
+      .update({ estado: 'cerrada', cerrado_en: ahora })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      message: 'Sesión cerrada correctamente',
+      data
+    });
+  } catch (error: any) {
+    console.error('Error cerrando sesión:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al cerrar la sesión',
+      error: error.message
+    });
+  }
+});
+
 // Convertir hora a minutos desde medianoche para desempate
 function parseHora(hora: string): number | null {
   if (!hora) return null;

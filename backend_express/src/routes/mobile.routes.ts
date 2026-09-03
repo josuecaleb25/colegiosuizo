@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import supabase from '../config/database';
-import { optionalAuthMiddleware, AuthRequest } from '../middleware/auth';
+import { authMiddleware, optionalAuthMiddleware, AuthRequest } from '../middleware/auth';
 import notificationService from '../services/notification.service';
 
 const router = Router();
@@ -216,17 +216,48 @@ router.get('/asistencia/alumnos', optionalAuthMiddleware, async (req: AuthReques
   }
 });
 
-// Escanear QR
-router.post('/asistencia/escanear-qr', async (req, res) => {
+// Escanear QR (solo profesores y admins)
+router.post('/asistencia/escanear-qr', authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const { qr_token } = req.body;
+    // Verificar que el usuario sea profesor o administrador
+    const rol = req.user?.rol;
+    if (rol !== 'profesor' && rol !== 'administrador' && rol !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'No tienes permiso para escanear códigos QR'
+      });
+    }
 
+    const { qr_token, sesion_id } = req.body;
 
     if (!qr_token) {
       return res.status(400).json({
         success: false,
         message: 'Se requiere qr_token'
       });
+    }
+
+    // Si llega sesion_id, verificar que la sesión esté abierta
+    if (sesion_id) {
+      const { data: sesion, error: sesionError } = await supabase
+        .from('asistencia_sesiones')
+        .select('id, estado')
+        .eq('id', sesion_id)
+        .single();
+
+      if (sesionError || !sesion) {
+        return res.status(404).json({
+          success: false,
+          message: 'Sesión de asistencia no encontrada'
+        });
+      }
+
+      if (sesion.estado !== 'abierta') {
+        return res.status(403).json({
+          success: false,
+          message: 'La sesión de asistencia ya fue cerrada. No se puede registrar más.'
+        });
+      }
     }
 
     // Buscar código QR
@@ -290,7 +321,8 @@ router.post('/asistencia/escanear-qr', async (req, res) => {
         tipo_persona: 'alumno',
         fecha: fechaLima,
         hora_entrada: horaLima12,
-        estado
+        estado,
+        sesion_id: sesion_id || null
       });
 
     if (insertError) {

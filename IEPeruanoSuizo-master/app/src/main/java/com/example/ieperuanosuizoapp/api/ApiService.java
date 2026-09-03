@@ -43,6 +43,29 @@ public interface ApiService {
 
     @POST("mobile/asistencia/escanear-qr")
     Call<ApiResponse<EscanearQrData>> escanearQrAsistencia(@Body Map<String, String> body);
+
+    // ============================================
+    // SESIONES DE ASISTENCIA (tiempo real compartido)
+    // ============================================
+
+    // Obtener la sesión activa del día
+    @GET("asistencia/sesiones/activa")
+    Call<ApiResponse<com.example.ieperuanosuizoapp.api.models.SesionAsistencia>> getSesionActiva();
+
+    // Crear una sesión de asistencia
+    @POST("asistencia/sesiones")
+    Call<ApiResponse<com.example.ieperuanosuizoapp.api.models.SesionAsistencia>> crearSesion(@Body Map<String, String> body);
+
+    // Cerrar una sesión de asistencia
+    @retrofit2.http.PUT("asistencia/sesiones/{id}/cerrar")
+    Call<ApiResponse<com.example.ieperuanosuizoapp.api.models.SesionAsistencia>> cerrarSesion(@retrofit2.http.Path("id") String id);
+
+    // Obtener asistencias del día (liviano, para polling en vivo)
+    @GET("asistencia/del-dia")
+    Call<ApiResponse<List<com.example.ieperuanosuizoapp.api.models.AsistenciaVivo>>> getAsistenciasDelDia(
+        @Query("fecha") String fecha,
+        @Query("sesion_id") String sesionId
+    );
     
     // Comunicados
     @GET("comunicados")
