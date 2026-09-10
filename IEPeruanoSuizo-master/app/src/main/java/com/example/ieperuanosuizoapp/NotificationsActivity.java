@@ -14,8 +14,8 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.ieperuanosuizoapp.api.ApiConfig;
 import com.example.ieperuanosuizoapp.api.ApiService;
+import com.example.ieperuanosuizoapp.api.RetrofitClient;
 import com.example.ieperuanosuizoapp.api.models.Notificacion;
 import com.example.ieperuanosuizoapp.api.models.NotificacionesResponse;
 
@@ -28,8 +28,6 @@ import java.util.Locale;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 public class NotificationsActivity extends AppCompatActivity {
 
@@ -79,12 +77,7 @@ public class NotificationsActivity extends AppCompatActivity {
             return;
         }
 
-        Retrofit retrofit = new Retrofit.Builder()
-            .baseUrl(ApiConfig.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build();
-
-        ApiService api = retrofit.create(ApiService.class);
+        ApiService api = RetrofitClient.getApiService();
         api.getNotificaciones(estudianteId, 1, 50).enqueue(new Callback<NotificacionesResponse>() {
             @Override
             public void onResponse(Call<NotificacionesResponse> call, Response<NotificacionesResponse> response) {

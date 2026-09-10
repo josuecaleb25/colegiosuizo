@@ -23,3 +23,7 @@ services:
         value: "*"
       - key: FIREBASE_SERVICE_ACCOUNT
         sync: false
+      - key: ATTENDANCE_AUTO_CLOSE_ENABLED
+        value: "false"
+      - key: ATTENDANCE_AUTO_CLOSE_TIME
+        sync: false

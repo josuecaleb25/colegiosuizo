@@ -104,9 +104,14 @@ public class PanelAsistencia extends AppCompatActivity {
 
     private boolean sesionComenzada = false;
     private int registrosEnSesion = 0;
+    private boolean verificandoSesion = false;
+    private boolean dialogoInicioVisible = false;
+    private boolean dialogoErrorVisible = false;
+    private boolean falloRedMostrado = false;
 
     // ========== TIEMPO REAL COMPARTIDO ==========
     private String sesionActualId = null;
+    private String sesionActualFecha = null;
     private Handler pollingHandler = new Handler();
     private boolean pollingActivo = false;
     private static final int POLLING_INTERVALO_MS = 3000;
@@ -163,8 +168,6 @@ public class PanelAsistencia extends AppCompatActivity {
         // LIMPIEZA TOTAL AL INICIAR
         limpiarTodosDatos();
 
-        generarDatosMaestros();
-
         adapter = new AlumnoAdapter(new ArrayList<>());
         rvAlumnos.setAdapter(adapter);
 
@@ -207,18 +210,20 @@ public class PanelAsistencia extends AppCompatActivity {
 
         setupBottomNavigation(findViewById(R.id.bottom_navigation));
 
-        // Verificar si ya existe asistencia HOY antes de permitir nueva sesión
-        verificarAsistenciaExistenteHoy();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // LIMPIEZA TOTAL cada vez que vuelves a esta pantalla
         limpiarTodosDatos();
-        
-        // Verificar si ya existe asistencia HOY
         verificarAsistenciaExistenteHoy();
+    }
+
+    @Override
+    protected void onStop() {
+        detenerPolling();
+        stopCamera();
+        super.onStop();
     }
 
     private void limpiarTodosDatos() {
@@ -228,44 +233,84 @@ public class PanelAsistencia extends AppCompatActivity {
         listaFiltrada.clear();
         registrosEnSesion = 0;
         sesionComenzada = false;
+        sesionActualId = null;
+        sesionActualFecha = null;
         ultimoCodigoLeido = null;
         ultimoScanMs = 0;
         procesandoQr = false;
     }
 
     private void verificarAsistenciaExistenteHoy() {
+        if (verificandoSesion) return;
+        verificandoSesion = true;
+
         // Buscar la sesión activa del día
         RetrofitClient.getApiService().getSesionActiva().enqueue(new retrofit2.Callback<ApiResponse<SesionAsistencia>>() {
             @Override
             public void onResponse(retrofit2.Call<ApiResponse<SesionAsistencia>> call, retrofit2.Response<ApiResponse<SesionAsistencia>> response) {
+                verificandoSesion = false;
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     SesionAsistencia sesion = response.body().getData();
                     if (sesion != null) {
-                        // Hay sesión activa → unirse y ver quiénes ya escanearon
-                        sesionActualId = sesion.getId();
-                        sesionComenzada = true;
-                        cargarAlumnosDesdeBackend();
-                        iniciarPolling();
+                        activarSesion(sesion, false);
                         Toast.makeText(PanelAsistencia.this, "Te uniste a la sesión de asistencia activa", Toast.LENGTH_SHORT).show();
                     } else {
-                        // No hay sesión activa → permitir iniciar una nueva
+                        sesionActualId = null;
+                        sesionComenzada = false;
                         cargarAlumnosDesdeBackend();
                         mostrarDialogoInicioAsistencia();
                     }
                 } else {
-                    // Error consultando la sesión → intentar iniciar directamente
-                    cargarAlumnosDesdeBackend();
-                    mostrarDialogoInicioAsistencia();
+                    if (response.code() != 401) {
+                        mostrarErrorRecuperacion("El servidor no pudo verificar la sesión de asistencia.");
+                    }
                 }
             }
 
             @Override
             public void onFailure(retrofit2.Call<ApiResponse<SesionAsistencia>> call, Throwable t) {
-                Toast.makeText(PanelAsistencia.this, "No se pudo verificar sesión de asistencia", Toast.LENGTH_SHORT).show();
-                cargarAlumnosDesdeBackend();
-                mostrarDialogoInicioAsistencia();
+                verificandoSesion = false;
+                mostrarErrorRecuperacion("No hay conexión. El escáner permanecerá bloqueado hasta recuperar la sesión.");
             }
         });
+    }
+
+    private void activarSesion(SesionAsistencia sesion, boolean iniciarCamara) {
+        if (sesion == null || sesion.getId() == null || sesion.getId().trim().isEmpty()) {
+            mostrarErrorRecuperacion("El servidor devolvió una sesión sin identificador válido.");
+            return;
+        }
+        sesionActualId = sesion.getId();
+        sesionActualFecha = sesion.getFecha();
+        sesionComenzada = true;
+        falloRedMostrado = false;
+        btnActivarCamara.setEnabled(true);
+        cargarAlumnosDesdeBackend();
+        iniciarPolling();
+        if (iniciarCamara) checkCameraPermissionAndStartOnly();
+    }
+
+    private void mostrarErrorRecuperacion(String mensaje) {
+        detenerPolling();
+        stopCamera();
+        btnActivarCamara.setEnabled(false);
+        if (dialogoErrorVisible || isFinishing() || isDestroyed()) return;
+        dialogoErrorVisible = true;
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("No se pudo recuperar la sesión")
+                .setMessage(mensaje)
+                .setCancelable(false)
+                .setNegativeButton("Volver", (d, w) -> {
+                    dialogoErrorVisible = false;
+                    d.dismiss();
+                    finish();
+                })
+                .setPositiveButton("Reintentar", (d, w) -> {
+                    dialogoErrorVisible = false;
+                    d.dismiss();
+                    verificarAsistenciaExistenteHoy();
+                })
+                .show();
     }
 
     private void crearSesionEnBackend(Runnable onSuccess) {
@@ -275,22 +320,46 @@ public class PanelAsistencia extends AppCompatActivity {
             public void onResponse(retrofit2.Call<ApiResponse<SesionAsistencia>> call, retrofit2.Response<ApiResponse<SesionAsistencia>> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     SesionAsistencia sesion = response.body().getData();
-                    if (sesion != null) {
+                    if (sesion != null && sesion.getId() != null && !sesion.getId().trim().isEmpty()) {
                         sesionActualId = sesion.getId();
+                        sesionActualFecha = sesion.getFecha();
+                        onSuccess.run();
+                    } else {
+                        mostrarErrorRecuperacion("No se recibió un identificador válido para la sesión.");
                     }
-                    onSuccess.run();
+                } else if (response.code() == 409) {
+                    recuperarSesionCreadaPorOtraTablet(onSuccess);
                 } else {
-                    // 409 = ya existe sesión activa, alguien más la creó. Igual podemos continuar.
-                    Toast.makeText(PanelAsistencia.this, "Ya hay una sesión activa iniciada", Toast.LENGTH_SHORT).show();
-                    onSuccess.run();
+                    Toast.makeText(PanelAsistencia.this, "No se pudo iniciar la sesión en el servidor", Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onFailure(retrofit2.Call<ApiResponse<SesionAsistencia>> call, Throwable t) {
-                // Si no podemos crear, igual permitimos escanear (modo local)
-                Toast.makeText(PanelAsistencia.this, "Sin conexión: " + t.getMessage(), Toast.LENGTH_LONG).show();
-                onSuccess.run();
+                mostrarErrorRecuperacion("No hay conexión. No se inició ninguna sesión y no se registrarán escaneos.");
+            }
+        });
+    }
+
+    private void recuperarSesionCreadaPorOtraTablet(Runnable onSuccess) {
+        RetrofitClient.getApiService().getSesionActiva().enqueue(new retrofit2.Callback<ApiResponse<SesionAsistencia>>() {
+            @Override
+            public void onResponse(retrofit2.Call<ApiResponse<SesionAsistencia>> call, retrofit2.Response<ApiResponse<SesionAsistencia>> response) {
+                SesionAsistencia sesion = response.body() != null ? response.body().getData() : null;
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()
+                        && sesion != null && sesion.getId() != null && !sesion.getId().trim().isEmpty()) {
+                    sesionActualId = sesion.getId();
+                    sesionActualFecha = sesion.getFecha();
+                    Toast.makeText(PanelAsistencia.this, "Te uniste a la sesión creada en otra tablet", Toast.LENGTH_SHORT).show();
+                    onSuccess.run();
+                } else if (response.code() != 401) {
+                    mostrarErrorRecuperacion("Otra tablet inició la sesión, pero no fue posible recuperarla.");
+                }
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<ApiResponse<SesionAsistencia>> call, Throwable t) {
+                mostrarErrorRecuperacion("Otra tablet inició la sesión, pero se perdió la conexión al recuperarla.");
             }
         });
     }
@@ -307,15 +376,21 @@ public class PanelAsistencia extends AppCompatActivity {
     }
 
     private void sincronizarAsistencias() {
-        String hoy = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
+        String hoy = sesionActualFecha;
         String sesionId = sesionActualId;
+        if (hoy == null || sesionId == null || sesionId.trim().isEmpty()) return;
 
         RetrofitClient.getApiService().getAsistenciasDelDia(hoy, sesionId).enqueue(new retrofit2.Callback<ApiResponse<List<AsistenciaVivo>>>() {
             @Override
             public void onResponse(retrofit2.Call<ApiResponse<List<AsistenciaVivo>>> call, retrofit2.Response<ApiResponse<List<AsistenciaVivo>>> response) {
                 if (!response.isSuccessful() || response.body() == null || !response.body().isSuccess()) {
+                    if (response.code() == 404 || response.code() == 409) {
+                        manejarSesionCerrada();
+                    }
                     return;
                 }
+                falloRedMostrado = false;
+                btnActivarCamara.setEnabled(true);
                 List<AsistenciaVivo> asistencias = response.body().getData();
                 if (asistencias == null) return;
 
@@ -343,9 +418,23 @@ public class PanelAsistencia extends AppCompatActivity {
 
             @Override
             public void onFailure(retrofit2.Call<ApiResponse<List<AsistenciaVivo>>> call, Throwable t) {
-                // Silencioso: el polling simplemente reintenta en la siguiente iteración
+                stopCamera();
+                btnActivarCamara.setEnabled(false);
+                if (!falloRedMostrado) {
+                    falloRedMostrado = true;
+                    Toast.makeText(PanelAsistencia.this, "Conexión perdida: el escáner se pausó", Toast.LENGTH_LONG).show();
+                }
             }
         });
+    }
+
+    private void manejarSesionCerrada() {
+        detenerPolling();
+        stopCamera();
+        sesionComenzada = false;
+        sesionActualId = null;
+        sesionActualFecha = null;
+        mostrarDialogoAsistenciaYaCompletada();
     }
 
     private void mostrarDialogoAsistenciaYaCompletada() {
@@ -361,6 +450,8 @@ public class PanelAsistencia extends AppCompatActivity {
     }
 
     private void mostrarDialogoInicioAsistencia() {
+        if (dialogoInicioVisible || isFinishing() || isDestroyed()) return;
+        dialogoInicioVisible = true;
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_inicio_asistencia, null);
         android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this, R.style.CustomDialogTheme)
                 .setView(dialogView)
@@ -374,11 +465,13 @@ public class PanelAsistencia extends AppCompatActivity {
         tvFecha.setText(fechaActual.substring(0, 1).toUpperCase() + fechaActual.substring(1));
 
         dialogView.findViewById(R.id.btn_volver_asistencia).setOnClickListener(v -> {
+            dialogoInicioVisible = false;
             dialog.dismiss();
             finish(); // Regresa a la pantalla anterior
         });
 
         dialogView.findViewById(R.id.btn_comenzar_asistencia).setOnClickListener(v -> {
+            dialogoInicioVisible = false;
             dialog.dismiss();
             // Crear la sesión en el backend para que otros puedan unirse
             crearSesionEnBackend(() -> {
@@ -405,27 +498,41 @@ public class PanelAsistencia extends AppCompatActivity {
                     d.dismiss();
                     detenerPolling();
                     stopCamera();
-                    cerrarSesionEnBackend();
-                    String fechaIso = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Calendar.getInstance().getTime());
+                    String fechaIso = sesionActualFecha != null
+                            ? sesionActualFecha
+                            : new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Calendar.getInstance().getTime());
                     List<AsistenciaAlumno> snapshot = construirListaConfirmacionDesdeAlumnos();
-                    mostrarModalConfirmacionAsistenciaDia(fechaIso, snapshot);
+                    cerrarSesionEnBackend(() -> mostrarModalConfirmacionAsistenciaDia(fechaIso, snapshot));
                 })
                 .show();
     }
 
-    private void cerrarSesionEnBackend() {
-        if (sesionActualId == null) return;
+    private void cerrarSesionEnBackend(Runnable onSuccess) {
+        if (sesionActualId == null || sesionActualId.trim().isEmpty()) {
+            Toast.makeText(this, "No hay una sesión válida para cerrar", Toast.LENGTH_LONG).show();
+            return;
+        }
         final String id = sesionActualId;
-        sesionActualId = null;
         RetrofitClient.getApiService().cerrarSesion(id).enqueue(new retrofit2.Callback<ApiResponse<SesionAsistencia>>() {
             @Override
             public void onResponse(retrofit2.Call<ApiResponse<SesionAsistencia>> call, retrofit2.Response<ApiResponse<SesionAsistencia>> response) {
-                // Silencioso, la sesión se cierra en el backend
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    sesionActualId = null;
+                    sesionActualFecha = null;
+                    sesionComenzada = false;
+                    onSuccess.run();
+                } else if (response.code() != 401) {
+                    Toast.makeText(PanelAsistencia.this, "No se pudo cerrar la sesión. Puedes volver a intentarlo.", Toast.LENGTH_LONG).show();
+                    btnActivarCamara.setEnabled(true);
+                    iniciarPolling();
+                }
             }
 
             @Override
             public void onFailure(retrofit2.Call<ApiResponse<SesionAsistencia>> call, Throwable t) {
-                // Silencioso
+                Toast.makeText(PanelAsistencia.this, "Sin conexión: la sesión sigue abierta", Toast.LENGTH_LONG).show();
+                btnActivarCamara.setEnabled(true);
+                iniciarPolling();
             }
         });
     }
@@ -444,6 +551,11 @@ public class PanelAsistencia extends AppCompatActivity {
         if (!sesionComenzada || !isCameraActive || procesandoQr) {
             return;
         }
+        if (sesionActualId == null || sesionActualId.trim().isEmpty()) {
+            stopCamera();
+            mostrarErrorRecuperacion("La sesión perdió su identificador. Debe recuperarse antes de escanear.");
+            return;
+        }
         long now = System.currentTimeMillis();
         if (ultimoCodigoLeido != null && token.equals(ultimoCodigoLeido) && (now - ultimoScanMs) < 3000) {
             return;
@@ -454,9 +566,7 @@ public class PanelAsistencia extends AppCompatActivity {
         procesandoQr = true;
         HashMap<String, String> body = new HashMap<>();
         body.put("qr_token", token);
-        if (sesionActualId != null) {
-            body.put("sesion_id", sesionActualId);
-        }
+        body.put("sesion_id", sesionActualId);
         RetrofitClient.getApiService().escanearQrAsistencia(body).enqueue(new Callback<ApiResponse<EscanearQrData>>() {
             @Override
             public void onResponse(Call<ApiResponse<EscanearQrData>> call, Response<ApiResponse<EscanearQrData>> response) {
@@ -468,8 +578,8 @@ public class PanelAsistencia extends AppCompatActivity {
                             ApiResponse<?> errorRes = new com.google.gson.Gson().fromJson(errorJson, ApiResponse.class);
                             String msg = (errorRes != null && errorRes.getMessage() != null) ? errorRes.getMessage() : "Error del servidor";
 
-                            if (response.code() == 400 || response.code() == 409) {
-                                mostrarModalAlumnoYaRegistrado(msg);
+                            if (response.code() == 409) {
+                                manejarSesionCerrada();
                             } else {
                                 Toast.makeText(PanelAsistencia.this, msg, Toast.LENGTH_SHORT).show();
                             }
@@ -481,6 +591,11 @@ public class PanelAsistencia extends AppCompatActivity {
                 }
                 ApiResponse<EscanearQrData> res = response.body();
                 if (res != null && res.isSuccess() && res.getData() != null) {
+                    if (res.getData().isReused()) {
+                        mostrarModalAlumnoYaRegistrado(res.getMessage());
+                        sincronizarAsistencias();
+                        return;
+                    }
                     registrosEnSesion++;
                     String nombre = res.getData().getAlumno();
                     String hora = res.getData().getHora();
@@ -656,6 +771,7 @@ public class PanelAsistencia extends AppCompatActivity {
     }
 
     private void setupBottomNavigation(BottomNavigationView bottomNav) {
+        NavigationRoleHelper.apply(this, bottomNav);
         int colorSeleccionado;
         TypedValue typedValue = new TypedValue();
         if (getTheme().resolveAttribute(androidx.appcompat.R.attr.colorPrimary, typedValue, true)) {
@@ -816,14 +932,9 @@ public class PanelAsistencia extends AppCompatActivity {
         MaterialButton btn = v.findViewById(R.id.btn_confirm_aceptar);
         btn.setOnClickListener(x -> {
             ad.dismiss();
-            
-            // Guardar los ausentes en el backend antes de navegar
-            guardarAusentesEnBackend(snapshot, () -> {
-                // Navegar a Gestión de Asistencia al culminar
-                Intent intent = new Intent(PanelAsistencia.this, GestionAsistenciaActivity.class);
-                startActivity(intent);
-                finish();
-            });
+            Intent intent = new Intent(PanelAsistencia.this, GestionAsistenciaActivity.class);
+            startActivity(intent);
+            finish();
         });
         ad.show();
     }
@@ -887,12 +998,12 @@ public class PanelAsistencia extends AppCompatActivity {
     private void stopCamera() {
         if (cameraProvider != null) {
             cameraProvider.unbindAll();
-            isCameraActive = false;
-            previewView.setVisibility(View.INVISIBLE);
-            btnActivarCamara.setText("Activar Camara");
-            btnActivarCamara.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#BA1924")));
-            btnActivarCamara.setTextColor(Color.WHITE);
         }
+        isCameraActive = false;
+        previewView.setVisibility(View.INVISIBLE);
+        btnActivarCamara.setText("Activar Camara");
+        btnActivarCamara.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#BA1924")));
+        btnActivarCamara.setTextColor(Color.WHITE);
     }
 
     static class Alumno {

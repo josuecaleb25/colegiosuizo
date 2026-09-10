@@ -148,7 +148,7 @@ public class AuthLogin extends AppCompatActivity {
 
                     // Obtener token
                     String token = task.getResult();
-                    android.util.Log.d("FCM", "Token FCM obtenido: " + token);
+                    android.util.Log.d("FCM", "Token FCM obtenido");
 
                     // Guardar token localmente
                     SharedPreferences prefs = getSharedPreferences("FCM", MODE_PRIVATE);
@@ -188,6 +188,7 @@ public class AuthLogin extends AppCompatActivity {
 
             okhttp3.Request request = new okhttp3.Request.Builder()
                     .url(com.example.ieperuanosuizoapp.api.ApiConfig.BASE_URL + "asistencia/device-token")
+                    .header("Authorization", "Bearer " + prefs.getString("user_token", ""))
                     .post(body)
                     .build();
 

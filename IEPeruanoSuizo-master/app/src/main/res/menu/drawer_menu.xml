@@ -31,11 +31,6 @@
             android:icon="@drawable/ic_leaderboard"
             android:title="Leaderboard" />
 
-        <item
-            android:id="@+id/nav_switch_role"
-            android:icon="@drawable/profileiconuser"
-            android:title="Cambiar de Rol (Debug)" />
-
         <!-- Items Administrativos -->
         <item
             android:id="@+id/nav_asistencia"

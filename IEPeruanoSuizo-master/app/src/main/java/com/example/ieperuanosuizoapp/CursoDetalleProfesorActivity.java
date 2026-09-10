@@ -88,6 +88,7 @@ public class CursoDetalleProfesorActivity extends AppCompatActivity {
 
     private void setupBottomNavigation() {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        NavigationRoleHelper.apply(this, bottomNav);
 
         // Configurar colores del BottomNav
         int[][] states = new int[][]{

@@ -201,6 +201,7 @@ public class UsuariosActivity extends AppCompatActivity implements UsuariosAdapt
 
     private void setupBottomNavigation() {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        NavigationRoleHelper.apply(this, bottomNav);
 
         int[][] states = new int[][]{
                 new int[]{android.R.attr.state_checked},

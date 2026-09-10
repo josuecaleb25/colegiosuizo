@@ -17,6 +17,7 @@ import usuariosRoutes from './routes/usuarios.routes';
 import adminRoutes from './routes/admin.routes';
 import seccionesRoutes from './routes/secciones.routes';
 import notificacionesRoutes from './routes/notificaciones.routes';
+import { startAttendanceAutoClose } from './services/attendance-auto-close.service';
 
 dotenv.config();
 
@@ -94,6 +95,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
   console.log(`📍 Entorno: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 Supabase URL: ${process.env.SUPABASE_URL}`);
+  startAttendanceAutoClose();
 });
 
 export default app;

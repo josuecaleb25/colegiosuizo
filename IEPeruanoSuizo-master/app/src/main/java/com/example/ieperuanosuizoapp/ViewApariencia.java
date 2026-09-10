@@ -112,6 +112,7 @@ public class ViewApariencia extends AppCompatActivity {
 
     private void setupBottomNavigation() {
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
+        NavigationRoleHelper.apply(this, bottomNavigationView);
         if (bottomNavigationView != null) {
             int colorSeleccionado;
             TypedValue typedValue = new TypedValue();

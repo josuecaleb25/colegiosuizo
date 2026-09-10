@@ -55,7 +55,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     @Override
     public void onNewToken(@NonNull String token) {
         super.onNewToken(token);
-        Log.d(TAG, "Nuevo token FCM: " + token);
+        Log.d(TAG, "Nuevo token FCM recibido");
         
         // Enviar el token al servidor
         sendTokenToServer(token);
@@ -96,10 +96,35 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 .putString("token", token)
                 .apply();
         
-        Log.d(TAG, "Token guardado localmente");
-        
-        // El token se enviará al servidor cuando el usuario inicie sesión
-        // Ver AuthLogin.java para la implementación
+        android.content.SharedPreferences userPrefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        String authToken = userPrefs.getString("user_token", "");
+        if (authToken.isEmpty()) return;
+
+        try {
+            org.json.JSONObject json = new org.json.JSONObject();
+            json.put("token", token);
+            json.put("device_info", android.os.Build.MODEL + " - Android " + android.os.Build.VERSION.RELEASE);
+            okhttp3.RequestBody body = okhttp3.RequestBody.create(
+                    json.toString(), okhttp3.MediaType.parse("application/json"));
+            okhttp3.Request request = new okhttp3.Request.Builder()
+                    .url(com.example.ieperuanosuizoapp.api.ApiConfig.BASE_URL + "asistencia/device-token")
+                    .header("Authorization", "Bearer " + authToken)
+                    .post(body)
+                    .build();
+            new okhttp3.OkHttpClient().newCall(request).enqueue(new okhttp3.Callback() {
+                @Override
+                public void onFailure(@NonNull okhttp3.Call call, @NonNull java.io.IOException e) {
+                    Log.e(TAG, "No se pudo actualizar el token FCM", e);
+                }
+
+                @Override
+                public void onResponse(@NonNull okhttp3.Call call, @NonNull okhttp3.Response response) {
+                    response.close();
+                }
+            });
+        } catch (org.json.JSONException error) {
+            Log.e(TAG, "No se pudo preparar el token FCM", error);
+        }
     }
 
     /**
@@ -117,9 +142,10 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             }
         }
 
+        int notificationId = (int) (System.currentTimeMillis() & 0x7fffffff);
         PendingIntent pendingIntent = PendingIntent.getActivity(
                 this, 
-                0, 
+                notificationId,
                 intent,
                 PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE
         );
@@ -154,6 +180,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         }
 
         // Mostrar notificación
-        notificationManager.notify(0, notificationBuilder.build());
+        notificationManager.notify(notificationId, notificationBuilder.build());
     }
 }

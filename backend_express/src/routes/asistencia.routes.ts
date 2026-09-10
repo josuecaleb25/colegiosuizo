@@ -1,8 +1,24 @@
 import { Router } from 'express';
 import supabase from '../config/database';
 import notificationService from '../services/notification.service';
+import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { closeAttendanceSession, getLimaDate } from '../services/attendance-session.service';
 
 const router = Router();
+
+function canManageAttendance(role?: string) {
+  return role === 'profesor' || role === 'administrador' || role === 'admin';
+}
+
+function rejectAttendancePermission(req: AuthRequest, res: any) {
+  if (canManageAttendance(req.user?.rol)) return false;
+  res.status(403).json({
+    success: false,
+    code: 'ATTENDANCE_FORBIDDEN',
+    message: 'No tienes permiso para gestionar sesiones de asistencia'
+  });
+  return true;
+}
 
 // Obtener asistencias por fecha
 router.get('/', async (req, res) => {
@@ -458,85 +474,70 @@ router.post('/registrar-ausente', async (req, res) => {
 });
 
 // POST /api/asistencia/device-token - Guardar token FCM del dispositivo
-router.post('/device-token', async (req, res) => {
+router.post('/device-token', authMiddleware, async (req: AuthRequest, res) => {
   try {
-    console.log('📱 Petición de registro de token FCM recibida');
-    console.log('📋 Body:', JSON.stringify(req.body, null, 2));
-    
-    const { token, user_id, estudiante_id, device_info } = req.body;
+    const { token, device_info } = req.body;
 
-    if (!token || !estudiante_id) {
-      console.log('❌ Faltan campos requeridos');
+    if (!token) {
       return res.status(400).json({
         success: false,
-        message: 'Token y estudiante_id son requeridos'
+        message: 'Token es requerido'
       });
     }
 
-    console.log('🔍 Buscando alumno con persona_id:', estudiante_id);
-
-    // Buscar el ID real del alumno usando el persona_id
-    const { data: alumno, error: alumnoError } = await supabase
+    const personaId = req.user!.id;
+    const { data: directStudent, error: directError } = await supabase
       .from('alumnos')
       .select('id')
-      .eq('persona_id', estudiante_id)
-      .single();
+      .eq('persona_id', personaId)
+      .maybeSingle();
+    if (directError) throw directError;
 
-    if (alumnoError || !alumno) {
-      console.error('❌ No se encontró alumno con persona_id:', estudiante_id);
-      return res.status(404).json({
-        success: false,
-        message: 'Alumno no encontrado'
+    let studentIds = directStudent ? [directStudent.id] : [];
+    if (studentIds.length === 0 && req.user?.rol === 'padre') {
+      const { data: relationships, error: relationshipError } = await supabase
+        .from('padres_alumnos')
+        .select('alumno_id')
+        .eq('padre_id', personaId);
+      if (relationshipError) throw relationshipError;
+      studentIds = (relationships || []).map((row: any) => row.alumno_id).filter(Boolean);
+    }
+
+    const { data: appUser, error: userError } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('persona_id', personaId)
+        .maybeSingle();
+    if (userError) throw userError;
+
+    if (studentIds.length === 0) {
+      return res.json({
+        success: true,
+        message: 'El usuario no requiere notificaciones de alumno',
+        data: []
       });
     }
 
-    const alumnoId = alumno.id;
-    console.log('✅ Alumno encontrado, alumno_id:', alumnoId);
-
-    // Verificar si user_id existe en la tabla usuarios
-    let validUserId = null;
-    if (user_id) {
-      const { data: usuario } = await supabase
-        .from('usuarios')
-        .select('id')
-        .eq('id', user_id)
-        .single();
-      
-      if (usuario) {
-        validUserId = user_id;
-        console.log('✅ user_id válido encontrado en tabla usuarios');
-      } else {
-        console.log('⚠️  user_id no existe en tabla usuarios, se guardará como null');
-      }
-    }
-
-    console.log('💾 Guardando token para alumno_id:', alumnoId);
-
+    const rows = studentIds.map(studentId => ({
+      user_id: appUser?.id || null,
+      estudiante_id: studentId,
+      token,
+      device_info: device_info || '',
+      updated_at: new Date().toISOString()
+    }));
     const { data, error } = await supabase
       .from('device_tokens')
-      .upsert({
-        user_id: validUserId,
-        estudiante_id: alumnoId,
-        token,
-        device_info: device_info || '',
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'estudiante_id,token'
-      })
-      .select()
-      .single();
+      .upsert(rows, { onConflict: 'estudiante_id,token' })
+      .select();
 
     if (error) {
       console.error('❌ Error de Supabase:', error);
       throw error;
     }
 
-    console.log('✅ Token FCM guardado exitosamente para alumno_id:', alumnoId);
-    console.log('📊 Datos guardados:', data);
-
     res.json({
       success: true,
-      message: 'Token guardado exitosamente',
+      message: 'Token asociado correctamente',
       data
     });
   } catch (error: any) {
@@ -1025,15 +1026,45 @@ router.get('/leaderboard', async (req, res) => {
 
 // Obtener las asistencias del día de forma LIVIANA (para polling en vivo)
 // Devuelve SOLO persona_id + hora + estado + sesion_id, no los alumnos.
-router.get('/del-dia', async (req, res) => {
+router.get('/del-dia', authMiddleware, async (req: AuthRequest, res) => {
   try {
+    if (rejectAttendancePermission(req, res)) return;
     const fecha = req.query.fecha as string;
     const sesionId = req.query.sesion_id as string;
 
-    if (!fecha) {
+    if (!fecha || !sesionId) {
       return res.status(400).json({
         success: false,
-        message: 'Se requiere el parámetro fecha'
+        code: 'SESSION_ID_REQUIRED',
+        message: 'Se requieren fecha y sesion_id'
+      });
+    }
+
+    const { data: session, error: sessionError } = await supabase
+      .from('asistencia_sesiones')
+      .select('id, fecha, estado')
+      .eq('id', sesionId)
+      .maybeSingle();
+    if (sessionError) throw sessionError;
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        code: 'SESSION_NOT_FOUND',
+        message: 'Sesión de asistencia no encontrada'
+      });
+    }
+    if (session.estado !== 'abierta') {
+      return res.status(409).json({
+        success: false,
+        code: 'SESSION_CLOSED',
+        message: 'La sesión de asistencia fue cerrada'
+      });
+    }
+    if (session.fecha !== fecha) {
+      return res.status(400).json({
+        success: false,
+        code: 'SESSION_DATE_MISMATCH',
+        message: 'La fecha no corresponde a la sesión activa'
       });
     }
 
@@ -1043,9 +1074,7 @@ router.get('/del-dia', async (req, res) => {
       .eq('fecha', fecha)
       .eq('tipo_persona', 'alumno');
 
-    if (sesionId) {
-      query = query.eq('sesion_id', sesionId);
-    }
+    query = query.eq('sesion_id', sesionId);
 
     const { data, error } = await query;
 
@@ -1067,9 +1096,10 @@ router.get('/del-dia', async (req, res) => {
 });
 
 // Obtener la sesión activa del día (si existe)
-router.get('/sesiones/activa', async (req, res) => {
+router.get('/sesiones/activa', authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
+    if (rejectAttendancePermission(req, res)) return;
+    const hoy = getLimaDate();
 
     const { data, error } = await supabase
       .from('asistencia_sesiones')
@@ -1098,15 +1128,16 @@ router.get('/sesiones/activa', async (req, res) => {
 });
 
 // Crear una sesión de asistencia (solo si no hay una activa hoy)
-router.post('/sesiones', async (req, res) => {
+router.post('/sesiones', authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
+    if (rejectAttendancePermission(req, res)) return;
+    const hoy = getLimaDate();
     const creadoPor = req.body?.creado_por || null;
 
     // Verificar si ya existe una sesión activa hoy
     const { data: existente, error: checkError } = await supabase
       .from('asistencia_sesiones')
-      .select('id')
+      .select('*')
       .eq('fecha', hoy)
       .eq('estado', 'abierta')
       .limit(1);
@@ -1114,9 +1145,10 @@ router.post('/sesiones', async (req, res) => {
     if (checkError) throw checkError;
 
     if (existente && existente.length > 0) {
-      return res.status(409).json({
-        success: false,
-        message: 'Ya existe una sesión de asistencia activa para hoy',
+      return res.status(200).json({
+        success: true,
+        reused: true,
+        message: 'Se reutilizó la sesión de asistencia activa',
         data: existente[0]
       });
     }
@@ -1131,6 +1163,22 @@ router.post('/sesiones', async (req, res) => {
       .select()
       .single();
 
+    if (error?.code === '23505') {
+      const { data: concurrentSession, error: concurrentError } = await supabase
+        .from('asistencia_sesiones')
+        .select('*')
+        .eq('fecha', hoy)
+        .eq('estado', 'abierta')
+        .limit(1)
+        .maybeSingle();
+      if (concurrentError) throw concurrentError;
+      return res.status(200).json({
+        success: true,
+        reused: true,
+        message: 'Se reutilizó la sesión creada por otra tablet',
+        data: concurrentSession
+      });
+    }
     if (error) throw error;
 
     res.status(201).json({
@@ -1149,53 +1197,31 @@ router.post('/sesiones', async (req, res) => {
 });
 
 // Cerrar una sesión de asistencia
-router.put('/sesiones/:id/cerrar', async (req, res) => {
+router.put('/sesiones/:id/cerrar', authMiddleware, async (req: AuthRequest, res) => {
   try {
+    if (rejectAttendancePermission(req, res)) return;
     const { id } = req.params;
-    const ahora = new Date().toISOString();
-
-    // Verificar que la sesión exista y esté abierta
-    const { data: sesion, error: getError } = await supabase
-      .from('asistencia_sesiones')
-      .select('id, estado')
-      .eq('id', id)
-      .single();
-
-    if (getError || !sesion) {
+    const data = await closeAttendanceSession(id);
+    if (!data) {
       return res.status(404).json({
         success: false,
+        code: 'SESSION_NOT_FOUND',
         message: 'Sesión no encontrada'
       });
     }
 
-    if (sesion.estado === 'cerrada') {
-      return res.status(200).json({
-        success: true,
-        message: 'La sesión ya estaba cerrada',
-        data: sesion
-      });
-    }
-
-    const { data, error } = await supabase
-      .from('asistencia_sesiones')
-      .update({ estado: 'cerrada', cerrado_en: ahora })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-
     res.json({
       success: true,
-      message: 'Sesión cerrada correctamente',
+      message: 'Sesión cerrada y ausencias registradas correctamente',
       data
     });
   } catch (error: any) {
     console.error('Error cerrando sesión:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
+      code: error.code || 'SESSION_CLOSE_FAILED',
       message: 'Error al cerrar la sesión',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });

@@ -538,6 +538,7 @@ public class ViewComunicadosActivity extends AppCompatActivity {
 
     private void setupBottomNavigation() {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        NavigationRoleHelper.apply(this, bottomNav);
 
         int[][] states = new int[][]{
             new int[]{android.R.attr.state_checked},

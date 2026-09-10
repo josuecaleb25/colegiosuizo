@@ -24,8 +24,8 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.navigation.NavigationView;
 
-import com.example.ieperuanosuizoapp.api.ApiConfig;
 import com.example.ieperuanosuizoapp.api.ApiService;
+import com.example.ieperuanosuizoapp.api.RetrofitClient;
 import com.example.ieperuanosuizoapp.api.models.NotificacionesNoLeidasResponse;
 
 import java.text.SimpleDateFormat;
@@ -38,8 +38,6 @@ import java.util.Locale;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -231,10 +229,6 @@ public class HomeActivity extends AppCompatActivity {
                 overridePendingTransition(0, 0);
                 drawerLayout.closeDrawer(GravityCompat.START);
                 return true;
-            } else if (id == R.id.nav_switch_role) {
-                switchUserRole();
-                drawerLayout.closeDrawer(GravityCompat.START);
-                return true;
             }
 
             // Cerrar el drawer para otros ítems si es necesario
@@ -255,6 +249,7 @@ public class HomeActivity extends AppCompatActivity {
         actualizarDatosUsuario();
 
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        NavigationRoleHelper.apply(this, bottomNav);
 
         // 1. Obtener color del Drawer (Verde Oscuro en Scheme Green)
         int colorSeleccionado;
@@ -311,31 +306,6 @@ public class HomeActivity extends AppCompatActivity {
 
             return true;
         });
-    }
-
-    private void switchUserRole() {
-        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
-        String currentRole = prefs.getString("user_mode", "ALUMNO");
-        String nextRole;
-
-        if ("ALUMNO".equals(currentRole)) {
-            nextRole = "PROFESOR";
-        } else if ("PROFESOR".equals(currentRole)) {
-            nextRole = "ADMIN";
-        } else {
-            nextRole = "ALUMNO";
-        }
-
-        prefs.edit().putString("user_mode", nextRole).apply();
-        userMode = nextRole;
-
-        android.widget.Toast.makeText(this, "Rol cambiado a: " + nextRole, android.widget.Toast.LENGTH_SHORT).show();
-
-        // Refrescar la UI y el menú
-        actualizarVisibilidadMenuLateral();
-        actualizarDatosUsuario();
-        comunicadosCargados = false;
-        cargarComunicados();
     }
 
     private void actualizarDatosUsuario() {
@@ -397,11 +367,7 @@ public class HomeActivity extends AppCompatActivity {
         TextView badge = findViewById(R.id.notification_badge);
         if (badge == null) return;
 
-        Retrofit retrofit = new Retrofit.Builder()
-            .baseUrl(ApiConfig.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build();
-        ApiService api = retrofit.create(ApiService.class);
+        ApiService api = RetrofitClient.getApiService();
         api.getNotificacionesNoLeidas(estudianteId).enqueue(new Callback<NotificacionesNoLeidasResponse>() {
             @Override
             public void onResponse(Call<NotificacionesNoLeidasResponse> call, Response<NotificacionesNoLeidasResponse> response) {
@@ -436,9 +402,6 @@ public class HomeActivity extends AppCompatActivity {
         menu.findItem(R.id.nav_identificacion).setVisible(false);
         menu.findItem(R.id.nav_leaderboard).setVisible(true);
         
-        // Cambiar de Rol solo visible para administradores
-        menu.findItem(R.id.nav_switch_role).setVisible(false);
-
         // Lógica de visibilidad por Rol
         // Normalizar el rol para comparación (aceptar variantes)
         String rolNormalizado = userMode != null ? userMode.toUpperCase().trim() : "PADRE";
@@ -485,7 +448,6 @@ public class HomeActivity extends AppCompatActivity {
             menu.findItem(R.id.nav_identificacion).setVisible(false);
             menu.findItem(R.id.nav_asistencia).setVisible(true);
             menu.findItem(R.id.nav_leaderboard).setVisible(true);
-            menu.findItem(R.id.nav_switch_role).setVisible(true); // Solo admin puede cambiar de rol
             menu.findItem(R.id.nav_panel_admin).setVisible(true);
             
             // Ocultar Cursos y Horarios para el Admin
@@ -1617,6 +1579,7 @@ public class HomeActivity extends AppCompatActivity {
         // Actualizar rol del usuario por si cambió
         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         userMode = prefs.getString("user_mode", "ALUMNO");
+        NavigationRoleHelper.apply(this, bottomNav);
         
         // Actualizar visibilidad del menú y datos del usuario
         actualizarVisibilidadMenuLateral();

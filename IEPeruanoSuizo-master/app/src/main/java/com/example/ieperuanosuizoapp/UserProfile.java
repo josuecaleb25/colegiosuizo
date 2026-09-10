@@ -167,6 +167,7 @@ public class UserProfile extends AppCompatActivity {
 
     private void setupBottomNavigation() {
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
+        NavigationRoleHelper.apply(this, bottomNavigationView);
         if (bottomNavigationView != null) {
             // Obtener color seleccionado del tema
             int colorSeleccionado;

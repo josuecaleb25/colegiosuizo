@@ -417,6 +417,7 @@ public class GestionAsistenciaActivity extends AppCompatActivity {
 
     private void setupBottomNavigation() {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        NavigationRoleHelper.apply(this, bottomNav);
         bottomNav.setSelectedItemId(R.id.nav_more);
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();

@@ -3,6 +3,7 @@ package com.example.ieperuanosuizoapp.api;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -28,9 +29,12 @@ public class RetrofitClient {
 
     public static ApiService getApiService() {
         if (apiService == null) {
-            // Logging interceptor para debug
             HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
-            loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+            boolean isDebuggable = appContext != null
+                    && (appContext.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+            loggingInterceptor.setLevel(isDebuggable
+                    ? HttpLoggingInterceptor.Level.BASIC
+                    : HttpLoggingInterceptor.Level.NONE);
 
             // Auth interceptor para agregar el token JWT
             Interceptor authInterceptor = new Interceptor() {

@@ -7,6 +7,7 @@ public class EscanearQrData {
     private String alumno;
     private String estado;
     private String hora;
+    private boolean reused;
 
     public String getAlumno() {
         return alumno;
@@ -30,5 +31,13 @@ public class EscanearQrData {
 
     public void setHora(String hora) {
         this.hora = hora;
+    }
+
+    public boolean isReused() {
+        return reused;
+    }
+
+    public void setReused(boolean reused) {
+        this.reused = reused;
     }
 }

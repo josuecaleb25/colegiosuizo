@@ -230,34 +230,43 @@ router.post('/asistencia/escanear-qr', authMiddleware, async (req: AuthRequest, 
 
     const { qr_token, sesion_id } = req.body;
 
-    if (!qr_token) {
+    if (!qr_token || !sesion_id) {
       return res.status(400).json({
         success: false,
-        message: 'Se requiere qr_token'
+        code: 'SESSION_ID_REQUIRED',
+        message: 'Se requieren qr_token y sesion_id'
       });
     }
 
-    // Si llega sesion_id, verificar que la sesión esté abierta
-    if (sesion_id) {
-      const { data: sesion, error: sesionError } = await supabase
-        .from('asistencia_sesiones')
-        .select('id, estado')
-        .eq('id', sesion_id)
-        .single();
+    const ahora = new Date();
+    const fechaLima = ahora.toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
+    const { data: sesion, error: sesionError } = await supabase
+      .from('asistencia_sesiones')
+      .select('id, fecha, estado')
+      .eq('id', sesion_id)
+      .maybeSingle();
 
-      if (sesionError || !sesion) {
-        return res.status(404).json({
-          success: false,
-          message: 'Sesión de asistencia no encontrada'
-        });
-      }
-
-      if (sesion.estado !== 'abierta') {
-        return res.status(403).json({
-          success: false,
-          message: 'La sesión de asistencia ya fue cerrada. No se puede registrar más.'
-        });
-      }
+    if (sesionError) throw sesionError;
+    if (!sesion) {
+      return res.status(404).json({
+        success: false,
+        code: 'SESSION_NOT_FOUND',
+        message: 'Sesión de asistencia no encontrada'
+      });
+    }
+    if (sesion.estado !== 'abierta') {
+      return res.status(409).json({
+        success: false,
+        code: 'SESSION_CLOSED',
+        message: 'La sesión de asistencia ya fue cerrada'
+      });
+    }
+    if (sesion.fecha !== fechaLima) {
+      return res.status(400).json({
+        success: false,
+        code: 'SESSION_DATE_MISMATCH',
+        message: 'La sesión no corresponde al día actual'
+      });
     }
 
     // Buscar código QR
@@ -283,8 +292,6 @@ router.post('/asistencia/escanear-qr', authMiddleware, async (req: AuthRequest, 
     }
 
     const personaData = codigosQr[0]?.personas as any;
-    const ahora = new Date();
-    const fechaLima = ahora.toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
     const horaLima24 = ahora.toLocaleTimeString('en-GB', { timeZone: 'America/Lima', hour12: false });
     const horaLima12 = ahora.toLocaleTimeString('en-US', { timeZone: 'America/Lima', hour: '2-digit', minute: '2-digit', hour12: true });
     const [horaStr, minStr] = horaLima24.split(':');
@@ -292,99 +299,116 @@ router.post('/asistencia/escanear-qr', authMiddleware, async (req: AuthRequest, 
     const minutos = parseInt(minStr, 10);
     const estado = (hora < 7 || (hora === 7 && minutos <= 30)) ? 'presente' : 'tardanza';
 
+    let asistencia: any = null;
+    let creada = true;
+    const { data: atomicData, error: atomicError } = await supabase.rpc('registrar_asistencia_atomica', {
+      p_persona_id: personaData?.id,
+      p_sesion_id: sesion_id,
+      p_fecha: fechaLima,
+      p_hora_entrada: horaLima12,
+      p_estado: estado
+    });
 
-    // Verificar si ya tiene asistencia HOY (no días anteriores)
-    const { data: asistenciaExistente, error: asistError } = await supabase
-      .from('asistencias')
-      .select('hora_entrada, estado')
-      .eq('persona_id', personaData?.id)
-      .eq('fecha', fechaLima)  // SOLO HOY
-      .limit(1);
-
-    if (asistError) {
-      console.error('Error verificando asistencia:', asistError);
-    }
-
-    if (asistenciaExistente && asistenciaExistente.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: `Este QR ya fue escaneado hoy a las ${asistenciaExistente[0].hora_entrada}`
-      });
-    }
-
-
-    // Registrar asistencia
-    const { error: insertError } = await supabase
-      .from('asistencias')
-      .insert({
-        persona_id: personaData?.id,
-        tipo_persona: 'alumno',
-        fecha: fechaLima,
-        hora_entrada: horaLima12,
-        estado,
-        sesion_id: sesion_id || null
-      });
-
-    if (insertError) {
-      console.error('❌ Error insertando asistencia:', insertError);
-      throw insertError;
-    }
-
-    const horaFormateada = horaLima12;
-    
-
-    // ========================================
-    // ENVIAR NOTIFICACIÓN PUSH AL ALUMNO
-    // ========================================
-    try {
-      
-      // Buscar el alumno_id usando persona_id
-      const { data: alumno, error: alumnoError } = await supabase
-        .from('alumnos')
-        .select('id')
-        .eq('persona_id', personaData?.id)
+    if (!atomicError) {
+      asistencia = atomicData;
+      creada = atomicData?.creada !== false;
+    } else if (atomicError.code === 'PGRST202' || atomicError.code === '42883') {
+      const { data: inserted, error: insertError } = await supabase
+        .from('asistencias')
+        .insert({
+          persona_id: personaData?.id,
+          tipo_persona: 'alumno',
+          fecha: fechaLima,
+          hora_entrada: horaLima12,
+          estado,
+          sesion_id
+        })
+        .select('hora_entrada, estado')
         .single();
 
-      if (alumnoError || !alumno) {
+      if (insertError?.code === '23505') {
+        const { data: existing, error: existingError } = await supabase
+          .from('asistencias')
+          .select('hora_entrada, estado')
+          .eq('persona_id', personaData?.id)
+          .eq('fecha', fechaLima)
+          .limit(1)
+          .maybeSingle();
+        if (existingError) throw existingError;
+        asistencia = existing;
+        creada = false;
+      } else if (insertError) {
+        throw insertError;
       } else {
-        
-        const nombreCompleto = `${personaData?.nombres} ${personaData?.apellidos}`;
-        const estadoTexto = estado === 'presente' ? 'a tiempo' : 'con tardanza';
-        
-        // Enviar notificación usando el servicio
-        await notificationService.enviarAEstudiante(alumno.id, {
-          tipo: 'asistencia',
-          titulo: '✅ Asistencia Registrada',
-          mensaje: `Buenos días, su hijo/a ${nombreCompleto} llegó ${estadoTexto} a las ${horaFormateada}`,
-          datos: {
-            alumno_id: alumno.id.toString(),
-            estado: estado,
-            hora: horaFormateada,
-            fecha: fechaLima
-          }
-        });
-        
+        asistencia = inserted;
       }
-    } catch (notifError: any) {
-      console.error('❌ Error enviando notificación:', notifError.message);
+    } else {
+      throw atomicError;
     }
-    // ========================================
+
+    const horaFormateada = asistencia?.hora_entrada || horaLima12;
+    const estadoRegistrado = asistencia?.estado || estado;
+    
 
     res.json({
       success: true,
-      message: 'Asistencia registrada exitosamente',
+      reused: !creada,
+      message: creada ? 'Asistencia registrada exitosamente' : 'La asistencia ya estaba registrada',
       data: {
         alumno: `${personaData?.nombres} ${personaData?.apellidos}`,
-        estado,
-        hora: horaFormateada
+        estado: estadoRegistrado,
+        hora: horaFormateada,
+        reused: !creada
       }
     });
+
+    if (creada) {
+      void (async () => {
+        try {
+          const { data: alumno, error: alumnoError } = await supabase
+            .from('alumnos')
+            .select('id')
+            .eq('persona_id', personaData?.id)
+            .single();
+          if (alumnoError || !alumno) return;
+
+          const nombreCompleto = `${personaData?.nombres} ${personaData?.apellidos}`;
+          const estadoTexto = estadoRegistrado === 'presente' ? 'a tiempo' : 'con tardanza';
+          await notificationService.enviarAEstudiante(alumno.id, {
+            tipo: 'asistencia',
+            titulo: '✅ Asistencia Registrada',
+            mensaje: `Buenos días, su hijo/a ${nombreCompleto} llegó ${estadoTexto} a las ${horaFormateada}`,
+            datos: {
+              alumno_id: alumno.id.toString(),
+              estado: estadoRegistrado,
+              hora: horaFormateada,
+              fecha: fechaLima
+            }
+          });
+        } catch (notifError: any) {
+          console.error('Error enviando notificación de asistencia:', notifError.message);
+        }
+      })();
+    }
   } catch (error: any) {
     console.error('❌ Error en escanear-qr:', error);
-    res.status(500).json({
+    const knownCode = ['SESSION_NOT_FOUND', 'SESSION_CLOSED', 'SESSION_DATE_MISMATCH']
+      .find(code => error?.message?.includes(code));
+    const status = knownCode === 'SESSION_NOT_FOUND' ? 404
+      : knownCode === 'SESSION_CLOSED' ? 409
+      : knownCode === 'SESSION_DATE_MISMATCH' ? 400
+      : 500;
+    res.status(status).json({
       success: false,
-      message: 'Error al registrar asistencia',
-      error: error.message
+      code: knownCode || 'ATTENDANCE_SCAN_FAILED',
+      message: knownCode === 'SESSION_CLOSED'
+        ? 'La sesión de asistencia ya fue cerrada'
+        : knownCode === 'SESSION_NOT_FOUND'
+          ? 'Sesión de asistencia no encontrada'
+          : knownCode === 'SESSION_DATE_MISMATCH'
+            ? 'La sesión no corresponde al día actual'
+            : 'Error al registrar asistencia',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });

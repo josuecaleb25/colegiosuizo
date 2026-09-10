@@ -345,6 +345,7 @@ public class CrearComunicadoActivity extends AppCompatActivity {
 
     private void setupBottomNavigation() {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        NavigationRoleHelper.apply(this, bottomNav);
         int[][] states = new int[][]{new int[]{android.R.attr.state_checked}, new int[]{-android.R.attr.state_checked}};
         int[] colors = new int[]{Color.parseColor("#BA1924"), Color.parseColor("#5E5F60")};
         bottomNav.setItemIconTintList(new ColorStateList(states, colors));

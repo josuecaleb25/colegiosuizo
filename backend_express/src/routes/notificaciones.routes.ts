@@ -1,26 +1,50 @@
 import { Router, Request, Response } from 'express';
 import supabase from '../config/database';
+import { authMiddleware, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
-router.get('/', async (req: Request, res: Response) => {
-  try {
-    const { estudiante_id, solo_no_leidas, page, limit } = req.query;
+async function getStudentIdsForUser(req: AuthRequest): Promise<string[]> {
+  const personaId = req.user!.id;
+  const { data: directStudent, error: directError } = await supabase
+    .from('alumnos')
+    .select('id')
+    .eq('persona_id', personaId)
+    .maybeSingle();
+  if (directError) throw directError;
+  if (directStudent) return [directStudent.id];
 
-    if (!estudiante_id) {
-      return res.status(400).json({ success: false, message: 'estudiante_id es requerido' });
-    }
+  if (req.user?.rol === 'padre') {
+    const { data, error } = await supabase
+      .from('padres_alumnos')
+      .select('alumno_id')
+      .eq('padre_id', personaId);
+    if (error) throw error;
+    return (data || []).map((row: any) => row.alumno_id).filter(Boolean);
+  }
+  return [];
+}
+
+function applyRecipientFilter(query: any, studentIds: string[]) {
+  if (studentIds.length === 0) return query.is('estudiante_id', null);
+  return query.or(`estudiante_id.in.(${studentIds.join(',')}),estudiante_id.is.null`);
+}
+
+router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { solo_no_leidas, page, limit } = req.query;
+    const studentIds = await getStudentIdsForUser(req);
 
     const pageNum = Math.max(1, parseInt(page as string) || 1);
     const limitNum = Math.min(50, Math.max(1, parseInt(limit as string) || 20));
     const offset = (pageNum - 1) * limitNum;
 
-    let query = supabase
+    let query: any = supabase
       .from('notificaciones_historial')
       .select('*', { count: 'exact' })
-      .or(`estudiante_id.eq.${estudiante_id},estudiante_id.is.null`)
       .order('fecha_envio', { ascending: false })
       .range(offset, offset + limitNum - 1);
+    query = applyRecipientFilter(query, studentIds);
 
     if (solo_no_leidas === 'true') {
       query = query.eq('leida', false);
@@ -46,19 +70,16 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/no-leidas', async (req: Request, res: Response) => {
+router.get('/no-leidas', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { estudiante_id } = req.query;
+    const studentIds = await getStudentIdsForUser(req);
 
-    if (!estudiante_id) {
-      return res.status(400).json({ success: false, message: 'estudiante_id es requerido' });
-    }
-
-    const { count, error } = await supabase
+    let query: any = supabase
       .from('notificaciones_historial')
       .select('*', { count: 'exact', head: true })
-      .or(`estudiante_id.eq.${estudiante_id},estudiante_id.is.null`)
       .eq('leida', false);
+    query = applyRecipientFilter(query, studentIds);
+    const { count, error } = await query;
 
     if (error) throw error;
 
@@ -69,14 +90,19 @@ router.get('/no-leidas', async (req: Request, res: Response) => {
   }
 });
 
-router.put('/:id/leer', async (req: Request, res: Response) => {
+router.put('/:id/leer', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const studentIds = await getStudentIdsForUser(req);
+    if (studentIds.length === 0) {
+      return res.status(403).json({ success: false, message: 'Notificación no disponible para este usuario' });
+    }
 
     const { error } = await supabase
       .from('notificaciones_historial')
       .update({ leida: true, fecha_lectura: new Date().toISOString() })
-      .eq('id', id);
+      .eq('id', id)
+      .in('estudiante_id', studentIds);
 
     if (error) throw error;
 
