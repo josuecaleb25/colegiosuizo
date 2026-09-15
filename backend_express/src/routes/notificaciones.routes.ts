@@ -26,8 +26,8 @@ async function getStudentIdsForUser(req: AuthRequest): Promise<string[]> {
 }
 
 function applyRecipientFilter(query: any, studentIds: string[]) {
-  if (studentIds.length === 0) return query.is('estudiante_id', null);
-  return query.or(`estudiante_id.in.(${studentIds.join(',')}),estudiante_id.is.null`);
+  if (studentIds.length === 0) return query.limit(0);
+  return query.in('estudiante_id', studentIds);
 }
 
 function getComunicadoId(notificacion: any): string | null {
@@ -136,11 +136,13 @@ router.put('/:id/leer', authMiddleware, async (req: AuthRequest, res: Response) 
       return res.status(403).json({ success: false, message: 'Notificación no disponible para este usuario' });
     }
 
-    const { error } = await supabase
+    let updateQuery: any = supabase
       .from('notificaciones_historial')
       .update({ leida: true, fecha_lectura: new Date().toISOString() })
-      .eq('id', id)
-      .in('estudiante_id', studentIds);
+      .eq('id', id);
+    updateQuery = applyRecipientFilter(updateQuery, studentIds);
+
+    const { error } = await updateQuery;
 
     if (error) throw error;
 

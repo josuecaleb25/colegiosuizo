@@ -87,9 +87,7 @@ class NotificationService {
    */
   async enviarAMultiplesEstudiantes(estudianteIds: string[], notificacion: NotificationData) {
     const idsUnicos = [...new Set(estudianteIds)];
-    for (const id of idsUnicos) {
-      await this.guardarHistorial(id, notificacion);
-    }
+    await this.guardarHistorialParaEstudiantes(idsUnicos, notificacion);
 
     if (!this.isFirebaseAvailable()) {
       return { success: false, message: 'Firebase no disponible' };
@@ -190,7 +188,20 @@ class NotificationService {
    * Enviar notificación a TODOS los usuarios
    */
   async enviarATodos(notificacion: NotificationData) {
-    await this.guardarHistorial(null, notificacion);
+    // Guardar una notificación por alumno permite que cada usuario tenga
+    // su propio estado de lectura, incluso para comunicados globales.
+    const { data: alumnos, error: alumnosError } = await supabase
+      .from('alumnos')
+      .select('id');
+
+    if (alumnosError) {
+      console.error('Error al obtener alumnos para el historial:', alumnosError.message);
+    } else {
+      await this.guardarHistorialParaEstudiantes(
+        (alumnos || []).map((alumno: { id: string }) => alumno.id),
+        notificacion
+      );
+    }
 
     if (!this.isFirebaseAvailable()) {
       return { success: false, message: 'Firebase no disponible' };
@@ -256,6 +267,28 @@ class NotificationService {
       });
     } catch (err: any) {
       console.error('Error al guardar en historial:', err.message);
+    }
+  }
+
+  private async guardarHistorialParaEstudiantes(estudianteIds: string[], notificacion: NotificationData) {
+    if (estudianteIds.length === 0) return;
+
+    try {
+      const registros = estudianteIds.map((estudianteId) => ({
+        estudiante_id: estudianteId,
+        tipo: notificacion.tipo,
+        titulo: notificacion.titulo,
+        mensaje: notificacion.mensaje,
+        datos: notificacion.datos || null
+      }));
+
+      const { error } = await supabase
+        .from('notificaciones_historial')
+        .insert(registros);
+
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Error al guardar historial de notificaciones:', err.message);
     }
   }
 
