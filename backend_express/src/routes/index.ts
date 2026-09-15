@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import authRoutes from './auth.routes';
 import alumnosRoutes from './alumnos.routes';
-import asistenciaRoutes from './asistencia.routes';
+import asistenciaRoutes from '../modules/attendance/attendance.routes';
 import mobileRoutes from './mobile.routes';
 import cursosRoutes from './cursos.routes';
 import calificacionesRoutes from './calificaciones.routes';

@@ -2,8 +2,14 @@ import { Router } from 'express';
 import supabase from '../config/database';
 import { authMiddleware, optionalAuthMiddleware, AuthRequest } from '../middleware/auth';
 import notificationService from '../modules/notifications/notifications.service';
+import { scanAttendanceQr } from '../modules/attendance/qr/qr.controller';
 
 const router = Router();
+
+// The QR flow is handled by the attendance module. The legacy handler below
+// remains temporarily for compatibility while the rest of this mobile router
+// is migrated.
+router.post('/asistencia/escanear-qr', authMiddleware, scanAttendanceQr);
 
 // Test endpoint
 router.get('/test', (req, res) => {
