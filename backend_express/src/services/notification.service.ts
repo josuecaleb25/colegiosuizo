@@ -143,9 +143,17 @@ class NotificationService {
 
     try {
       const personaIds = recipients.map((recipient) => recipient.personaId);
-      const { data: tokens, error } = await supabase.from('device_tokens')
-        .select('token').in('persona_id', personaIds);
-      if (error) throw error;
+      // Supabase serializa .in() en la URL. Un comunicado global puede
+      // incluir cientos de destinatarios, así que se consulta por lotes.
+      const personaBatches = this.dividirEnLotes(personaIds, 100);
+      const tokenResults = await Promise.all(personaBatches.map(async (batch) => {
+        const { data, error } = await supabase.from('device_tokens')
+          .select('token').in('persona_id', batch);
+        if (error) throw error;
+        return data || [];
+      }));
+      const tokens = [...new Map(tokenResults.flat()
+        .map((row: { token: string }) => [row.token, row])).values()];
       if (!tokens || tokens.length === 0) {
         return { success: false, message: 'No hay dispositivos registrados' };
       }
@@ -170,7 +178,12 @@ class NotificationService {
       }
       return { success: true, enviados, total: tokens.length };
     } catch (error: any) {
-      console.error('Error al enviar notificaciones:', error.message);
+      console.error('Error al enviar notificaciones:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
       return { success: false, error: error.message };
     }
   }
