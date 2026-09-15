@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import supabase from '../config/database';
-import notificationService from '../modules/notifications/notifications.service';
 import { authMiddleware, requireRoles } from '../middleware/auth';
+import { createAnnouncement } from '../modules/announcements/announcements.controller';
 
 const router = Router();
 
@@ -125,104 +125,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/comunicados - Crear comunicado
-router.post('/', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), async (req, res) => {
-  try {
-    const { 
-      usuario_id,  // La app envía esto pero lo usaremos como persona_id
-      titulo, 
-      contenido, 
-      tipo, 
-      destinatario_tipo, 
-      seccion_id, 
-      grado_id 
-    } = req.body;
-
-    // Usar usuario_id como persona_id (la app envía persona_id con el nombre usuario_id)
-    const persona_id = usuario_id;
-
-    if (!persona_id || !titulo || !contenido || !destinatario_tipo) {
-      return res.status(400).json({
-        success: false,
-        message: 'Faltan datos requeridos: usuario_id (persona_id), titulo, contenido, destinatario_tipo'
-      });
-    }
-
-    // Validar que si es seccion o grado, tenga el ID correspondiente
-    if (destinatario_tipo === 'seccion' && !seccion_id) {
-      return res.status(400).json({
-        success: false,
-        message: 'seccion_id es requerido cuando destinatario_tipo es "seccion"'
-      });
-    }
-
-    if (destinatario_tipo === 'grado' && !grado_id) {
-      return res.status(400).json({
-        success: false,
-        message: 'grado_id es requerido cuando destinatario_tipo es "grado"'
-      });
-    }
-
-    const { data, error } = await supabase
-      .from('comunicados_nuevos')
-      .insert({
-        persona_id,  // Ahora usa persona_id
-        titulo,
-        contenido,
-        tipo: tipo || 'general',
-        destinatario_tipo,
-        seccion_id: destinatario_tipo === 'seccion' ? seccion_id : null,
-        grado_id: destinatario_tipo === 'grado' ? grado_id : null
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('❌ Error al insertar comunicado:', error);
-      throw error;
-    }
-
-    // ========================================
-    // ENVIAR NOTIFICACIÓN PUSH
-    // ========================================
-    try {
-      const notificacion = {
-        tipo: 'comunicado' as const,
-        titulo: '📢 Nuevo Comunicado',
-        mensaje: titulo,
-        datos: {
-          comunicado_id: data.id.toString(),
-          tipo: tipo || 'general'
-        }
-      };
-
-      if (destinatario_tipo === 'global') {
-        // Enviar a TODOS
-        await notificationService.enviarATodos(notificacion);
-        
-      } else if (destinatario_tipo === 'seccion' && seccion_id) {
-        // Enviar a una sección específica
-        await notificationService.enviarASeccion(seccion_id, notificacion);
-      }
-    } catch (notifError: any) {
-      // No fallar la creación del comunicado si falla la notificación
-      console.error('Error al enviar notificación:', notifError.message);
-    }
-    // ========================================
-
-    res.json({
-      success: true,
-      message: 'Comunicado publicado exitosamente',
-      data
-    });
-  } catch (error: any) {
-    console.error('❌ Error en POST /comunicados:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error al crear comunicado',
-      error: error.message
-    });
-  }
-});
+router.post('/', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), createAnnouncement);
 
 // POST /api/comunicados/:id/leer - Marcar comunicado como leído
 router.post('/:id/leer', authMiddleware, async (req, res) => {

@@ -7,7 +7,7 @@ import cursosRoutes from './cursos.routes';
 import calificacionesRoutes from './calificaciones.routes';
 import evaluacionesRoutes from './evaluaciones';
 import horariosRoutes from './horarios.routes';
-import comunicadosRoutes from './comunicados.routes';
+import comunicadosRoutes from '../modules/announcements/announcements.routes';
 import usuariosRoutes from './usuarios.routes';
 import adminRoutes from './admin.routes';
 import seccionesRoutes from './secciones.routes';
