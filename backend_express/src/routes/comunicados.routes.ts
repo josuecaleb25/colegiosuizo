@@ -469,6 +469,23 @@ router.delete('/:id', authMiddleware, requireRoles('profesor', 'administrador', 
 
     if (error) throw error;
 
+    // Las notificaciones de comunicados guardan el ID del comunicado en datos.
+    // Al eliminarlo, también se retiran del historial para no mostrar enlaces
+    // hacia contenido que ya no está disponible.
+    const { error: notificationError } = await supabase
+      .from('notificaciones_historial')
+      .delete()
+      .eq('tipo', 'comunicado')
+      .eq('datos->>comunicado_id', id);
+
+    if (notificationError) {
+      console.error('Error al limpiar notificaciones del comunicado:', notificationError);
+      return res.status(500).json({
+        success: false,
+        message: 'El comunicado se desactivó, pero no se pudieron limpiar sus notificaciones'
+      });
+    }
+
     res.json({
       success: true,
       message: 'Comunicado eliminado exitosamente'
