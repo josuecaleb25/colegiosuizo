@@ -13,8 +13,6 @@ router.get('/alumnos', async (req, res) => {
   try {
     const { seccion, search, limit = 100 } = req.query;
     
-    console.log('📊 Petición recibida:', { seccion, search, limit });
-
     let query = supabase
       .from('alumnos')
       .select(`
@@ -49,8 +47,6 @@ router.get('/alumnos', async (req, res) => {
     // Filtrar ANTES de generar QR
     let alumnosFiltrados = alumnos || [];
     
-    console.log(`📚 Alumnos totales: ${alumnos?.length || 0}`);
-
     if (seccion) {
       alumnosFiltrados = alumnosFiltrados.filter((alumno: any) => {
         const matriculas = Array.isArray(alumno.matriculas) ? alumno.matriculas : [alumno.matriculas];
@@ -60,7 +56,6 @@ router.get('/alumnos', async (req, res) => {
         const seccionNombre = secciones && grados ? `${grados.nombre} ${secciones.nombre}` : '';
         return seccionNombre.toLowerCase().includes(seccion.toString().toLowerCase());
       });
-      console.log(`🎯 Después de filtrar por "${seccion}": ${alumnosFiltrados.length} alumnos`);
     }
 
     // Ahora sí, generar QR solo de los filtrados
@@ -95,7 +90,7 @@ router.get('/alumnos', async (req, res) => {
           }
         });
       } catch (qrError) {
-        console.error('Error generando QR:', qrError);
+        console.error('QR generation failed:', qrError);
       }
 
       return {
@@ -201,8 +196,6 @@ router.get('/asistencia/fecha', async (req, res) => {
       });
     }
 
-    console.log('📅 Consultando asistencias para fecha:', fecha);
-
     // Obtener asistencias de la fecha especificada
     const { data: asistencias, error } = await supabase
       .from('asistencias')
@@ -218,11 +211,9 @@ router.get('/asistencia/fecha', async (req, res) => {
       .eq('tipo_persona', 'alumno');
 
     if (error) {
-      console.error('Error consultando asistencias:', error);
+      console.error('Attendance query failed:', error);
       throw error;
     }
-
-    console.log(`✅ Encontradas ${asistencias?.length || 0} asistencias`);
 
     if (!asistencias || asistencias.length === 0) {
       return res.json({
@@ -255,7 +246,7 @@ router.get('/asistencia/fecha', async (req, res) => {
       `);
 
     if (alumnosError) {
-      console.error('Error consultando alumnos:', alumnosError);
+      console.error('Student query failed:', alumnosError);
       throw alumnosError;
     }
 
@@ -300,15 +291,13 @@ router.get('/asistencia/fecha', async (req, res) => {
       };
     }).filter(a => a !== null);
 
-    console.log(`📊 Formateadas ${asistenciasFormateadas.length} asistencias`);
-
     res.json({
       success: true,
       data: asistenciasFormateadas,
       total: asistenciasFormateadas.length
     });
   } catch (error: any) {
-    console.error('❌ Error en /admin/asistencia/fecha:', error);
+    console.error('Admin attendance endpoint failed:', error);
     res.status(500).json({
       success: false,
       message: 'Error al obtener asistencias',

@@ -18,7 +18,6 @@ class QrAttendanceService {
 
     const person = qr.personas as any;
     const time24 = now.toLocaleTimeString('en-GB', { timeZone: LIMA_TIME_ZONE, hour12: false });
-    const time12 = now.toLocaleTimeString('en-US', { timeZone: LIMA_TIME_ZONE, hour: '2-digit', minute: '2-digit', hour12: true });
     const [hourText, minuteText] = time24.split(':');
     const hour = Number.parseInt(hourText, 10);
     const minute = Number.parseInt(minuteText, 10);
@@ -28,10 +27,10 @@ class QrAttendanceService {
       personaId: person.id,
       sessionId,
       date,
-      time: time12,
+      time: time24,
       status
     });
-    const registeredTime = result.data?.hora_entrada || time12;
+    const registeredTime = result.data?.hora_entrada || time24;
     const registeredStatus = result.data?.estado || status;
     const studentId = result.created ? await qrRepository.findStudentId(person.id) : null;
 
