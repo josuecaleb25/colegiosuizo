@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import supabase from '../config/database';
-import { authMiddleware as authenticateToken } from '../middleware/auth';
+import { authMiddleware as authenticateToken, requireRoles } from '../middleware/auth';
 
 const router = Router();
 
@@ -43,7 +43,7 @@ router.get('/curso/:cursoId', authenticateToken, async (req: Request, res: Respo
  * Crear una nueva evaluación para un curso
  * Al crear, se generan automáticamente registros en calificaciones para todos los alumnos
  */
-router.post('/', authenticateToken, async (req: Request, res: Response) => {
+router.post('/', authenticateToken, requireRoles('profesor', 'administrador', 'admin'), async (req: Request, res: Response) => {
   try {
     const { asignacion_id, nombre, peso, orden, activo } = req.body;
 
@@ -135,7 +135,7 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
  * PUT /api/evaluaciones/:id
  * Actualizar una evaluación
  */
-router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.put('/:id', authenticateToken, requireRoles('profesor', 'administrador', 'admin'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { nombre, peso, orden, activo } = req.body;
@@ -174,7 +174,7 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
  * DELETE /api/evaluaciones/:id
  * Eliminar una evaluación (también elimina sus calificaciones en cascada)
  */
-router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.delete('/:id', authenticateToken, requireRoles('profesor', 'administrador', 'admin'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -432,7 +432,7 @@ router.get('/calificaciones/curso/:cursoId', authenticateToken, async (req: Requ
  * PUT /api/evaluaciones/calificaciones/:id
  * Actualizar una calificación específica
  */
-router.put('/calificaciones/:id', authenticateToken, async (req: Request, res: Response) => {
+router.put('/calificaciones/:id', authenticateToken, requireRoles('profesor', 'administrador', 'admin'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { calificacion } = req.body;
@@ -500,7 +500,7 @@ router.put('/calificaciones/:id', authenticateToken, async (req: Request, res: R
  * Inicializar evaluaciones por defecto para una asignación
  * NOTA: cursoId es realmente asignacion_id
  */
-router.post('/inicializar-curso/:cursoId', authenticateToken, async (req: Request, res: Response) => {
+router.post('/inicializar-curso/:cursoId', authenticateToken, requireRoles('profesor', 'administrador', 'admin'), async (req: Request, res: Response) => {
   try {
     const { cursoId } = req.params;
 

@@ -9,6 +9,28 @@ export interface AuthRequest extends Request {
   };
 }
 
+// Verifica que el usuario autenticado tenga uno de los roles permitidos.
+// Debe usarse después de authMiddleware.
+export const requireRoles = (...allowedRoles: string[]) => {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Autenticación requerida'
+      });
+    }
+
+    if (!allowedRoles.includes(req.user.rol)) {
+      return res.status(403).json({
+        success: false,
+        message: 'No tienes permisos para realizar esta operación'
+      });
+    }
+
+    next();
+  };
+};
+
 export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');

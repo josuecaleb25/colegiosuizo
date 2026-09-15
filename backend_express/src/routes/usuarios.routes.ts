@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import supabase from '../config/database';
 import QRCode from 'qrcode';
+import { authMiddleware, requireRoles } from '../middleware/auth';
 
 const router = Router();
 
@@ -200,7 +201,7 @@ router.get('/perfil/:id', async (req, res) => {
 });
 
 // Actualizar perfil de usuario
-router.put('/perfil/:id', async (req, res) => {
+router.put('/perfil/:id', authMiddleware, requireRoles('administrador', 'admin'), async (req, res) => {
   try {
     const { id } = req.params;
     const { telefono } = req.body;

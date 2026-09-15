@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import supabase from '../config/database';
+import { authMiddleware, requireRoles } from '../middleware/auth';
 
 const router = Router();
 
@@ -135,7 +136,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Crear alumno
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, requireRoles('administrador', 'admin'), async (req, res) => {
   try {
     const {
       codigo,
@@ -189,7 +190,7 @@ router.post('/', async (req, res) => {
 });
 
 // Actualizar alumno
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, requireRoles('administrador', 'admin'), async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -246,7 +247,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Eliminar alumno (soft delete)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, requireRoles('administrador', 'admin'), async (req, res) => {
   try {
     const { id } = req.params;
 

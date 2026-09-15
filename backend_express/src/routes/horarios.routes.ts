@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import supabase from '../config/database';
+import { authMiddleware, requireRoles } from '../middleware/auth';
 
 const router = Router();
 
@@ -348,7 +349,7 @@ router.get('/seccion/:seccionId', async (req, res) => {
 });
 
 // POST /api/horarios - Crear horario
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), async (req, res) => {
   try {
     const { asignacion_id, dia_semana, hora_inicio, hora_fin, salon } = req.body;
 
@@ -388,7 +389,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/horarios/:id - Actualizar horario
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), async (req, res) => {
   try {
     const { id } = req.params;
     const { dia_semana, hora_inicio, hora_fin, salon } = req.body;
@@ -422,7 +423,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/horarios/:id - Eliminar horario
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), async (req, res) => {
   try {
     const { id } = req.params;
 

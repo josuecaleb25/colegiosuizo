@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import supabase from '../config/database';
 import notificationService from '../services/notification.service';
-import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { authMiddleware, AuthRequest, requireRoles } from '../middleware/auth';
 import { closeAttendanceSession, getLimaDate } from '../services/attendance-session.service';
 
 const router = Router();
@@ -110,7 +110,7 @@ router.get('/', async (req, res) => {
 });
 
 // Registrar asistencia manual
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), async (req, res) => {
   try {
     const { sesion_id, alumno_id, estado, observaciones } = req.body;
 
@@ -230,7 +230,7 @@ router.post('/', async (req, res) => {
 });
 
 // POST /api/asistencia/registrar-ausentes-batch - Registrar múltiples ausentes de una vez
-router.post('/registrar-ausentes-batch', async (req, res) => {
+router.post('/registrar-ausentes-batch', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), async (req, res) => {
   try {
     const { ausentes, fecha } = req.body;
 
@@ -368,7 +368,7 @@ router.post('/registrar-ausentes-batch', async (req, res) => {
 });
 
 // POST /api/asistencia/registrar-ausente - Registrar alumno ausente al culminar
-router.post('/registrar-ausente', async (req, res) => {
+router.post('/registrar-ausente', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), async (req, res) => {
   try {
     const { persona_id, estado, fecha } = req.body;
 
@@ -551,7 +551,7 @@ router.post('/device-token', authMiddleware, async (req: AuthRequest, res) => {
 });
 
 // Actualizar asistencia
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), async (req, res) => {
   try {
     const { id } = req.params;
     const { estado, observaciones } = req.body;
@@ -590,7 +590,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // POST /api/asistencia/eliminar-batch - Eliminar múltiples asistencias de una vez
-router.post('/eliminar-batch', async (req, res) => {
+router.post('/eliminar-batch', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), async (req, res) => {
   try {
     const { ids } = req.body;
 
@@ -695,7 +695,7 @@ router.post('/eliminar-batch', async (req, res) => {
 // });
 
 // Eliminar asistencia individual
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), async (req, res) => {
   try {
     const { id } = req.params;
 

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import supabase from '../config/database';
 import notificationService from '../services/notification.service';
+import { authMiddleware, requireRoles } from '../middleware/auth';
 
 const router = Router();
 
@@ -143,7 +144,7 @@ router.get('/curso/:asignacionId', async (req, res) => {
 });
 
 // POST /api/calificaciones - Registrar/actualizar calificación
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), async (req, res) => {
   try {
     const { evaluacion_id, alumno_id, nota, observaciones } = req.body;
 
@@ -300,7 +301,7 @@ router.get('/evaluaciones/:asignacionId', async (req, res) => {
 });
 
 // POST /api/calificaciones/evaluaciones - Crear evaluación
-router.post('/evaluaciones', async (req, res) => {
+router.post('/evaluaciones', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), async (req, res) => {
   try {
     const { asignacion_id, nombre, peso, orden } = req.body;
 
@@ -339,7 +340,7 @@ router.post('/evaluaciones', async (req, res) => {
 });
 
 // DELETE /api/calificaciones/evaluaciones/:id - Eliminar evaluación
-router.delete('/evaluaciones/:id', async (req, res) => {
+router.delete('/evaluaciones/:id', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), async (req, res) => {
   try {
     const { id } = req.params;
 

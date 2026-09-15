@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import supabase from '../config/database';
 import notificationService from '../services/notification.service';
+import { authMiddleware, requireRoles } from '../middleware/auth';
 
 const router = Router();
 
@@ -124,7 +125,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/comunicados - Crear comunicado
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), async (req, res) => {
   try {
     const { 
       usuario_id,  // La app envía esto pero lo usaremos como persona_id
@@ -224,7 +225,7 @@ router.post('/', async (req, res) => {
 });
 
 // POST /api/comunicados/:id/leer - Marcar comunicado como leído
-router.post('/:id/leer', async (req, res) => {
+router.post('/:id/leer', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { usuario_id } = req.body;
@@ -411,7 +412,7 @@ router.get('/:id/lecturas', async (req, res) => {
 });
 
 // PUT /api/comunicados/:id - Actualizar comunicado
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), async (req, res) => {
   try {
     const { id } = req.params;
     const { 
@@ -457,7 +458,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/comunicados/:id - Eliminar comunicado
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), async (req, res) => {
   try {
     const { id } = req.params;
 

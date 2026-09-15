@@ -1,8 +1,12 @@
 import { Router } from 'express';
 import supabase from '../config/database';
 import QRCode from 'qrcode';
+import { authMiddleware, requireRoles } from '../middleware/auth';
 
 const router = Router();
+
+// Todas las rutas bajo /api/admin son exclusivas del administrador.
+router.use(authMiddleware, requireRoles('administrador', 'admin'));
 
 // Obtener todos los alumnos con filtros (para admin)
 router.get('/alumnos', async (req, res) => {
