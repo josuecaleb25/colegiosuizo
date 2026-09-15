@@ -15,7 +15,7 @@ const initializeFirebase = () => {
 
     // OPCIÓN 1: Variable de entorno (para Railway/Render/producción)
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-      console.log('📦 Usando credenciales de Firebase desde variable de entorno');
+      console.log('Using Firebase credentials from environment variable');
       serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
     } 
     // OPCIÓN 2: Archivo local (para desarrollo)
@@ -23,14 +23,14 @@ const initializeFirebase = () => {
       const serviceAccountPath = path.join(__dirname, '../../serviceAccountKey.json');
       
       if (!fs.existsSync(serviceAccountPath)) {
-        console.warn('⚠️  serviceAccountKey.json no encontrado y FIREBASE_SERVICE_ACCOUNT no está configurado.');
-        console.warn('   Las notificaciones push no estarán disponibles.');
-        console.warn('   Para desarrollo: Coloca el archivo en backend_express/serviceAccountKey.json');
-        console.warn('   Para producción: Configura la variable FIREBASE_SERVICE_ACCOUNT');
+        console.warn('serviceAccountKey.json not found and FIREBASE_SERVICE_ACCOUNT is not configured.');
+        console.warn('Push notifications will be unavailable.');
+        console.warn('For development, place the file in backend_express/serviceAccountKey.json.');
+        console.warn('For production, configure the FIREBASE_SERVICE_ACCOUNT variable.');
         return;
       }
 
-      console.log('📦 Usando credenciales de Firebase desde archivo local');
+      console.log('Using Firebase credentials from local file');
       serviceAccount = require(serviceAccountPath);
     }
 
@@ -39,10 +39,10 @@ const initializeFirebase = () => {
     });
 
     firebaseInitialized = true;
-    console.log('✅ Firebase Admin SDK inicializado correctamente');
+    console.log('Firebase Admin SDK initialized successfully');
   } catch (error: any) {
-    console.error('❌ Error al inicializar Firebase Admin SDK:', error.message);
-    console.warn('   Las notificaciones push no estarán disponibles.');
+    console.error('Failed to initialize Firebase Admin SDK:', error.message);
+    console.warn('Push notifications will be unavailable.');
   }
 };
 

@@ -29,12 +29,12 @@ const testConnection = async () => {
       .limit(1);
     
     if (error) {
-      console.error('❌ Error al conectar con Supabase:', error.message);
+      console.error('Failed to connect to Supabase:', error.message);
     } else {
-      console.log('✅ Supabase conectado correctamente');
+      console.log('Supabase connected successfully');
     }
   } catch (err: any) {
-    console.error('❌ Error de conexión:', err.message);
+    console.error('Database connection error:', err.message);
   }
 };
 

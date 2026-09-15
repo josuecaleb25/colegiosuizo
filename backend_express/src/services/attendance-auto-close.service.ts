@@ -42,18 +42,18 @@ async function closeExpiredSessions(closeTime: string) {
 
 export function startAttendanceAutoClose() {
   if (process.env.ATTENDANCE_AUTO_CLOSE_ENABLED !== 'true') {
-    console.log('Cierre automático de asistencia desactivado');
+    console.log('Automatic attendance closing is disabled');
     return;
   }
 
   const closeTime = process.env.ATTENDANCE_AUTO_CLOSE_TIME || '';
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(closeTime)) {
-    console.error('ATTENDANCE_AUTO_CLOSE_TIME debe tener formato HH:mm; cierre automático desactivado');
+    console.error('ATTENDANCE_AUTO_CLOSE_TIME must use HH:mm format; automatic attendance closing is disabled');
     return;
   }
 
   void closeExpiredSessions(closeTime);
   timer = setInterval(() => void closeExpiredSessions(closeTime), CHECK_INTERVAL_MS);
   timer.unref();
-  console.log(`Cierre automático de asistencia activo a las ${closeTime} (America/Lima)`);
+  console.log(`Automatic attendance closing enabled at ${closeTime} (America/Lima)`);
 }
