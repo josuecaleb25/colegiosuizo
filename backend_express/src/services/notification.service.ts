@@ -156,10 +156,14 @@ class NotificationService {
         const resultados = await Promise.all(lote.map((token) => messaging!.send({
           token,
           notification: { title: notificacion.titulo, body: notificacion.mensaje },
-          data: { tipo: notificacion.tipo, ...notificacion.datos },
+          data: Object.fromEntries(Object.entries({ tipo: notificacion.tipo, ...notificacion.datos })
+            .map(([key, value]) => [key, String(value ?? '')])),
           android: { priority: 'high', notification: { sound: 'default', channelId: 'asistencia_channel' } }
         }).catch((error: any) => {
-          console.error(`Error enviando a token ${token.substring(0, 20)}...:`, error.message);
+          console.error(`Error enviando a token ${token.substring(0, 20)}...:`, {
+            code: error.code,
+            message: error.message
+          });
           return null;
         })));
         enviados += resultados.filter(Boolean).length;
