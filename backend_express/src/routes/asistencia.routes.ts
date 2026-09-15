@@ -493,16 +493,6 @@ router.post('/device-token', authMiddleware, async (req: AuthRequest, res) => {
       .maybeSingle();
     if (directError) throw directError;
 
-    let studentIds = directStudent ? [directStudent.id] : [];
-    if (studentIds.length === 0 && req.user?.rol === 'padre') {
-      const { data: relationships, error: relationshipError } = await supabase
-        .from('padres_alumnos')
-        .select('alumno_id')
-        .eq('padre_id', personaId);
-      if (relationshipError) throw relationshipError;
-      studentIds = (relationships || []).map((row: any) => row.alumno_id).filter(Boolean);
-    }
-
     const { data: appUser, error: userError } = await supabase
         .from('usuarios')
         .select('id')
@@ -510,24 +500,17 @@ router.post('/device-token', authMiddleware, async (req: AuthRequest, res) => {
         .maybeSingle();
     if (userError) throw userError;
 
-    if (studentIds.length === 0) {
-      return res.json({
-        success: true,
-        message: 'El usuario no requiere notificaciones de alumno',
-        data: []
-      });
-    }
-
-    const rows = studentIds.map(studentId => ({
+    const row = {
       user_id: appUser?.id || null,
-      estudiante_id: studentId,
+      persona_id: personaId,
+      estudiante_id: directStudent?.id || null,
       token,
       device_info: device_info || '',
       updated_at: new Date().toISOString()
-    }));
+    };
     const { data, error } = await supabase
       .from('device_tokens')
-      .upsert(rows, { onConflict: 'estudiante_id,token' })
+      .upsert(row, { onConflict: 'persona_id,token' })
       .select();
 
     if (error) {

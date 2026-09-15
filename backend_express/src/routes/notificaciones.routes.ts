@@ -4,30 +4,8 @@ import { authMiddleware, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
-async function getStudentIdsForUser(req: AuthRequest): Promise<string[]> {
-  const personaId = req.user!.id;
-  const { data: directStudent, error: directError } = await supabase
-    .from('alumnos')
-    .select('id')
-    .eq('persona_id', personaId)
-    .maybeSingle();
-  if (directError) throw directError;
-  if (directStudent) return [directStudent.id];
-
-  if (req.user?.rol === 'padre') {
-    const { data, error } = await supabase
-      .from('padres_alumnos')
-      .select('alumno_id')
-      .eq('padre_id', personaId);
-    if (error) throw error;
-    return (data || []).map((row: any) => row.alumno_id).filter(Boolean);
-  }
-  return [];
-}
-
-function applyRecipientFilter(query: any, studentIds: string[]) {
-  if (studentIds.length === 0) return query.limit(0);
-  return query.in('estudiante_id', studentIds);
+function applyRecipientFilter(query: any, personaId: string) {
+  return personaId ? query.eq('persona_id', personaId) : query.limit(0);
 }
 
 function getComunicadoId(notificacion: any): string | null {
@@ -67,7 +45,7 @@ async function ocultarNotificacionesDeComunicadosEliminados(notificaciones: any[
 router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { solo_no_leidas, page, limit } = req.query;
-    const studentIds = await getStudentIdsForUser(req);
+    const personaId = req.user!.id;
 
     const pageNum = Math.max(1, parseInt(page as string) || 1);
     const limitNum = Math.min(50, Math.max(1, parseInt(limit as string) || 20));
@@ -78,7 +56,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       .select('*', { count: 'exact' })
       .order('fecha_envio', { ascending: false })
       .range(offset, offset + limitNum - 1);
-    query = applyRecipientFilter(query, studentIds);
+    query = applyRecipientFilter(query, personaId);
 
     if (solo_no_leidas === 'true') {
       query = query.eq('leida', false);
@@ -108,13 +86,13 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
 router.get('/no-leidas', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const studentIds = await getStudentIdsForUser(req);
+    const personaId = req.user!.id;
 
     let query: any = supabase
       .from('notificaciones_historial')
       .select('*')
       .eq('leida', false);
-    query = applyRecipientFilter(query, studentIds);
+    query = applyRecipientFilter(query, personaId);
     const { data, error } = await query;
 
     if (error) throw error;
@@ -131,8 +109,8 @@ router.get('/no-leidas', authMiddleware, async (req: AuthRequest, res: Response)
 router.put('/:id/leer', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const studentIds = await getStudentIdsForUser(req);
-    if (studentIds.length === 0) {
+    const personaId = req.user!.id;
+    if (!personaId) {
       return res.status(403).json({ success: false, message: 'Notificación no disponible para este usuario' });
     }
 
@@ -140,7 +118,7 @@ router.put('/:id/leer', authMiddleware, async (req: AuthRequest, res: Response) 
       .from('notificaciones_historial')
       .update({ leida: true, fecha_lectura: new Date().toISOString() })
       .eq('id', id);
-    updateQuery = applyRecipientFilter(updateQuery, studentIds);
+    updateQuery = applyRecipientFilter(updateQuery, personaId);
 
     const { error } = await updateQuery;
 

@@ -8,293 +8,186 @@ interface NotificationData {
   datos?: Record<string, string>;
 }
 
+interface NotificationRecipient {
+  personaId: string;
+  estudianteId?: string;
+}
+
 class NotificationService {
-  
-  /**
-   * Verificar si Firebase está disponible
-   */
   private isFirebaseAvailable(): boolean {
     if (!messaging) {
-      console.warn('⚠️  Firebase no está inicializado. Notificación no enviada.');
+      console.warn('Firebase no está inicializado. Notificación no enviada.');
       return false;
     }
     return true;
   }
 
-  /**
-   * Enviar notificación a un estudiante específico
-   */
+  // QR/asistencia: únicamente la cuenta asociada al alumno.
   async enviarAEstudiante(estudianteId: string, notificacion: NotificationData) {
-    await this.guardarHistorial(estudianteId, notificacion);
-
-    if (!this.isFirebaseAvailable()) {
-      return { success: false, message: 'Firebase no disponible' };
+    const recipients = await this.obtenerDestinatariosDeAlumnos([estudianteId]);
+    if (recipients.length === 0) {
+      return { success: false, message: 'No se encontró la cuenta del alumno' };
     }
+    await this.guardarHistorial(recipients, notificacion);
+    return this.enviarPush(recipients, notificacion);
+  }
 
+  async enviarAMultiplesEstudiantes(estudianteIds: string[], notificacion: NotificationData) {
+    const recipients = await this.obtenerDestinatariosDeAlumnos(estudianteIds);
+    await this.guardarHistorial(recipients, notificacion);
+    return this.enviarPush(recipients, notificacion);
+  }
+
+  // Comunicado dirigido a alumnos de la sección y docentes asignados.
+  async enviarASeccion(seccionId: string, notificacion: NotificationData) {
     try {
-      // Buscar tokens del estudiante
-      const { data: tokens, error } = await supabase
-        .from('device_tokens')
-        .select('token')
-        .eq('estudiante_id', estudianteId);
+      const { data: matriculas, error: matriculasError } = await supabase
+        .from('matriculas').select('alumno_id').eq('seccion_id', seccionId);
+      if (matriculasError) throw matriculasError;
 
-      if (error) throw error;
+      const studentIds = (matriculas || []).map((row: { alumno_id: string }) => row.alumno_id);
+      const studentRecipients = await this.obtenerDestinatariosDeAlumnos(studentIds);
 
-      if (!tokens || tokens.length === 0) {
-        // Silencioso: no mostrar log si no hay tokens
-        return { success: false, message: 'No hay dispositivos registrados' };
+      const { data: asignaciones, error: asignacionesError } = await supabase
+        .from('asignaciones').select('docente_id').eq('seccion_id', seccionId);
+      if (asignacionesError) throw asignacionesError;
+
+      const teacherIds = [...new Set((asignaciones || [])
+        .map((row: { docente_id: string }) => row.docente_id).filter(Boolean))];
+      const teacherRecipients = await this.obtenerDestinatariosDeDocentes(teacherIds);
+      const recipients = this.unicos([...studentRecipients, ...teacherRecipients]);
+
+      if (recipients.length === 0) {
+        return { success: false, message: 'No hay destinatarios en esta sección' };
       }
-
-      // Enviar a todos los dispositivos del estudiante
-      const promesas = tokens.map(({ token }) =>
-        messaging!.send({
-          token,
-          notification: {
-            title: notificacion.titulo,
-            body: notificacion.mensaje
-          },
-          data: {
-            tipo: notificacion.tipo,
-            ...notificacion.datos
-          },
-          android: {
-            priority: 'high',
-            notification: {
-              sound: 'default',
-              channelId: 'asistencia_channel'
-            }
-          }
-        }).catch(err => {
-          console.error(`Error enviando a token ${token.substring(0, 20)}...:`, err.message);
-          return null;
-        })
-      );
-
-      const resultados = await Promise.all(promesas);
-      const exitosos = resultados.filter(r => r !== null).length;
-      
-      console.log(`✅ Notificación enviada a estudiante ${estudianteId}: ${exitosos}/${tokens.length} dispositivos`);
-      return { success: true, enviados: exitosos, total: tokens.length };
-      
+      await this.guardarHistorial(recipients, notificacion);
+      return this.enviarPush(recipients, notificacion);
     } catch (error: any) {
-      console.error('Error al enviar notificación:', error.message);
+      console.error('Error al enviar comunicado a sección:', error.message);
       return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Enviar notificación a múltiples estudiantes
-   */
-  async enviarAMultiplesEstudiantes(estudianteIds: string[], notificacion: NotificationData) {
-    const idsUnicos = [...new Set(estudianteIds)];
-    await this.guardarHistorialParaEstudiantes(idsUnicos, notificacion);
+  // Comunicado global: alumnos, docentes y administradores activos.
+  async enviarATodos(notificacion: NotificationData) {
+    const recipients: NotificationRecipient[] = [];
 
-    if (!this.isFirebaseAvailable()) {
-      return { success: false, message: 'Firebase no disponible' };
+    const { data: alumnos, error: alumnosError } = await supabase
+      .from('alumnos').select('id, persona_id, estado');
+    if (alumnosError) throw alumnosError;
+    for (const alumno of alumnos || []) {
+      if (alumno.estado !== 'inactivo' && alumno.persona_id) {
+        recipients.push({ personaId: alumno.persona_id, estudianteId: alumno.id });
+      }
     }
 
+    const { data: docentes, error: docentesError } = await supabase
+      .from('docentes').select('persona_id, estado');
+    if (docentesError) throw docentesError;
+    for (const docente of docentes || []) {
+      if (docente.estado !== 'inactivo' && docente.persona_id) {
+        recipients.push({ personaId: docente.persona_id });
+      }
+    }
+
+    const { data: admins, error: adminsError } = await supabase
+      .from('usuarios').select('persona_id, rol, activo')
+      .in('rol', ['administrador', 'admin']);
+    if (adminsError) throw adminsError;
+    for (const admin of admins || []) {
+      if (admin.activo !== false && admin.persona_id) {
+        recipients.push({ personaId: admin.persona_id });
+      }
+    }
+
+    const uniqueRecipients = this.unicos(recipients);
+    await this.guardarHistorial(uniqueRecipients, notificacion);
+    return this.enviarPush(uniqueRecipients, notificacion);
+  }
+
+  private async obtenerDestinatariosDeAlumnos(estudianteIds: string[]) {
+    const ids = [...new Set(estudianteIds.filter(Boolean))];
+    if (ids.length === 0) return [];
+    const { data, error } = await supabase.from('alumnos')
+      .select('id, persona_id').in('id', ids);
+    if (error) throw error;
+    return (data || []).filter((alumno: any) => alumno.persona_id)
+      .map((alumno: any) => ({ personaId: alumno.persona_id, estudianteId: alumno.id }));
+  }
+
+  private async obtenerDestinatariosDeDocentes(docenteIds: string[]) {
+    if (docenteIds.length === 0) return [];
+    const { data, error } = await supabase.from('docentes')
+      .select('persona_id').in('id', docenteIds);
+    if (error) throw error;
+    return (data || []).filter((docente: any) => docente.persona_id)
+      .map((docente: any) => ({ personaId: docente.persona_id }));
+  }
+
+  private unicos(recipients: NotificationRecipient[]) {
+    const byPersona = new Map<string, NotificationRecipient>();
+    for (const recipient of recipients) {
+      if (!recipient.personaId) continue;
+      const current = byPersona.get(recipient.personaId);
+      byPersona.set(recipient.personaId, {
+        personaId: recipient.personaId,
+        estudianteId: current?.estudianteId || recipient.estudianteId
+      });
+    }
+    return [...byPersona.values()];
+  }
+
+  private async enviarPush(recipients: NotificationRecipient[], notificacion: NotificationData) {
+    if (!this.isFirebaseAvailable()) return { success: false, message: 'Firebase no disponible' };
+    if (recipients.length === 0) return { success: false, message: 'No hay destinatarios' };
+
     try {
-      // Buscar todos los tokens
-      const { data: tokens, error } = await supabase
-        .from('device_tokens')
-        .select('token, estudiante_id')
-        .in('estudiante_id', idsUnicos);
-
+      const personaIds = recipients.map((recipient) => recipient.personaId);
+      const { data: tokens, error } = await supabase.from('device_tokens')
+        .select('token').in('persona_id', personaIds);
       if (error) throw error;
-
       if (!tokens || tokens.length === 0) {
-        console.log('⚠️  No hay tokens para los estudiantes especificados');
         return { success: false, message: 'No hay dispositivos registrados' };
       }
 
-      // Enviar a todos
-      const promesas = tokens.map(({ token }) =>
-        messaging!.send({
+      const lotes = this.dividirEnLotes(tokens.map((row: { token: string }) => row.token), 500);
+      let enviados = 0;
+      for (const lote of lotes) {
+        const resultados = await Promise.all(lote.map((token) => messaging!.send({
           token,
-          notification: {
-            title: notificacion.titulo,
-            body: notificacion.mensaje
-          },
-          data: {
-            tipo: notificacion.tipo,
-            ...notificacion.datos
-          },
-          android: {
-            priority: 'high',
-            notification: {
-              sound: 'default',
-              channelId: 'asistencia_channel'
-            }
-          }
-        }).catch(err => {
-          console.error(`Error enviando a token:`, err.message);
+          notification: { title: notificacion.titulo, body: notificacion.mensaje },
+          data: { tipo: notificacion.tipo, ...notificacion.datos },
+          android: { priority: 'high', notification: { sound: 'default', channelId: 'asistencia_channel' } }
+        }).catch((error: any) => {
+          console.error(`Error enviando a token ${token.substring(0, 20)}...:`, error.message);
           return null;
-        })
-      );
-
-      const resultados = await Promise.all(promesas);
-      const exitosos = resultados.filter(r => r !== null).length;
-
-      console.log(`✅ Notificaciones enviadas: ${exitosos}/${tokens.length}`);
-      return { success: true, enviados: exitosos, total: tokens.length };
-      
+        })));
+        enviados += resultados.filter(Boolean).length;
+      }
+      return { success: true, enviados, total: tokens.length };
     } catch (error: any) {
       console.error('Error al enviar notificaciones:', error.message);
       return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Enviar notificación a toda una sección
-   */
-  async enviarASeccion(seccionId: string, notificacion: NotificationData) {
-    try {
-      console.log(`🔍 Buscando alumnos de sección ID: ${seccionId}`);
-      
-      const { data: matriculas, error } = await supabase
-        .from('matriculas')
-        .select('alumno_id')
-        .eq('seccion_id', seccionId);
-
-      if (error) {
-        console.error('❌ Error al buscar matrículas:', error);
-        throw error;
-      }
-
-      console.log(`📊 Matrículas encontradas en sección ${seccionId}: ${matriculas?.length || 0}`);
-
-      if (!matriculas || matriculas.length === 0) {
-        console.log(`⚠️  No hay alumnos matriculados en la sección ${seccionId}`);
-        return { success: false, message: 'No hay alumnos en esta sección' };
-      }
-
-      const estudianteIds = matriculas.map(m => m.alumno_id);
-      console.log(`📤 Enviando notificación "${notificacion.titulo}" a ${estudianteIds.length} alumnos de la sección ${seccionId}`);
-      console.log(`👥 IDs de alumnos: ${estudianteIds.join(', ')}`);
-      
-      // El historial se guarda aunque Firebase no esté disponible.
-      // Así la notificación seguirá visible cuando el usuario abra la app.
-      return await this.enviarAMultiplesEstudiantes(estudianteIds, notificacion);
-      
-    } catch (error: any) {
-      console.error('Error al enviar a sección:', error.message);
-      return { success: false, error: error.message };
-    }
-  }
-
-  /**
-   * Enviar notificación a TODOS los usuarios
-   */
-  async enviarATodos(notificacion: NotificationData) {
-    // Guardar una notificación por alumno permite que cada usuario tenga
-    // su propio estado de lectura, incluso para comunicados globales.
-    const { data: alumnos, error: alumnosError } = await supabase
-      .from('alumnos')
-      .select('id');
-
-    if (alumnosError) {
-      console.error('Error al obtener alumnos para el historial:', alumnosError.message);
-    } else {
-      await this.guardarHistorialParaEstudiantes(
-        (alumnos || []).map((alumno: { id: string }) => alumno.id),
-        notificacion
-      );
-    }
-
-    if (!this.isFirebaseAvailable()) {
-      return { success: false, message: 'Firebase no disponible' };
-    }
-
-    try {
-      const { data: tokens, error } = await supabase
-        .from('device_tokens')
-        .select('token');
-
-      if (error) throw error;
-
-      if (!tokens || tokens.length === 0) {
-        return { success: false, message: 'No hay dispositivos registrados' };
-      }
-
-      const lotes = this.dividirEnLotes(tokens.map(t => t.token), 500);
-      let totalEnviados = 0;
-      
-      for (const lote of lotes) {
-        const promesas = lote.map(token =>
-          messaging!.send({
-            token,
-            notification: {
-              title: notificacion.titulo,
-              body: notificacion.mensaje
-            },
-            data: {
-              tipo: notificacion.tipo,
-              ...notificacion.datos
-            },
-            android: {
-              priority: 'high',
-              notification: {
-                sound: 'default',
-                channelId: 'asistencia_channel'
-              }
-            }
-          }).catch(err => null)
-        );
-
-        const resultados = await Promise.all(promesas);
-        totalEnviados += resultados.filter(r => r !== null).length;
-      }
-
-      console.log(`✅ Notificación enviada a ${totalEnviados}/${tokens.length} dispositivos`);
-      return { success: true, enviados: totalEnviados, total: tokens.length };
-      
-    } catch (error: any) {
-      console.error('Error al enviar a todos:', error.message);
-      return { success: false, error: error.message };
-    }
-  }
-
-  private async guardarHistorial(estudianteId: string | null, notificacion: NotificationData) {
-    try {
-      await supabase.from('notificaciones_historial').insert({
-        estudiante_id: estudianteId,
-        tipo: notificacion.tipo,
-        titulo: notificacion.titulo,
-        mensaje: notificacion.mensaje,
-        datos: notificacion.datos || null
-      });
-    } catch (err: any) {
-      console.error('Error al guardar en historial:', err.message);
-    }
-  }
-
-  private async guardarHistorialParaEstudiantes(estudianteIds: string[], notificacion: NotificationData) {
-    if (estudianteIds.length === 0) return;
-
-    try {
-      const registros = estudianteIds.map((estudianteId) => ({
-        estudiante_id: estudianteId,
-        tipo: notificacion.tipo,
-        titulo: notificacion.titulo,
-        mensaje: notificacion.mensaje,
-        datos: notificacion.datos || null
-      }));
-
-      const { error } = await supabase
-        .from('notificaciones_historial')
-        .insert(registros);
-
-      if (error) throw error;
-    } catch (err: any) {
-      console.error('Error al guardar historial de notificaciones:', err.message);
-    }
+  private async guardarHistorial(recipients: NotificationRecipient[], notificacion: NotificationData) {
+    if (recipients.length === 0) return;
+    const registros = this.unicos(recipients).map((recipient) => ({
+      persona_id: recipient.personaId,
+      estudiante_id: recipient.estudianteId || null,
+      tipo: notificacion.tipo,
+      titulo: notificacion.titulo,
+      mensaje: notificacion.mensaje,
+      datos: notificacion.datos || null
+    }));
+    const { error } = await supabase.from('notificaciones_historial').insert(registros);
+    if (error) console.error('Error al guardar historial de notificaciones:', error.message);
   }
 
   private dividirEnLotes<T>(array: T[], tamano: number): T[][] {
     const lotes: T[][] = [];
-    for (let i = 0; i < array.length; i += tamano) {
-      lotes.push(array.slice(i, i + tamano));
-    }
+    for (let i = 0; i < array.length; i += tamano) lotes.push(array.slice(i, i + tamano));
     return lotes;
   }
 }
