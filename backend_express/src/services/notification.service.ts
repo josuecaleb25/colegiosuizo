@@ -98,7 +98,7 @@ class NotificationService {
       const { data: tokens, error } = await supabase
         .from('device_tokens')
         .select('token, estudiante_id')
-        .in('estudiante_id', estudianteIds);
+        .in('estudiante_id', idsUnicos);
 
       if (error) throw error;
 
@@ -148,10 +148,6 @@ class NotificationService {
    * Enviar notificación a toda una sección
    */
   async enviarASeccion(seccionId: string, notificacion: NotificationData) {
-    if (!this.isFirebaseAvailable()) {
-      return { success: false, message: 'Firebase no disponible' };
-    }
-
     try {
       console.log(`🔍 Buscando alumnos de sección ID: ${seccionId}`);
       
@@ -176,6 +172,8 @@ class NotificationService {
       console.log(`📤 Enviando notificación "${notificacion.titulo}" a ${estudianteIds.length} alumnos de la sección ${seccionId}`);
       console.log(`👥 IDs de alumnos: ${estudianteIds.join(', ')}`);
       
+      // El historial se guarda aunque Firebase no esté disponible.
+      // Así la notificación seguirá visible cuando el usuario abra la app.
       return await this.enviarAMultiplesEstudiantes(estudianteIds, notificacion);
       
     } catch (error: any) {
