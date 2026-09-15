@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import supabase from '../config/database';
-import notificationService from '../services/notification.service';
+import notificationService from '../modules/notifications/notifications.service';
 import { authMiddleware, AuthRequest, requireRoles } from '../middleware/auth';
 import { closeAttendanceSession, getLimaDate } from '../services/attendance-session.service';
 

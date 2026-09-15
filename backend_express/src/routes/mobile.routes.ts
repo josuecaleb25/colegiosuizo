@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import supabase from '../config/database';
 import { authMiddleware, optionalAuthMiddleware, AuthRequest } from '../middleware/auth';
-import notificationService from '../services/notification.service';
+import notificationService from '../modules/notifications/notifications.service';
 
 const router = Router();
 

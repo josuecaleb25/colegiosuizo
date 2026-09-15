@@ -11,7 +11,7 @@ import comunicadosRoutes from './comunicados.routes';
 import usuariosRoutes from './usuarios.routes';
 import adminRoutes from './admin.routes';
 import seccionesRoutes from './secciones.routes';
-import notificacionesRoutes from './notificaciones.routes';
+import notificacionesRoutes from '../modules/notifications/notifications.routes';
 
 const router = Router();
 
