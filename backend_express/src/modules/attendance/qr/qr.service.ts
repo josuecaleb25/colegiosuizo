@@ -23,7 +23,7 @@ class QrAttendanceService {
     const minute = Number.parseInt(minuteText, 10);
     const status = hour < 7 || (hour === 7 && minute <= 30) ? 'presente' : 'tardanza';
 
-    const result = await qrRepository.registerAtomically({
+    const result = await qrRepository.register({
       personaId: person.id,
       sessionId,
       date,

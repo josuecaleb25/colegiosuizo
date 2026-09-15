@@ -22,24 +22,13 @@ class AttendanceQrRepository {
     return data?.[0] || null;
   }
 
-  async registerAtomically(input: {
+  async register(input: {
     personaId: string;
     sessionId: string;
     date: string;
     time: string;
     status: string;
   }) {
-    const { data, error } = await supabase.rpc('registrar_asistencia_atomica', {
-      p_persona_id: input.personaId,
-      p_sesion_id: input.sessionId,
-      p_fecha: input.date,
-      p_hora_entrada: input.time,
-      p_estado: input.status
-    });
-
-    if (!error) return { data, created: data?.creada !== false };
-    if (error.code !== 'PGRST202' && error.code !== '42883') throw error;
-
     const { data: inserted, error: insertError } = await supabase
       .from('asistencias')
       .insert({
@@ -59,6 +48,7 @@ class AttendanceQrRepository {
         .select('hora_entrada, estado')
         .eq('persona_id', input.personaId)
         .eq('fecha', input.date)
+        .eq('tipo_persona', 'alumno')
         .limit(1)
         .maybeSingle();
       if (existingError) throw existingError;
