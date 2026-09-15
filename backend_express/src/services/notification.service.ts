@@ -172,6 +172,9 @@ class NotificationService {
             code: error.code,
             message: error.message
           });
+          if (this.esTokenFCMInvalido(error)) {
+            return this.eliminarTokenInvalido(token);
+          }
           return null;
         })));
         enviados += resultados.filter(Boolean).length;
@@ -186,6 +189,23 @@ class NotificationService {
       });
       return { success: false, error: error.message };
     }
+  }
+
+  private esTokenFCMInvalido(error: any): boolean {
+    return [
+      'messaging/registration-token-not-registered',
+      'messaging/invalid-registration-token'
+    ].includes(error?.code);
+  }
+
+  private async eliminarTokenInvalido(token: string) {
+    const { error } = await supabase.from('device_tokens').delete().eq('token', token);
+    if (error) {
+      console.error('No se pudo eliminar el token FCM inválido:', error.message);
+    } else {
+      console.log('Token FCM inválido eliminado automáticamente');
+    }
+    return null;
   }
 
   private async guardarHistorial(recipients: NotificationRecipient[], notificacion: NotificationData) {

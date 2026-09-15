@@ -508,6 +508,15 @@ router.post('/device-token', authMiddleware, async (req: AuthRequest, res) => {
       device_info: device_info || '',
       updated_at: new Date().toISOString()
     };
+
+    // Un token identifica al dispositivo, no a una cuenta permanente.
+    // Si se cambia de usuario en el mismo teléfono, se elimina la asociación anterior.
+    const { error: previousTokenError } = await supabase
+      .from('device_tokens')
+      .delete()
+      .eq('token', token);
+    if (previousTokenError) throw previousTokenError;
+
     const { data, error } = await supabase
       .from('device_tokens')
       .upsert(row, { onConflict: 'persona_id,token' })
