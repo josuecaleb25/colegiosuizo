@@ -30,6 +30,40 @@ function applyRecipientFilter(query: any, studentIds: string[]) {
   return query.or(`estudiante_id.in.(${studentIds.join(',')}),estudiante_id.is.null`);
 }
 
+function getComunicadoId(notificacion: any): string | null {
+  if (notificacion?.tipo !== 'comunicado' || !notificacion.datos) return null;
+  try {
+    const datos = typeof notificacion.datos === 'string'
+      ? JSON.parse(notificacion.datos)
+      : notificacion.datos;
+    return datos?.comunicado_id ? String(datos.comunicado_id) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function ocultarNotificacionesDeComunicadosEliminados(notificaciones: any[]) {
+  const comunicadoIds = notificaciones
+    .map(getComunicadoId)
+    .filter((id): id is string => Boolean(id));
+
+  if (comunicadoIds.length === 0) return notificaciones;
+
+  const { data: comunicadosActivos, error } = await supabase
+    .from('comunicados_nuevos')
+    .select('id')
+    .in('id', [...new Set(comunicadoIds)])
+    .eq('activo', true);
+
+  if (error) throw error;
+
+  const idsActivos = new Set((comunicadosActivos || []).map((comunicado: any) => String(comunicado.id)));
+  return notificaciones.filter((notificacion) => {
+    const comunicadoId = getComunicadoId(notificacion);
+    return !comunicadoId || idsActivos.has(comunicadoId);
+  });
+}
+
 router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { solo_no_leidas, page, limit } = req.query;
@@ -54,9 +88,11 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     if (error) throw error;
 
+    const notificacionesVisibles = await ocultarNotificacionesDeComunicadosEliminados(data || []);
+
     res.json({
       success: true,
-      data,
+      data: notificacionesVisibles,
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -76,14 +112,16 @@ router.get('/no-leidas', authMiddleware, async (req: AuthRequest, res: Response)
 
     let query: any = supabase
       .from('notificaciones_historial')
-      .select('*', { count: 'exact', head: true })
+      .select('*')
       .eq('leida', false);
     query = applyRecipientFilter(query, studentIds);
-    const { count, error } = await query;
+    const { data, error } = await query;
 
     if (error) throw error;
 
-    res.json({ success: true, no_leidas: count || 0 });
+    const notificacionesVisibles = await ocultarNotificacionesDeComunicadosEliminados(data || []);
+
+    res.json({ success: true, no_leidas: notificacionesVisibles.length });
   } catch (err: any) {
     console.error('Error al contar no leídas:', err.message);
     res.status(500).json({ success: false, message: err.message });
