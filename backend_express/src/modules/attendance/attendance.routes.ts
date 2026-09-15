@@ -1,14 +1,16 @@
 import { Router } from 'express';
-import legacyAttendanceRoutes from '../../routes/asistencia.routes';
 import sessionsRoutes from './sessions/sessions.routes';
 import deviceTokensRoutes from './device-tokens/device-tokens.routes';
+import recordsRoutes from './records/records.routes';
+import mutationsRoutes from './records/records.mutations.routes';
+import reportsRoutes from './reports/reports.routes';
 
 const router = Router();
 
-// Session routes are extracted first; the remaining attendance endpoints stay
-// behind the legacy router until each one is migrated and verified.
 router.use('/sesiones', sessionsRoutes);
 router.use('/device-token', deviceTokensRoutes);
-router.use(legacyAttendanceRoutes);
+router.use(recordsRoutes);
+router.use(mutationsRoutes);
+router.use(reportsRoutes);
 
 export default router;
