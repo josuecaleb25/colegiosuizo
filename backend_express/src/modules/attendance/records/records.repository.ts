@@ -101,11 +101,13 @@ class AttendanceRecordsRepository {
   }
 
   async insertAbsences(records: Array<Record<string, unknown>>) {
-    if (records.length === 0) return;
-    const { error } = await supabase
+    if (records.length === 0) return [];
+    const { data, error } = await supabase
       .from('asistencias')
-      .upsert(records, { onConflict: 'persona_id,fecha', ignoreDuplicates: true });
+      .upsert(records, { onConflict: 'persona_id,fecha', ignoreDuplicates: true })
+      .select('id, persona_id, fecha');
     if (error) throw error;
+    return data || [];
   }
 }
 

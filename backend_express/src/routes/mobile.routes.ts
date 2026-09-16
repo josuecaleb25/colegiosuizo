@@ -329,13 +329,13 @@ router.post('/asistencia/escanear-qr', authMiddleware, async (req: AuthRequest, 
           estado,
           sesion_id
         })
-        .select('hora_entrada, estado')
+        .select('id, hora_entrada, estado')
         .single();
 
       if (insertError?.code === '23505') {
         const { data: existing, error: existingError } = await supabase
           .from('asistencias')
-          .select('hora_entrada, estado')
+          .select('id, hora_entrada, estado')
           .eq('persona_id', personaData?.id)
           .eq('fecha', fechaLima)
           .limit(1)
@@ -354,6 +354,20 @@ router.post('/asistencia/escanear-qr', authMiddleware, async (req: AuthRequest, 
 
     const horaFormateada = asistencia?.hora_entrada || horaLima12;
     const estadoRegistrado = asistencia?.estado || estado;
+    let asistenciaId = asistencia?.id || null;
+
+    if (creada && !asistenciaId) {
+      const { data: savedAttendance, error: savedAttendanceError } = await supabase
+        .from('asistencias')
+        .select('id')
+        .eq('persona_id', personaData?.id)
+        .eq('fecha', fechaLima)
+        .eq('sesion_id', sesion_id)
+        .eq('tipo_persona', 'alumno')
+        .maybeSingle();
+      if (savedAttendanceError) throw savedAttendanceError;
+      asistenciaId = savedAttendance?.id || null;
+    }
     
 
     res.json({
@@ -382,8 +396,9 @@ router.post('/asistencia/escanear-qr', authMiddleware, async (req: AuthRequest, 
           const estadoTexto = estadoRegistrado === 'presente' ? 'a tiempo' : 'con tardanza';
           await notificationService.enviarAEstudiante(alumno.id, {
             tipo: 'asistencia',
-            titulo: '✅ Asistencia Registrada',
-            mensaje: `Buenos días, su hijo/a ${nombreCompleto} llegó ${estadoTexto} a las ${horaFormateada}`,
+            titulo: 'Asistencia registrada',
+            mensaje: `Su hijo/a ${nombreCompleto} registró asistencia ${estadoTexto} a las ${horaFormateada}.`,
+            asistenciaId,
             datos: {
               alumno_id: alumno.id.toString(),
               estado: estadoRegistrado,

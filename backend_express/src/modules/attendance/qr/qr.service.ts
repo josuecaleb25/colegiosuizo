@@ -36,6 +36,7 @@ class QrAttendanceService {
 
     return {
       created: result.created,
+      attendanceId: result.data?.id || null,
       studentId,
       date,
       time: registeredTime,
@@ -49,8 +50,9 @@ class QrAttendanceService {
     const statusText = result.status === 'presente' ? 'a tiempo' : 'con tardanza';
     await notificationService.enviarAEstudiante(result.studentId, {
       tipo: 'asistencia',
-      titulo: '✅ Asistencia Registrada',
-      mensaje: `Buenos días, su hijo/a ${result.studentName} llegó ${statusText} a las ${result.time}`,
+      titulo: 'Asistencia registrada',
+      mensaje: `Su hijo/a ${result.studentName} registró asistencia ${statusText} a las ${result.time}.`,
+      asistenciaId: result.attendanceId,
       datos: {
         alumno_id: String(result.studentId),
         estado: result.status,

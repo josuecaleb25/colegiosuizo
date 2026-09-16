@@ -6,6 +6,7 @@ interface NotificationData {
   titulo: string;
   mensaje: string;
   datos?: Record<string, string>;
+  asistenciaId?: string | null;
 }
 
 interface NotificationRecipient {
@@ -213,6 +214,7 @@ class NotificationService {
     const registros = this.unicos(recipients).map((recipient) => ({
       persona_id: recipient.personaId,
       estudiante_id: recipient.estudianteId || null,
+      asistencia_id: notificacion.asistenciaId || null,
       tipo: notificacion.tipo,
       titulo: notificacion.titulo,
       mensaje: notificacion.mensaje,

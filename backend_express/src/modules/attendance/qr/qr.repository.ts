@@ -39,13 +39,13 @@ class AttendanceQrRepository {
         estado: input.status,
         sesion_id: input.sessionId
       })
-      .select('hora_entrada, estado')
+      .select('id, hora_entrada, estado')
       .single();
 
     if (insertError?.code === '23505') {
       const { data: existing, error: existingError } = await supabase
         .from('asistencias')
-        .select('hora_entrada, estado')
+        .select('id, hora_entrada, estado')
         .eq('persona_id', input.personaId)
         .eq('fecha', input.date)
         .eq('tipo_persona', 'alumno')
