@@ -221,7 +221,7 @@ public class HorariosActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>> call, Throwable t) {
-                android.widget.Toast.makeText(HorariosActivity.this, "Error al cargar horarios: " + t.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+                android.widget.Toast.makeText(HorariosActivity.this, "No se pudieron cargar los horarios. Intenta nuevamente.", android.widget.Toast.LENGTH_SHORT).show();
                 mostrarMensajeVacio();
             }
         });
@@ -416,59 +416,6 @@ public class HorariosActivity extends AppCompatActivity {
         super.onDestroy();
         if (horarioHandler != null && horarioRunnable != null) {
             horarioHandler.removeCallbacks(horarioRunnable);
-        }
-    }
-
-    private List<Course> getMockCourses(Calendar date) {
-        List<Course> list = new ArrayList<>();
-        int dayOfWeek = date.get(Calendar.DAY_OF_WEEK);
-
-        // Simulación más completa de horario escolar
-        switch (dayOfWeek) {
-            case Calendar.MONDAY:
-                list.add(new Course("Matemática", "08:00", "09:30", "Salón 4A", "Ricardo Huaman", "4to A"));
-                list.add(new Course("Comunicación", "09:30", "11:00", "Salón 4A", "Ana Lima", "4to A"));
-                list.add(new Course("Arte y Cultura", "11:30", "13:00", "Patio Central", "Carmen Rosa", "4to A"));
-                list.add(new Course("Tutoría", "13:00", "13:45", "Salón 4A", "Ricardo Huaman", "4to A"));
-                break;
-            case Calendar.TUESDAY:
-                list.add(new Course("Inglés", "08:00", "09:30", "Lab Idiomas", "Rosa Condori", "4to A"));
-                list.add(new Course("Historia", "09:30", "11:00", "Salón 4A", "Carlos Ramos", "4to A"));
-                list.add(new Course("Educación Física", "11:00", "12:30", "Campo Deportivo", "Jorge Chavez", "4to A"));
-                list.add(new Course("Ciencia y Tecnología", "12:30", "14:00", "Laboratorio", "Ana Lima", "4to A"));
-                break;
-            case Calendar.WEDNESDAY:
-                list.add(new Course("Matemática", "08:00", "10:00", "Salón 4A", "Ricardo Huaman", "4to A"));
-                list.add(new Course("Inglés", "10:00", "11:00", "Salón 4A", "Rosa Condori", "4to A"));
-                list.add(new Course("Computación", "11:30", "13:00", "Lab Cómputo", "Josue Ochoa", "4to A"));
-                list.add(new Course("Religión", "13:00", "14:00", "Salón 4A", "Carlos Ramos", "4to A"));
-                break;
-            case Calendar.THURSDAY:
-                list.add(new Course("Ciencias Sociales", "08:00", "09:30", "Salón 4A", "Carlos Ramos", "4to A"));
-                list.add(new Course("Comunicación", "09:30", "11:00", "Salón 4A", "Ana Lima", "4to A"));
-                list.add(new Course("Ciencia y Tecnología", "11:30", "13:00", "Laboratorio", "Ana Lima", "4to A"));
-                list.add(new Course("Personal Social", "13:00", "14:00", "Salón 4A", "Carlos Ramos", "4to A"));
-                break;
-            case Calendar.FRIDAY:
-                list.add(new Course("Comunicación", "08:00", "10:00", "Salón 4A", "Ana Lima", "4to A"));
-                list.add(new Course("Matemática", "10:00", "12:00", "Salón 4A", "Ricardo Huaman", "4to A"));
-                list.add(new Course("Música", "12:30", "14:00", "Salón de Música", "Carmen Rosa", "4to A"));
-                break;
-            case Calendar.SATURDAY:
-                // Sábado con una actividad especial como pediste
-                list.add(new Course("Talleres Extraescolares", "09:00", "12:00", "Coliseo", "Varios Profesores", "Multigrado"));
-                break;
-            default:
-                // Domingo u otros casos (vacío)
-                break;
-        }
-        return list;
-    }
-
-    private static class Course {
-        String name, startTime, endTime, location, teacher, section;
-        Course(String n, String s, String e, String l, String t, String sec) {
-            name = n; startTime = s; endTime = e; location = l; teacher = t; section = sec;
         }
     }
 

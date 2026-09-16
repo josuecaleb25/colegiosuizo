@@ -106,7 +106,7 @@
                         android:layout_width="23dp"
                         android:layout_height="23dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/notificationdark"
+                        android:src="@drawable/icon_notifications_google"
                         app:tint="?android:attr/textColorPrimary" />
 
                     <TextView
@@ -338,7 +338,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp">
-                    <ImageView android:id="@+id/iv_calendar" android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/iconcalendar" app:tint="?android:attr/textColorPrimary" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" />
+                    <ImageView android:id="@+id/iv_calendar" android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/icon_calendar_google" app:tint="?android:attr/textColorPrimary" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" />
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:fontFamily="@font/londrinasolidregular" android:text="Mi Agenda de Hoy" android:textColor="?attr/homeTextColorTitles" android:textSize="18sp" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toEndOf="@+id/iv_calendar" app:layout_constraintTop_toTopOf="parent" />
                     <LinearLayout 
                         android:id="@+id/btn_ver_completo_horario"
@@ -425,7 +425,7 @@
                     android:gravity="center"
                     android:layout_marginTop="12dp"
                     android:visibility="gone">
-                    <ImageView android:layout_width="60dp" android:layout_height="60dp" android:src="@drawable/buhope" android:alpha="0.3" />
+                    <ImageView android:layout_width="60dp" android:layout_height="60dp" android:src="@drawable/icon_upcoming_announcements_google" android:alpha="0.3" />
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="No hay comunicados por ahora" android:textColor="#BCC1CD" android:fontFamily="@font/poppinsmedium" android:textSize="13sp" android:layout_marginTop="4dp" />
                 </LinearLayout>
 
@@ -484,7 +484,7 @@
                     android:gravity="center"
                     android:layout_marginTop="12dp"
                     android:visibility="gone">
-                    <ImageView android:layout_width="60dp" android:layout_height="60dp" android:src="@drawable/buhope" android:alpha="0.3" />
+                    <ImageView android:layout_width="60dp" android:layout_height="60dp" android:src="@drawable/icon_upcoming_announcements_google" android:alpha="0.3" />
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="No hay comunicados por ahora" android:textColor="#BCC1CD" android:fontFamily="@font/poppinsmedium" android:textSize="13sp" android:layout_marginTop="4dp" />
                 </LinearLayout>
 
@@ -543,7 +543,7 @@
                     android:gravity="center"
                     android:layout_marginTop="12dp"
                     android:visibility="gone">
-                    <ImageView android:layout_width="60dp" android:layout_height="60dp" android:src="@drawable/buhope" android:alpha="0.3" />
+                    <ImageView android:layout_width="60dp" android:layout_height="60dp" android:src="@drawable/icon_upcoming_announcements_google" android:alpha="0.3" />
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="No hay comunicados por ahora" android:textColor="#BCC1CD" android:fontFamily="@font/poppinsmedium" android:textSize="13sp" android:layout_marginTop="4dp" />
                 </LinearLayout>
 
@@ -556,7 +556,7 @@
                     android:gravity="center"
                     android:layout_marginTop="20dp"
                     android:visibility="gone">
-                    <ImageView android:layout_width="80dp" android:layout_height="80dp" android:src="@drawable/buhope" android:alpha="0.3" />
+                    <ImageView android:layout_width="80dp" android:layout_height="80dp" android:src="@drawable/icon_upcoming_announcements_google" android:alpha="0.3" />
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="No hay anuncios por ahora" android:textColor="#BCC1CD" android:fontFamily="@font/poppinsmedium" android:layout_marginTop="8dp" />
                 </LinearLayout>
 
@@ -594,7 +594,7 @@
             android:background="@android:color/transparent"
             app:elevation="0dp"
             app:headerLayout="@layout/nav_header_main"
-            app:itemIconTint="#FFFFFF"
+            app:itemIconTint="#E3E3E3"
             app:itemTextColor="#FFFFFF"
             app:itemVerticalPadding="20dp"
             app:itemBackground="@android:color/transparent"

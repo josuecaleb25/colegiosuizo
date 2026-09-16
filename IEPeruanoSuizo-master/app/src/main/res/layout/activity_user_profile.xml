@@ -36,7 +36,7 @@
                 android:layout_width="14dp"
                 android:layout_height="14dp"
                 android:layout_gravity="center"
-                android:src="@drawable/righticon"
+                android:src="@drawable/icon_arrow_google"
                 app:tint="#444444" />
         </androidx.cardview.widget.CardView>
 
@@ -139,7 +139,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:background="?attr/selectableItemBackground">
-                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/informationperson" app:tint="?android:attr/textColorPrimary" />
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/icon_info_google" app:tint="?android:attr/textColorPrimary" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Mi informacion" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
                 <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
             </LinearLayout>
@@ -163,7 +163,7 @@
                 android:orientation="horizontal"
                 android:alpha="0.4"
                 android:clickable="false">
-                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/notification" app:tint="?android:attr/textColorPrimary" />
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/icon_notifications_google" app:tint="?android:attr/textColorPrimary" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Notificaciones" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
                 <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
             </LinearLayout>
@@ -188,7 +188,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:background="?attr/selectableItemBackground">
-                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/palettenewiconfinal" app:tint="?android:attr/textColorPrimary" />
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/icon_appearance_google" app:tint="?android:attr/textColorPrimary" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Apariencia" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
                 <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
             </LinearLayout>
@@ -200,7 +200,7 @@
                 android:orientation="horizontal"
                 android:alpha="0.4"
                 android:clickable="false">
-                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/aboutcode" app:tint="?android:attr/textColorPrimary" />
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/icon_about_google" app:tint="?android:attr/textColorPrimary" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Acerca de la Aplicacion" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
                 <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
             </LinearLayout>
@@ -223,7 +223,7 @@
                 android:orientation="horizontal"
                 android:alpha="0.4"
                 android:clickable="false">
-                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/helpuscontact" app:tint="?android:attr/textColorPrimary" />
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/icon_support_google" app:tint="?android:attr/textColorPrimary" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Centro de Ayuda" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
                 <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
             </LinearLayout>
@@ -237,7 +237,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:background="?attr/selectableItemBackground">
-                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/logouticon" app:tint="#BA1924" />
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/icon_logout_google" app:tint="#BA1924" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Logout" android:textColor="#BA1924" android:textSize="14sp" />
                 <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/flechaie" app:tint="#BA1924" />
             </LinearLayout>

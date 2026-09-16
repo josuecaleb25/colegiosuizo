@@ -404,22 +404,7 @@ public class GestionComunicadosActivity extends AppCompatActivity {
                             String estado = jsonObj.has("estado") ? jsonObj.get("estado").getAsString() : "Enviado";
                             int vistos = jsonObj.has("vistos_count") ? jsonObj.get("vistos_count").getAsInt() : 0;
                             
-                            // Formatear hora de "2024-05-14T10:30:00" a "10:30 AM"
-                            String horaStr = "";
-                            try {
-                                String[] partes = fechaPublicacion.split("T");
-                                if (partes.length > 1) {
-                                    String[] horaPartes = partes[1].split(":");
-                                    int h = Integer.parseInt(horaPartes[0]);
-                                    int m = Integer.parseInt(horaPartes[1]);
-                                    String ampm = h >= 12 ? "pm" : "am";
-                                    if (h > 12) h -= 12;
-                                    if (h == 0) h = 12;
-                                    horaStr = String.format(java.util.Locale.US, "%d:%02d %s", h, m, ampm);
-                                }
-                            } catch (Exception e) {
-                                horaStr = "--:--";
-                            }
+                            String horaStr = formatearHoraLima(fechaPublicacion);
                             
                             listaHistorial.add(new HistorialItem(id, titulo, emisor, horaStr, destinatario, estado, vistos, contenido));
                         }
@@ -441,6 +426,34 @@ public class GestionComunicadosActivity extends AppCompatActivity {
                     layoutEmptyHistory.setVisibility(View.VISIBLE);
                 }
             });
+    }
+
+    private String formatearHoraLima(String fechaIso) {
+        if (fechaIso == null || fechaIso.trim().isEmpty()) return "--:--";
+
+        String[] formatosEntrada = {
+                "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+                "yyyy-MM-dd'T'HH:mm:ssXXX",
+                "yyyy-MM-dd'T'HH:mm:ss"
+        };
+
+        for (String formato : formatosEntrada) {
+            try {
+                java.text.SimpleDateFormat entrada = new java.text.SimpleDateFormat(formato, java.util.Locale.US);
+                entrada.setLenient(false);
+                if (!formato.endsWith("XXX")) {
+                    entrada.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+                }
+
+                java.util.Date fecha = entrada.parse(fechaIso);
+                java.text.SimpleDateFormat salida = new java.text.SimpleDateFormat("h:mm a", new java.util.Locale("es", "PE"));
+                salida.setTimeZone(java.util.TimeZone.getTimeZone("America/Lima"));
+                return salida.format(fecha).toLowerCase(new java.util.Locale("es", "PE"));
+            } catch (Exception ignored) {
+                // Probar el siguiente formato recibido desde Supabase.
+            }
+        }
+        return "--:--";
     }
 
     private void mostrarDialogoEnviar() {

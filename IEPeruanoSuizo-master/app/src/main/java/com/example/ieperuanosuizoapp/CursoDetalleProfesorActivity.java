@@ -59,12 +59,9 @@ public class CursoDetalleProfesorActivity extends AppCompatActivity {
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
             switch (position) {
                 case 0:
-                    tab.setText("Contenido");
-                    break;
-                case 1:
                     tab.setText("Estudiantes");
                     break;
-                case 2:
+                case 1:
                     tab.setText("Evaluaciones");
                     break;
             }
@@ -76,7 +73,7 @@ public class CursoDetalleProfesorActivity extends AppCompatActivity {
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 // Cuando se selecciona la pestaña de Estudiantes, notificar al fragmento
-                if (position == 1) {
+                if (position == 0) {
                     Fragment fragment = getSupportFragmentManager().findFragmentByTag("f" + position);
                     if (fragment instanceof ContainerEstudiantesFragment) {
                         ((ContainerEstudiantesFragment) fragment).onTabSelected();
@@ -134,46 +131,18 @@ public class CursoDetalleProfesorActivity extends AppCompatActivity {
         @NonNull
         @Override
         public Fragment createFragment(int position) {
-            if (position == 1) {
+            if (position == 0) {
                 return ContainerEstudiantesFragment.newInstance(cursoId, salon);
-            } else if (position == 2) {
+            } else if (position == 1) {
                 return EvaluacionesFragment.newInstance(cursoId); // cursoId es realmente asignacion_id
             }
-            // Retornamos fragmentos vacíos por ahora para las otras pestañas
-            return PlaceholderFragment.newInstance(position);
+            return ContainerEstudiantesFragment.newInstance(cursoId, salon);
         }
 
         @Override
         public int getItemCount() {
-            return 3;
+            return 2;
         }
     }
 
-    public static class PlaceholderFragment extends Fragment {
-        public static PlaceholderFragment newInstance(int position) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
-            Bundle args = new Bundle();
-            args.putInt("position", position);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
-        @Override
-        public android.view.View onCreateView(@NonNull android.view.LayoutInflater inflater,
-                                           android.view.ViewGroup container,
-                                           Bundle savedInstanceState) {
-            android.view.View root = inflater.inflate(android.R.layout.simple_list_item_1, container, false);
-            TextView textView = root.findViewById(android.R.id.text1);
-            int pos = getArguments() != null ? getArguments().getInt("position") : 0;
-            String name = "";
-            switch (pos) {
-                case 0: name = "Contenido (Próximamente)"; break;
-                case 1: name = "Alumnos (Próximamente)"; break;
-                case 2: name = "Evaluaciones (Próximamente)"; break;
-            }
-            textView.setText(name);
-            textView.setGravity(android.view.Gravity.CENTER);
-            return root;
-        }
-    }
 }

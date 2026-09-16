@@ -55,6 +55,7 @@ public class HomeActivity extends AppCompatActivity {
     private TextView tvTitleSalon, tvTitleSalones;
     private String userMode;
     private boolean comunicadosCargados = false; // Bandera para evitar duplicados
+    private boolean cargandoComunicados = false;
     private boolean esPrimeraVez = true; // Bandera para detectar primera carga
     private Handler horarioHandler = new Handler();
     private List<Object> ultimosHorarios;
@@ -278,16 +279,12 @@ public class HomeActivity extends AppCompatActivity {
 
         bottomNav.setOnItemSelectedListener(item -> {
             bottomNav.getMenu().setGroupCheckable(0, true, true);
-            bottomNav.getMenu().findItem(R.id.nav_home).setIcon(R.drawable.ic_home);
+            bottomNav.getMenu().findItem(R.id.nav_home).setIcon(R.drawable.icon_home_google);
 
             if (item.getItemId() == R.id.nav_home) {
                 // Para el Home presionado, aplicamos el tinte dinámico si es verde
-                if (colorScheme == 2) {
-                    bottomNav.setItemIconTintList(navTint);
-                } else {
-                    bottomNav.setItemIconTintList(null);
-                }
-                item.setIcon(R.drawable.ic_homepress);
+                bottomNav.setItemIconTintList(navTint);
+                item.setIcon(R.drawable.icon_home_google);
             } else if (item.getItemId() == R.id.nav_homework) {
                 android.content.Intent intent = new android.content.Intent(this, CursosActivity.class);
                 intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION);
@@ -468,7 +465,7 @@ public class HomeActivity extends AppCompatActivity {
 
     private void cargarComunicados() {
         // Evitar cargar múltiples veces en la misma sesión
-        if (comunicadosCargados) {
+        if (comunicadosCargados || cargandoComunicados) {
             android.util.Log.d("HomeActivity", "Comunicados ya cargados, saltando...");
             return;
         }
@@ -493,12 +490,15 @@ public class HomeActivity extends AppCompatActivity {
             return;
         }
 
+        cargandoComunicados = true;
+
         com.example.ieperuanosuizoapp.api.RetrofitClient.getApiService()
             .getComunicados(null, null, userId)
             .enqueue(new retrofit2.Callback<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>>() {
                 @Override
                 public void onResponse(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>> call, 
                                      retrofit2.Response<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>> response) {
+                    cargandoComunicados = false;
                     if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                         List<Object> comunicadosData = response.body().getData();
                         
@@ -639,7 +639,8 @@ public class HomeActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>> call, Throwable t) {
-                    android.widget.Toast.makeText(HomeActivity.this, "Error al cargar comunicados: " + t.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+                    cargandoComunicados = false;
+                    android.widget.Toast.makeText(HomeActivity.this, "No se pudieron cargar los comunicados. Intenta nuevamente.", android.widget.Toast.LENGTH_SHORT).show();
                     layoutNoComunicados.setVisibility(View.VISIBLE);
                     layoutNoComunicadosGlobales.setVisibility(View.GONE);
                     layoutNoComunicadosSalon.setVisibility(View.GONE);
@@ -1593,10 +1594,9 @@ public class HomeActivity extends AppCompatActivity {
         
         // Solo recargar comunicados si NO es la primera vez y pasó suficiente tiempo
         if (!esPrimeraVez) {
-            if (comunicadosCacheExpirados()) {
-                comunicadosCargados = false;
-                cargarComunicados();
-            }
+            // Al volver de otra pantalla, refrescar para mostrar comunicados nuevos.
+            comunicadosCargados = false;
+            cargarComunicados();
         } else {
             esPrimeraVez = false;
         }

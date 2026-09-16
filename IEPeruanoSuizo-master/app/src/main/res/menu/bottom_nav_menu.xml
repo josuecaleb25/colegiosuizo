@@ -4,7 +4,7 @@
 
     <item
         android:id="@+id/nav_home"
-        android:icon="@drawable/ic_home"
+        android:icon="@drawable/icon_home_google"
         android:title="Home" />
 
     <item
@@ -14,13 +14,8 @@
 
     <item
         android:id="@+id/nav_horarios"
-        android:icon="@drawable/iconcalendar"
+        android:icon="@drawable/icon_calendar_google"
         android:title="Calendario" />
-
-    <item
-        android:id="@+id/nav_search"
-        android:icon="@drawable/ic_buscador"
-        android:title="Buscar" />
 
     <item
         android:id="@+id/nav_more"

@@ -28,6 +28,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.camera.core.CameraSelector;
+import androidx.camera.core.Camera;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
@@ -73,9 +74,15 @@ import com.google.common.util.concurrent.ListenableFuture;
 public class PanelAsistencia extends AppCompatActivity {
 
     private PreviewView previewView;
-    private MaterialButton btnActivarCamara, btnCulminarAsistencia;
+    private MaterialButton btnActivarCamara;
+    private ImageButton btnCulminarAsistencia;
+    private ImageButton btnFlash, btnSwitchCamera, btnExitScanner;
+    private TextView tvContadorAsistencia;
     private ActivityResultLauncher<String> requestPermissionLauncher;
     private boolean isCameraActive = false;
+    private boolean usandoCamaraFrontal = false;
+    private boolean flashActivo = false;
+    private Camera camaraActual;
     private ProcessCameraProvider cameraProvider;
     private AutoCompleteTextView autoCompleteSalon;
     private ConstraintLayout mainLayout;
@@ -84,9 +91,6 @@ public class PanelAsistencia extends AppCompatActivity {
     private RecyclerView rvAlumnos, rvAlumnosSearch;
     private TextView tvPaginationInfo;
     private ImageButton btnPagePrev, btnPageNext;
-
-    private View modalExito;
-    private TextView tvModalBienvenida;
 
     private AlumnoAdapter adapter;
     private List<Alumno> listaCompleta = new ArrayList<>();
@@ -148,6 +152,10 @@ public class PanelAsistencia extends AppCompatActivity {
         previewView = findViewById(R.id.previewView);
         btnActivarCamara = findViewById(R.id.btn_activar_camara);
         btnCulminarAsistencia = findViewById(R.id.btn_culminar_asistencia);
+        btnFlash = findViewById(R.id.btn_flash);
+        btnSwitchCamera = findViewById(R.id.btn_switch_camera);
+        btnExitScanner = findViewById(R.id.btn_back);
+        tvContadorAsistencia = findViewById(R.id.tv_contador_asistencia);
         autoCompleteSalon = findViewById(R.id.autoComplete_salon);
         cameraContainer = findViewById(R.id.camera_container);
         etBuscador = findViewById(R.id.et_buscador);
@@ -159,9 +167,6 @@ public class PanelAsistencia extends AppCompatActivity {
         tvPaginationInfo = findViewById(R.id.tv_pagination_info);
         btnPagePrev = findViewById(R.id.btn_page_prev);
         btnPageNext = findViewById(R.id.btn_page_next);
-        modalExito = findViewById(R.id.modal_exito);
-        tvModalBienvenida = findViewById(R.id.tv_modal_bienvenida);
-
         rvAlumnos.setLayoutManager(new LinearLayoutManager(this));
         rvAlumnosSearch.setLayoutManager(new LinearLayoutManager(this));
 
@@ -175,9 +180,6 @@ public class PanelAsistencia extends AppCompatActivity {
         setupSalonSelector();
         setupSearchAnimation();
         actualizarVistaTabla();
-
-        // Al presionar arriba (título), volvemos a la cámara si estábamos buscando
-        findViewById(R.id.tv_title).setOnClickListener(v -> hideSearchMode());
 
         requestPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
@@ -208,6 +210,20 @@ public class PanelAsistencia extends AppCompatActivity {
             }
         });
 
+        btnExitScanner.setOnClickListener(v -> {
+            stopCamera();
+            finish();
+        });
+
+        btnFlash.setOnClickListener(v -> toggleFlash());
+        btnSwitchCamera.setOnClickListener(v -> {
+            usandoCamaraFrontal = !usandoCamaraFrontal;
+            flashActivo = false;
+            if (isCameraActive) {
+                startCamera();
+            }
+        });
+
         setupBottomNavigation(findViewById(R.id.bottom_navigation));
 
     }
@@ -232,12 +248,19 @@ public class PanelAsistencia extends AppCompatActivity {
         listaActiva.clear();
         listaFiltrada.clear();
         registrosEnSesion = 0;
+        actualizarContador();
         sesionComenzada = false;
         sesionActualId = null;
         sesionActualFecha = null;
         ultimoCodigoLeido = null;
         ultimoScanMs = 0;
         procesandoQr = false;
+    }
+
+    private void actualizarContador() {
+        if (tvContadorAsistencia != null) {
+            tvContadorAsistencia.setText(registrosEnSesion + " alum.");
+        }
     }
 
     private void verificarAsistenciaExistenteHoy() {
@@ -287,7 +310,7 @@ public class PanelAsistencia extends AppCompatActivity {
         btnActivarCamara.setEnabled(true);
         cargarAlumnosDesdeBackend();
         iniciarPolling();
-        if (iniciarCamara) checkCameraPermissionAndStartOnly();
+        if (iniciarCamara || !isCameraActive) checkCameraPermissionAndStartOnly();
     }
 
     private void mostrarErrorRecuperacion(String mensaje) {
@@ -393,6 +416,8 @@ public class PanelAsistencia extends AppCompatActivity {
                 btnActivarCamara.setEnabled(true);
                 List<AsistenciaVivo> asistencias = response.body().getData();
                 if (asistencias == null) return;
+                registrosEnSesion = asistencias.size();
+                actualizarContador();
 
                 // Construir mapa de persona_id -> asistencia
                 java.util.Map<String, AsistenciaVivo> mapa = new java.util.HashMap<>();
@@ -581,10 +606,12 @@ public class PanelAsistencia extends AppCompatActivity {
                             if (response.code() == 409) {
                                 manejarSesionCerrada();
                             } else {
+                                reproducirSonido(R.raw.sound_error);
                                 Toast.makeText(PanelAsistencia.this, msg, Toast.LENGTH_SHORT).show();
                             }
                         }
                     } catch (Exception e) {
+                        reproducirSonido(R.raw.sound_error);
                         Toast.makeText(PanelAsistencia.this, "Error al procesar respuesta", Toast.LENGTH_SHORT).show();
                     }
                     return;
@@ -592,11 +619,13 @@ public class PanelAsistencia extends AppCompatActivity {
                 ApiResponse<EscanearQrData> res = response.body();
                 if (res != null && res.isSuccess() && res.getData() != null) {
                     if (res.getData().isReused()) {
+                        reproducirSonido(R.raw.sound_duplicate);
                         mostrarModalAlumnoYaRegistrado(res.getMessage());
                         sincronizarAsistencias();
                         return;
                     }
                     registrosEnSesion++;
+                    actualizarContador();
                     String nombre = res.getData().getAlumno();
                     String hora = res.getData().getHora();
                     String estado = res.getData().getEstado();
@@ -614,10 +643,11 @@ public class PanelAsistencia extends AppCompatActivity {
                             }
                         }
                         actualizarVistaTabla();
-                        mostrarModalExito(nombre);
+                        reproducirSonido(R.raw.sound_success);
                     }
                 } else {
                     String msg = res != null && res.getMessage() != null ? res.getMessage() : "No se pudo registrar";
+                    reproducirSonido(R.raw.sound_error);
                     Toast.makeText(PanelAsistencia.this, msg, Toast.LENGTH_LONG).show();
                 }
             }
@@ -625,6 +655,7 @@ public class PanelAsistencia extends AppCompatActivity {
             @Override
             public void onFailure(Call<ApiResponse<EscanearQrData>> call, Throwable t) {
                 procesandoQr = false;
+                reproducirSonido(R.raw.sound_error);
                 Toast.makeText(PanelAsistencia.this, "Sin conexión: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
@@ -638,33 +669,15 @@ public class PanelAsistencia extends AppCompatActivity {
                 .show();
     }
 
-    private void mostrarModalExito(String nombre) {
-        tvModalBienvenida.setText("Bienvenido, " + nombre);
-        modalExito.bringToFront();
-        modalExito.setVisibility(View.VISIBLE);
-        modalExito.setTranslationY(1500f);
-
+    private void reproducirSonido(int recurso) {
         try {
-            MediaPlayer.create(this, R.raw.soundassist).start();
-        } catch (Exception ignored) {}
-
-        modalExito.animate()
-                .translationY(0f) 
-                .setDuration(600)
-                .withEndAction(() -> {
-                    new Handler().postDelayed(() -> {
-                        ocultarModalExito();
-                    }, 3000);
-                })
-                .start();
-    }
-
-    private void ocultarModalExito() {
-        modalExito.animate()
-                .translationY(1500f)
-                .setDuration(600)
-                .withEndAction(() -> modalExito.setVisibility(View.INVISIBLE))
-                .start();
+            MediaPlayer player = MediaPlayer.create(this, recurso);
+            if (player == null) return;
+            player.setOnCompletionListener(MediaPlayer::release);
+            player.start();
+        } catch (Exception ignored) {
+            // Sound feedback must never interrupt attendance registration.
+        }
     }
 
     private void actualizarVistaTabla() {
@@ -771,6 +784,7 @@ public class PanelAsistencia extends AppCompatActivity {
     }
 
     private void setupBottomNavigation(BottomNavigationView bottomNav) {
+        if (bottomNav == null) return;
         NavigationRoleHelper.apply(this, bottomNav);
         int colorSeleccionado;
         TypedValue typedValue = new TypedValue();
@@ -983,7 +997,10 @@ public class PanelAsistencia extends AppCompatActivity {
                 });
 
                 cameraProvider.unbindAll();
-                cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalysis);
+                CameraSelector selector = usandoCamaraFrontal
+                        ? CameraSelector.DEFAULT_FRONT_CAMERA
+                        : CameraSelector.DEFAULT_BACK_CAMERA;
+                camaraActual = cameraProvider.bindToLifecycle(this, selector, preview, imageAnalysis);
                 previewView.setVisibility(View.VISIBLE);
                 isCameraActive = true;
                 btnActivarCamara.setText("Desactivar Camara");
@@ -999,11 +1016,22 @@ public class PanelAsistencia extends AppCompatActivity {
         if (cameraProvider != null) {
             cameraProvider.unbindAll();
         }
+        camaraActual = null;
+        flashActivo = false;
         isCameraActive = false;
         previewView.setVisibility(View.INVISIBLE);
         btnActivarCamara.setText("Activar Camara");
         btnActivarCamara.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#BA1924")));
         btnActivarCamara.setTextColor(Color.WHITE);
+    }
+
+    private void toggleFlash() {
+        if (camaraActual == null || !camaraActual.getCameraInfo().hasFlashUnit()) {
+            Toast.makeText(this, "El flash no está disponible en esta cámara", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        flashActivo = !flashActivo;
+        camaraActual.getCameraControl().enableTorch(flashActivo);
     }
 
     static class Alumno {
@@ -1053,6 +1081,7 @@ public class PanelAsistencia extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        stopCamera();
         super.onBackPressed();
     }
 
@@ -1111,8 +1140,12 @@ public class PanelAsistencia extends AppCompatActivity {
                     okhttp3.MediaType.parse("application/json")
             );
 
+            SharedPreferences userPrefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+            String authToken = userPrefs.getString("user_token", "");
+
             okhttp3.Request request = new okhttp3.Request.Builder()
                     .url(com.example.ieperuanosuizoapp.api.ApiConfig.BASE_URL + "asistencia/registrar-ausentes-batch")
+                    .header("Authorization", "Bearer " + authToken)
                     .post(body)
                     .build();
 

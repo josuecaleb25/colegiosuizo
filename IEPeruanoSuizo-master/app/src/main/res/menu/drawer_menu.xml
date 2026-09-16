@@ -3,7 +3,7 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_home"
-            android:icon="@drawable/ic_home"
+            android:icon="@drawable/icon_home_google"
             android:title="Inicio" />
         <item
             android:id="@+id/nav_cursos"
@@ -11,16 +11,21 @@
             android:title="Cursos" />
         <item
             android:id="@+id/nav_horarios"
-            android:icon="@drawable/iconcalendar"
+            android:icon="@drawable/icon_calendar_google"
             android:title="Horarios" />
         <item
             android:id="@+id/nav_gestion_comunicados"
-            android:icon="@drawable/message"
+            android:icon="@drawable/icon_communication_google"
             android:title="Gestión de Comunicados"
             android:visible="false" />
         <item
+            android:id="@+id/nav_asistencia"
+            android:icon="@drawable/icon_id_card_google"
+            android:title="Asistencia" />
+
+        <item
             android:id="@+id/nav_perfil"
-            android:icon="@drawable/profileiconuser"
+            android:icon="@drawable/icon_profile_google"
             android:title="Perfil" />
         <item
             android:id="@+id/nav_identificacion"
@@ -28,17 +33,13 @@
             android:title="Mi identificación" />
         <item
             android:id="@+id/nav_leaderboard"
-            android:icon="@drawable/ic_leaderboard"
+            android:icon="@drawable/icon_leaderboard_google"
             android:title="Leaderboard" />
 
         <!-- Items Administrativos -->
         <item
-            android:id="@+id/nav_asistencia"
-            android:icon="@drawable/cardubication"
-            android:title="Asistencia" />
-        <item
             android:id="@+id/nav_panel_admin"
-            android:icon="@drawable/configurationicon"
+            android:icon="@drawable/icon_settings_google"
             android:title="Panel Admin"
             android:visible="false" />
     </group>

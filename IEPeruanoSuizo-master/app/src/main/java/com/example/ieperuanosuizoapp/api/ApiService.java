@@ -245,7 +245,8 @@ public interface ApiService {
     Call<NotificacionesResponse> getNotificaciones(
         @Query("estudiante_id") String estudianteId,
         @Query("page") Integer page,
-        @Query("limit") Integer limit
+        @Query("limit") Integer limit,
+        @Query("solo_no_leidas") Boolean soloNoLeidas
     );
 
     @GET("notificaciones/no-leidas")

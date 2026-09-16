@@ -14,6 +14,8 @@ public final class NavigationRoleHelper {
                 .getString("user_mode", "ALUMNO");
         boolean isAdmin = "ADMIN".equalsIgnoreCase(role)
                 || "ADMINISTRADOR".equalsIgnoreCase(role);
+        MenuItem courses = navigation.getMenu().findItem(R.id.nav_homework);
+        if (courses != null) courses.setVisible(!isAdmin);
         MenuItem schedule = navigation.getMenu().findItem(R.id.nav_horarios);
         if (schedule != null) schedule.setVisible(!isAdmin);
     }

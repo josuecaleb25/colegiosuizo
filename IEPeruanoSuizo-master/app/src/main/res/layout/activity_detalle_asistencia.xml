@@ -35,7 +35,7 @@
                 android:layout_width="14dp"
                 android:layout_height="14dp"
                 android:layout_gravity="center"
-                android:src="@drawable/righticon"
+                android:src="@drawable/icon_arrow_google"
                 app:tint="?android:attr/textColorPrimary" />
         </androidx.cardview.widget.CardView>
 
@@ -365,7 +365,7 @@
                         android:layout_width="14dp"
                         android:layout_height="14dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/righticon"
+                        android:src="@drawable/icon_arrow_google"
                         app:tint="#9E9E9E" />
                 </androidx.cardview.widget.CardView>
 
@@ -391,7 +391,7 @@
                         android:layout_height="14dp"
                         android:layout_gravity="center"
                         android:rotation="180"
-                        android:src="@drawable/righticon"
+                        android:src="@drawable/icon_arrow_google"
                         app:tint="#9E9E9E" />
                 </androidx.cardview.widget.CardView>
             </LinearLayout>

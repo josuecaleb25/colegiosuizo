@@ -276,8 +276,12 @@ public class GestionAsistenciaActivity extends AppCompatActivity {
                     okhttp3.MediaType.parse("application/json")
             );
 
+            SharedPreferences userPrefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+            String authToken = userPrefs.getString("user_token", "");
+
             okhttp3.Request request = new okhttp3.Request.Builder()
                     .url(com.example.ieperuanosuizoapp.api.ApiConfig.BASE_URL + "asistencia/eliminar-batch")
+                    .header("Authorization", "Bearer " + authToken)
                     .post(body)
                     .build();
 

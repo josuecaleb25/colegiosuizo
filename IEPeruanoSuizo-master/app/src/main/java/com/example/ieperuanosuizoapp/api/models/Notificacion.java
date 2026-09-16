@@ -34,6 +34,7 @@ public class Notificacion {
     public String getTipo() { return tipo; }
     public String getTitulo() { return titulo; }
     public String getMensaje() { return mensaje; }
+    public Object getDatos() { return datos; }
     public boolean isLeida() { return leida; }
     public String getFechaEnvio() { return fechaEnvio; }
     public void setLeida(boolean leida) { this.leida = leida; }

@@ -102,7 +102,7 @@ public class CursosActivity extends AppCompatActivity {
             @Override
             public void onFailure(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>> call, Throwable t) {
                 android.util.Log.e("CursosActivity", "Error al cargar cursos: " + t.getMessage(), t);
-                Toast.makeText(CursosActivity.this, "Error al cargar cursos: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(CursosActivity.this, "No se pudieron cargar los cursos. Intenta nuevamente.", Toast.LENGTH_SHORT).show();
             }
         });
     }

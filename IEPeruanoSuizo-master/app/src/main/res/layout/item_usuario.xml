@@ -97,7 +97,7 @@
                 <ImageView
                     android:layout_width="14dp"
                     android:layout_height="14dp"
-                    android:src="@drawable/ic_class"
+                    android:src="@drawable/icon_salon_google"
                     app:tint="#999999" />
 
                 <TextView
@@ -121,7 +121,7 @@
                 <ImageView
                     android:layout_width="14dp"
                     android:layout_height="14dp"
-                    android:src="@drawable/ic_email"
+                    android:src="@drawable/icon_email_google"
                     app:tint="#999999" />
 
                 <TextView
@@ -164,7 +164,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/ic_download"
+                    android:src="@drawable/icon_download_google"
                     app:tint="@color/white" />
             </androidx.cardview.widget.CardView>
 
@@ -185,7 +185,7 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/ic_share"
+                    android:src="@drawable/icon_share_google"
                     app:tint="#666666" />
             </androidx.cardview.widget.CardView>
         </LinearLayout>

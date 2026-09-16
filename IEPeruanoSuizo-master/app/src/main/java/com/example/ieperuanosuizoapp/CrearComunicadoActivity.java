@@ -31,6 +31,7 @@ public class CrearComunicadoActivity extends AppCompatActivity {
     private com.google.android.material.button.MaterialButton btnCrear;
     private String userId, userRol, comunicadoId;
     private boolean isEdit = false;
+    private boolean seccionesDisponibles = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -166,15 +167,10 @@ public class CrearComunicadoActivity extends AppCompatActivity {
                                 seccionIdMap.put(nombre, id);
                             }
                         }
+                        seccionesDisponibles = !seccionIdMap.isEmpty();
                     } else {
-                        // Fallback si falla la API
-                        secciones.add("GLOBAL");
-                        seccionIdMap.put("GLOBAL", null);
-                        secciones.add("1ro A");
-                        secciones.add("2do B");
-                        secciones.add("3ro C");
-                        secciones.add("4to A");
-                        secciones.add("5to B");
+                        seccionesDisponibles = false;
+                        secciones.add("No se pudieron cargar las secciones");
                     }
                     
                     if (secciones.isEmpty()) secciones.add("Sin secciones");
@@ -204,7 +200,8 @@ public class CrearComunicadoActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(@NonNull retrofit2.Call<ApiResponse<List<Object>>> call, @NonNull Throwable t) {
-                    String[] defaultSalones = {"GLOBAL", "1ro A", "2do B", "3ro C", "4to A", "5to B"};
+                    seccionesDisponibles = false;
+                    String[] defaultSalones = {"No se pudieron cargar las secciones"};
                     ArrayAdapter<String> adapter = new ArrayAdapter<>(CrearComunicadoActivity.this, 
                         R.layout.item_dropdown_salon, defaultSalones);
                     spinnerDestinatarios.setAdapter(adapter);
@@ -214,6 +211,11 @@ public class CrearComunicadoActivity extends AppCompatActivity {
     }
 
     private void enviarComunicado() {
+        if (!seccionesDisponibles) {
+            Toast.makeText(this, "No hay secciones disponibles. Intenta cargar nuevamente.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         String asunto = etAsunto.getText().toString().trim();
         String descripcion = etDescripcion.getText().toString().trim();
         String destinatario = spinnerDestinatarios.getText().toString().trim();

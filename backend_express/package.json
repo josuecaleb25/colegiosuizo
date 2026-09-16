@@ -7,6 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "build:ignore-errors": "tsc --noEmitOnError false",
+    "test:unit": "npm run build && node --test tests/*.test.js",
     "start": "node dist/index.js",
     "seed": "tsx src/scripts/seed-alumnos.ts",
     "seed-completo": "tsx src/scripts/seed-completo.ts",

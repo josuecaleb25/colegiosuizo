@@ -32,7 +32,7 @@
                 android:layout_width="14dp"
                 android:layout_height="14dp"
                 android:layout_gravity="center"
-                android:src="@drawable/righticon"
+                android:src="@drawable/icon_arrow_google"
                 app:tint="#444444" />
         </androidx.cardview.widget.CardView>
 

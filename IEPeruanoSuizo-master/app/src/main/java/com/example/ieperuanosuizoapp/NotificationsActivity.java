@@ -1,6 +1,7 @@
 package com.example.ieperuanosuizoapp;
 
 import android.content.SharedPreferences;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -78,7 +79,9 @@ public class NotificationsActivity extends AppCompatActivity {
         }
 
         ApiService api = RetrofitClient.getApiService();
-        api.getNotificaciones(estudianteId, 1, 50).enqueue(new Callback<NotificacionesResponse>() {
+        // El historial muestra leídas y no leídas. El contador se consulta
+        // por separado usando /notificaciones/no-leidas.
+        api.getNotificaciones(estudianteId, 1, 50, false).enqueue(new Callback<NotificacionesResponse>() {
             @Override
             public void onResponse(Call<NotificacionesResponse> call, Response<NotificacionesResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
@@ -165,8 +168,59 @@ public class NotificationsActivity extends AppCompatActivity {
             if (holder instanceof HeaderVH) {
                 ((HeaderVH) holder).tv.setText(item.text);
             } else {
-                ((NotifVH) holder).tv.setText(item.text);
+                NotifVH notifHolder = (NotifVH) holder;
+                notifHolder.tv.setText(item.text);
+                notifHolder.itemView.setAlpha(item.notificacion != null && item.notificacion.isLeida() ? 0.60f : 1.0f);
+                notifHolder.itemView.setOnClickListener(v -> abrirNotificacion(item.notificacion));
             }
+        }
+
+        private void abrirNotificacion(Notificacion notificacion) {
+            if (notificacion == null) return;
+            String comunicadoId = obtenerComunicadoId(notificacion);
+            marcarComoLeida(notificacion, () -> {
+                if ("comunicado".equalsIgnoreCase(notificacion.getTipo()) && comunicadoId != null) {
+                    Intent intent = new Intent(NotificationsActivity.this, ViewComunicadosActivity.class);
+                    intent.putExtra("tipo", "TODOS");
+                    intent.putExtra("comunicado_id", comunicadoId);
+                    startActivity(intent);
+                }
+            });
+        }
+
+        private String obtenerComunicadoId(Notificacion notificacion) {
+            try {
+                com.google.gson.JsonElement datos = new com.google.gson.Gson().toJsonTree(notificacion.getDatos());
+                if (datos.isJsonObject() && datos.getAsJsonObject().has("comunicado_id")) {
+                    return datos.getAsJsonObject().get("comunicado_id").getAsString();
+                }
+            } catch (Exception ignored) {
+                // La notificación puede no tener datos de navegación.
+            }
+            return null;
+        }
+
+        private void marcarComoLeida(Notificacion notificacion, Runnable despuesDeMarcar) {
+            if (notificacion == null || notificacion.getId() == null) return;
+            RetrofitClient.getApiService().marcarNotificacionLeida(notificacion.getId())
+                    .enqueue(new Callback<com.example.ieperuanosuizoapp.api.models.ApiResponse<Object>>() {
+                        @Override
+                        public void onResponse(Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<Object>> call,
+                                               Response<com.example.ieperuanosuizoapp.api.models.ApiResponse<Object>> response) {
+                            if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                                cargarNotificaciones();
+                                if (despuesDeMarcar != null) despuesDeMarcar.run();
+                            } else if (despuesDeMarcar != null) {
+                                Toast.makeText(NotificationsActivity.this, "No se pudo marcar como leída.", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<Object>> call, Throwable t) {
+                            Toast.makeText(NotificationsActivity.this, "No se pudo actualizar la notificación.", Toast.LENGTH_SHORT).show();
+                            if (despuesDeMarcar != null) despuesDeMarcar.run();
+                        }
+                    });
         }
 
         @Override

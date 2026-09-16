@@ -27,6 +27,10 @@ public class ViewComunicadosActivity extends AppCompatActivity {
     private LinearLayout containerComunicados;
     private String userMode;
     private String tipoFiltro; // GLOBAL, MI_SALON, SALONES
+    private String comunicadoPendienteId;
+    private boolean cargandoComunicados = false;
+    private long ultimaSolicitudComunicados = 0L;
+    private static final long MIN_REFRESH_INTERVAL_MS = 30_000L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +52,7 @@ public class ViewComunicadosActivity extends AppCompatActivity {
         // Obtener el tipo de filtro desde el Intent
         tipoFiltro = getIntent().getStringExtra("tipo");
         if (tipoFiltro == null) tipoFiltro = "TODOS";
+        comunicadoPendienteId = getIntent().getStringExtra("comunicado_id");
 
         containerComunicados = findViewById(R.id.container_comunicados);
 
@@ -77,7 +82,17 @@ public class ViewComunicadosActivity extends AppCompatActivity {
         setupBottomNavigation();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (System.currentTimeMillis() - ultimaSolicitudComunicados >= MIN_REFRESH_INTERVAL_MS) {
+            cargarTodosComunicados();
+        }
+    }
+
     private void cargarTodosComunicados() {
+        if (cargandoComunicados) return;
+
         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         String userId = prefs.getString("user_id", null);
 
@@ -86,12 +101,16 @@ public class ViewComunicadosActivity extends AppCompatActivity {
             return;
         }
 
+        cargandoComunicados = true;
+        ultimaSolicitudComunicados = System.currentTimeMillis();
+
         com.example.ieperuanosuizoapp.api.RetrofitClient.getApiService()
             .getComunicados(null, null, userId)
             .enqueue(new retrofit2.Callback<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>>() {
                 @Override
                 public void onResponse(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>> call,
                                      retrofit2.Response<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>> response) {
+                    cargandoComunicados = false;
                     if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                         List<Object> comunicadosData = response.body().getData();
 
@@ -123,7 +142,8 @@ public class ViewComunicadosActivity extends AppCompatActivity {
                             destinatarioTipo = destinatarioTipo.toUpperCase().trim();
                             boolean esGlobal = "GLOBAL".equals(destinatarioTipo);
 
-                            Comunicado comunicado = new Comunicado(titulo, contenido, null, salonInfo, emisor);
+                            String comunicadoId = jsonObj.has("id") ? jsonObj.get("id").getAsString() : null;
+                            Comunicado comunicado = new Comunicado(comunicadoId, titulo, contenido, null, salonInfo, emisor);
                             comunicado.fechaPublicacion = fechaPublicacion;
 
                             if (esGlobal) {
@@ -167,7 +187,8 @@ public class ViewComunicadosActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<List<Object>>> call, Throwable t) {
-                    Toast.makeText(ViewComunicadosActivity.this, "Error al cargar comunicados: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                    cargandoComunicados = false;
+                    Toast.makeText(ViewComunicadosActivity.this, "No se pudieron cargar los comunicados. Intenta nuevamente.", Toast.LENGTH_SHORT).show();
                     mostrarMensajeVacio();
                 }
             });
@@ -390,6 +411,10 @@ public class ViewComunicadosActivity extends AppCompatActivity {
         cardView.setOnClickListener(v -> mostrarDetalleModal(comunicado));
 
         containerComunicados.addView(cardView);
+        if (comunicadoPendienteId != null && comunicadoPendienteId.equals(comunicado.id)) {
+            cardView.post(() -> mostrarDetalleModal(comunicado));
+            comunicadoPendienteId = null;
+        }
     }
 
     /**
@@ -583,9 +608,10 @@ public class ViewComunicadosActivity extends AppCompatActivity {
 
     // Clase interna Comunicado
     private static class Comunicado {
-        String titulo, contenido, banner, salon, emisor, fechaPublicacion;
+        String id, titulo, contenido, banner, salon, emisor, fechaPublicacion;
 
-        Comunicado(String t, String c, String b, String s, String e) {
+        Comunicado(String i, String t, String c, String b, String s, String e) {
+            id = i;
             titulo = t;
             contenido = c;
             banner = b;

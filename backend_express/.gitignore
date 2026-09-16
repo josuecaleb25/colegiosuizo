@@ -37,6 +37,7 @@ coverage/
 
 # SQL scripts and credentials (development only)
 *.sql
+!migrations/*.sql
 *.txt
 ALUMNOS_CREDENCIALES.txt
 VERIFICAR_ENDPOINTS.txt
