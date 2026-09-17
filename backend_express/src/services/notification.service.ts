@@ -50,12 +50,16 @@ class NotificationService {
     );
     const attendanceIds = unicosRegistros.map((registro) => registro.asistenciaId);
 
-    const { data: existentes, error: existentesError } = await supabase
-      .from('notificaciones_historial')
-      .select('asistencia_id, persona_id')
-      .eq('tipo', 'asistencia')
-      .in('asistencia_id', attendanceIds);
-    if (existentesError) throw existentesError;
+    const historialBatches = await Promise.all(this.dividirEnLotes(attendanceIds, 100).map(async (batch) => {
+      const { data, error } = await supabase
+        .from('notificaciones_historial')
+        .select('asistencia_id, persona_id')
+        .eq('tipo', 'asistencia')
+        .in('asistencia_id', batch);
+      if (error) throw error;
+      return data || [];
+    }));
+    const existentes = historialBatches.flat();
 
     const notificados = new Set((existentes || []).map((row: any) =>
       `${row.asistencia_id}:${row.persona_id}`
@@ -88,10 +92,12 @@ class NotificationService {
         fecha: registro.fecha
       }
     }));
-    const { error: historyError } = await supabase
-      .from('notificaciones_historial')
-      .insert(history);
-    if (historyError) throw historyError;
+    for (const batch of this.dividirEnLotes(history, 100)) {
+      const { error: historyError } = await supabase
+        .from('notificaciones_historial')
+        .insert(batch);
+      if (historyError) throw historyError;
+    }
 
     if (!this.isFirebaseAvailable()) {
       return { success: false, message: 'Firebase no disponible', enviados: 0, total: pendientes.length };
@@ -212,10 +218,13 @@ class NotificationService {
   private async obtenerDestinatariosDeAlumnos(estudianteIds: string[]) {
     const ids = [...new Set(estudianteIds.filter(Boolean))];
     if (ids.length === 0) return [];
-    const { data, error } = await supabase.from('alumnos')
-      .select('id, persona_id').in('id', ids);
-    if (error) throw error;
-    return (data || []).filter((alumno: any) => alumno.persona_id)
+    const batches = await Promise.all(this.dividirEnLotes(ids, 100).map(async (batch) => {
+      const { data, error } = await supabase.from('alumnos')
+        .select('id, persona_id').in('id', batch);
+      if (error) throw error;
+      return data || [];
+    }));
+    return batches.flat().filter((alumno: any) => alumno.persona_id)
       .map((alumno: any) => ({ personaId: alumno.persona_id, estudianteId: alumno.id }));
   }
 

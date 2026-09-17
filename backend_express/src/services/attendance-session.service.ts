@@ -33,11 +33,16 @@ async function notifySessionAbsences(sessionId: string, sessionDate: string) {
   if (!absences || absences.length === 0) return;
 
   const personaIds = [...new Set(absences.map((absence: any) => absence.persona_id).filter(Boolean))];
-  const { data: students, error: studentsError } = await supabase
-    .from('alumnos')
-    .select('id, persona_id')
-    .in('persona_id', personaIds);
-  if (studentsError) throw studentsError;
+  const students: any[] = [];
+  for (let index = 0; index < personaIds.length; index += 100) {
+    const batch = personaIds.slice(index, index + 100);
+    const { data, error } = await supabase
+      .from('alumnos')
+      .select('id, persona_id')
+      .in('persona_id', batch);
+    if (error) throw error;
+    students.push(...(data || []));
+  }
 
   const studentByPersona = new Map(
     (students || []).map((student: any) => [student.persona_id, student])
@@ -72,7 +77,12 @@ export async function closeAttendanceSession(id: string) {
       try {
         await notifySessionAbsences(id, session.fecha);
       } catch (notificationError: any) {
-        console.error('Failed to process absence notifications after session close:', notificationError.message);
+        console.error('Failed to process absence notifications after session close:', {
+          message: notificationError.message,
+          code: notificationError.code,
+          details: notificationError.details,
+          hint: notificationError.hint
+        });
       }
     }
     return session;
@@ -96,7 +106,12 @@ export async function closeAttendanceSession(id: string) {
     try {
       await notifySessionAbsences(id, session.fecha);
     } catch (notificationError: any) {
-      console.error('Failed to retry absence notifications after session close:', notificationError.message);
+      console.error('Failed to retry absence notifications after session close:', {
+        message: notificationError.message,
+        code: notificationError.code,
+        details: notificationError.details,
+        hint: notificationError.hint
+      });
     }
     return session;
   }
@@ -147,7 +162,12 @@ export async function closeAttendanceSession(id: string) {
     try {
       await notifySessionAbsences(id, result.fecha);
     } catch (notificationError: any) {
-      console.error('Failed to process absence notifications after session close:', notificationError.message);
+      console.error('Failed to process absence notifications after session close:', {
+        message: notificationError.message,
+        code: notificationError.code,
+        details: notificationError.details,
+        hint: notificationError.hint
+      });
     }
   }
   return result;
