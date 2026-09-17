@@ -61,7 +61,7 @@
                         android:id="@+id/tv_greeting"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinssemibold"
+                        android:fontFamily="@font/dmsansmedium"
                         android:text="Buenos dias, "
                         android:textColor="#90A5B4"
                         android:textSize="18sp" />
@@ -70,7 +70,7 @@
                         android:id="@+id/tv_user_name"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinssemibold"
+                        android:fontFamily="@font/dmsanssemibold"
                         android:text="Sebastian"
                         android:textColor="?attr/homeTextColorSebastian"
                         android:textSize="18sp" />
@@ -80,7 +80,7 @@
                     android:id="@+id/tv_motivation"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="@font/poppinsregular"
+                    android:fontFamily="@font/dmsansregular"
                     android:text="Un dia mas cerca de tus metas"
                     android:textColor="?android:attr/textColorSecondary"
                     android:textSize="14sp" />
@@ -136,7 +136,7 @@
                     android:id="@+id/tv_celebration"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:fontFamily="@font/londrinasolidregular"
+                    android:fontFamily="@font/dmsanssemibold"
                     android:gravity="center"
                     android:text=""
                     android:textColor="#BA1924"
@@ -180,7 +180,7 @@
                             android:id="@+id/tv_day_name"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppinsmedium"
+                            android:fontFamily="@font/dmsansmedium"
                             android:textColor="#BCC1CD"
                             android:textSize="18sp"
                             tools:text="Miercoles" />
@@ -189,7 +189,7 @@
                             android:id="@+id/tv_month_year"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppinsmedium"
+                            android:fontFamily="@font/dmsansmedium"
                             android:textColor="#BCC1CD"
                             android:textSize="18sp"
                             tools:text="Abril 2025" />
@@ -267,7 +267,7 @@
                             android:id="@+id/tv_streak_label"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:fontFamily="@font/londrinasolidregular"
+                            android:fontFamily="@font/dmsansmedium"
                             android:text="Dias Seguidos"
                             android:textColor="?attr/homeTextColorCardLabel"
                             android:textSize="10sp"
@@ -301,7 +301,7 @@
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
                             <ImageView android:layout_width="18dp" android:layout_height="18dp" android:src="@drawable/checkassist" app:tint="?android:attr/textColorPrimary" />
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:fontFamily="@font/londrinasolidregular" android:text="Dias asistidos" android:textColor="?attr/homeTextColorCardLabel" android:textSize="14sp" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:fontFamily="@font/dmsansregular" android:text="Dias asistidos" android:textColor="?attr/homeTextColorCardLabel" android:textSize="14sp" />
                         </LinearLayout>
 
                             <LinearLayout
@@ -311,23 +311,23 @@
                                 android:orientation="horizontal">
                                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
                                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="L" android:textSize="12sp" android:textColor="?android:attr/textColorPrimary" android:fontFamily="@font/poppinsmedium"/>
-                                    <ImageView android:id="@+id/check_lunes" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/checkcircleassist" android:layout_marginTop="4dp" android:visibility="invisible"/>
+                                    <TextView android:id="@+id/check_lunes" android:layout_width="28dp" android:layout_height="28dp" android:layout_marginTop="4dp" android:gravity="center" android:textSize="12sp" android:textStyle="bold" android:visibility="invisible"/>
                                 </LinearLayout>
                                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
                                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="M" android:textSize="12sp" android:textColor="?android:attr/textColorPrimary" android:fontFamily="@font/poppinsmedium"/>
-                                    <ImageView android:id="@+id/check_martes" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/checkcircleassist" android:layout_marginTop="4dp" android:visibility="invisible"/>
+                                    <TextView android:id="@+id/check_martes" android:layout_width="28dp" android:layout_height="28dp" android:layout_marginTop="4dp" android:gravity="center" android:textSize="12sp" android:textStyle="bold" android:visibility="invisible"/>
                                 </LinearLayout>
                                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
                                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Mi" android:textSize="12sp" android:textColor="?android:attr/textColorPrimary" android:fontFamily="@font/poppinsmedium"/>
-                                    <ImageView android:id="@+id/check_miercoles" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/checkcircleassist" android:layout_marginTop="4dp" android:visibility="invisible"/>
+                                    <TextView android:id="@+id/check_miercoles" android:layout_width="28dp" android:layout_height="28dp" android:layout_marginTop="4dp" android:gravity="center" android:textSize="12sp" android:textStyle="bold" android:visibility="invisible"/>
                                 </LinearLayout>
                                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
                                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="J" android:textSize="12sp" android:textColor="?android:attr/textColorPrimary" android:fontFamily="@font/poppinsmedium"/>
-                                    <ImageView android:id="@+id/check_jueves" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/checkcircleassist" android:layout_marginTop="4dp" android:visibility="invisible"/>
+                                    <TextView android:id="@+id/check_jueves" android:layout_width="28dp" android:layout_height="28dp" android:layout_marginTop="4dp" android:gravity="center" android:textSize="12sp" android:textStyle="bold" android:visibility="invisible"/>
                                 </LinearLayout>
                                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
                                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="V" android:textSize="12sp" android:textColor="?android:attr/textColorPrimary" android:fontFamily="@font/poppinsmedium"/>
-                                    <ImageView android:id="@+id/check_viernes" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/checkcircleassist" android:layout_marginTop="4dp" android:visibility="invisible"/>
+                                    <TextView android:id="@+id/check_viernes" android:layout_width="28dp" android:layout_height="28dp" android:layout_marginTop="4dp" android:gravity="center" android:textSize="12sp" android:textStyle="bold" android:visibility="invisible"/>
                                 </LinearLayout>
                             </LinearLayout>
                     </LinearLayout>

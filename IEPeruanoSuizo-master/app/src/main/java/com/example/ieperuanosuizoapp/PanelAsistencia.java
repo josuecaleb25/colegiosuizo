@@ -267,16 +267,20 @@ public class PanelAsistencia extends AppCompatActivity {
         if (verificandoSesion) return;
         verificandoSesion = true;
 
-        // Buscar la sesión activa del día
-        RetrofitClient.getApiService().getSesionActiva().enqueue(new retrofit2.Callback<ApiResponse<SesionAsistencia>>() {
+        // Buscar cualquier sesión registrada hoy, abierta o cerrada
+        RetrofitClient.getApiService().getSesionDelDia().enqueue(new retrofit2.Callback<ApiResponse<SesionAsistencia>>() {
             @Override
             public void onResponse(retrofit2.Call<ApiResponse<SesionAsistencia>> call, retrofit2.Response<ApiResponse<SesionAsistencia>> response) {
                 verificandoSesion = false;
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     SesionAsistencia sesion = response.body().getData();
                     if (sesion != null) {
-                        activarSesion(sesion, false);
-                        Toast.makeText(PanelAsistencia.this, "Te uniste a la sesión de asistencia activa", Toast.LENGTH_SHORT).show();
+                        if ("abierta".equalsIgnoreCase(sesion.getEstado())) {
+                            activarSesion(sesion, false);
+                            Toast.makeText(PanelAsistencia.this, "Te uniste a la sesión de asistencia activa", Toast.LENGTH_SHORT).show();
+                        } else {
+                            mostrarDialogoAsistenciaYaCompletada();
+                        }
                     } else {
                         sesionActualId = null;
                         sesionComenzada = false;
@@ -351,7 +355,11 @@ public class PanelAsistencia extends AppCompatActivity {
                         mostrarErrorRecuperacion("No se recibió un identificador válido para la sesión.");
                     }
                 } else if (response.code() == 409) {
-                    recuperarSesionCreadaPorOtraTablet(onSuccess);
+                    if ("ATTENDANCE_ALREADY_COMPLETED".equals(response.body() != null ? response.body().getCode() : null)) {
+                        mostrarDialogoAsistenciaYaCompletada();
+                    } else {
+                        recuperarSesionCreadaPorOtraTablet(onSuccess);
+                    }
                 } else {
                     Toast.makeText(PanelAsistencia.this, "No se pudo iniciar la sesión en el servidor", Toast.LENGTH_LONG).show();
                 }
@@ -1093,120 +1101,4 @@ public class PanelAsistencia extends AppCompatActivity {
         barcodeScanner.close();
     }
 
-    /**
-     * Guardar alumnos ausentes en el backend al culminar
-     */
-    private void guardarAusentesEnBackend(List<AsistenciaAlumno> snapshot, Runnable onComplete) {
-        // Filtrar solo los ausentes (los que no tienen hora_registro)
-        List<AsistenciaAlumno> ausentes = new ArrayList<>();
-        for (AsistenciaAlumno alumno : snapshot) {
-            if (alumno.getHora_registro() == null || alumno.getHora_registro().isEmpty()) {
-                ausentes.add(alumno);
-            }
-        }
-
-        if (ausentes.isEmpty()) {
-            // No hay ausentes, continuar
-            onComplete.run();
-            return;
-        }
-
-        // Mostrar progreso
-        android.app.ProgressDialog progress = new android.app.ProgressDialog(this);
-        progress.setMessage("Guardando registro de asistencia...");
-        progress.setCancelable(false);
-        progress.show();
-
-        // Preparar array de ausentes para envío batch
-        org.json.JSONArray ausentesArray = new org.json.JSONArray();
-        for (AsistenciaAlumno alumno : ausentes) {
-            try {
-                org.json.JSONObject ausenteObj = new org.json.JSONObject();
-                ausenteObj.put("persona_id", alumno.getPersona_id());
-                ausentesArray.put(ausenteObj);
-            } catch (org.json.JSONException e) {
-                e.printStackTrace();
-            }
-        }
-
-        // Crear body con array de ausentes y fecha
-        org.json.JSONObject jsonBody = new org.json.JSONObject();
-        try {
-            jsonBody.put("ausentes", ausentesArray);
-            jsonBody.put("fecha", new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date()));
-
-            okhttp3.RequestBody body = okhttp3.RequestBody.create(
-                    jsonBody.toString(),
-                    okhttp3.MediaType.parse("application/json")
-            );
-
-            SharedPreferences userPrefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
-            String authToken = userPrefs.getString("user_token", "");
-
-            okhttp3.Request request = new okhttp3.Request.Builder()
-                    .url(com.example.ieperuanosuizoapp.api.ApiConfig.BASE_URL + "asistencia/registrar-ausentes-batch")
-                    .header("Authorization", "Bearer " + authToken)
-                    .post(body)
-                    .build();
-
-            // Crear cliente con timeout más largo para batch grande
-            okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
-                    .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                    .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                    .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-                    .build();
-
-            // UNA SOLA petición para todos los ausentes
-            client.newCall(request).enqueue(new okhttp3.Callback() {
-                @Override
-                public void onFailure(okhttp3.Call call, java.io.IOException e) {
-                    runOnUiThread(() -> {
-                        progress.dismiss();
-                        Toast.makeText(PanelAsistencia.this, 
-                            "Error al guardar ausentes: " + e.getMessage(), 
-                            Toast.LENGTH_LONG).show();
-                        // NO llamar onComplete aquí - el guardado falló
-                    });
-                }
-
-                @Override
-                public void onResponse(okhttp3.Call call, okhttp3.Response response) {
-                    try {
-                        String responseBody = response.body() != null ? response.body().string() : "";
-                        
-                        runOnUiThread(() -> {
-                            progress.dismiss();
-                            
-                            if (response.isSuccessful()) {
-                                Toast.makeText(PanelAsistencia.this, 
-                                    "Registro guardado exitosamente", 
-                                    Toast.LENGTH_SHORT).show();
-                                // Solo llamar onComplete cuando el guardado fue exitoso
-                                onComplete.run();
-                            } else {
-                                Toast.makeText(PanelAsistencia.this, 
-                                    "Error al guardar: " + response.code(), 
-                                    Toast.LENGTH_LONG).show();
-                                // NO llamar onComplete - el guardado falló
-                            }
-                        });
-                    } catch (Exception e) {
-                        runOnUiThread(() -> {
-                            progress.dismiss();
-                            Toast.makeText(PanelAsistencia.this, 
-                                "Error procesando respuesta", 
-                                Toast.LENGTH_SHORT).show();
-                        });
-                    }
-                }
-            });
-
-        } catch (org.json.JSONException e) {
-            runOnUiThread(() -> {
-                progress.dismiss();
-                Toast.makeText(this, "Error al preparar datos", Toast.LENGTH_SHORT).show();
-                // NO llamar onComplete - hubo error
-            });
-        }
-    }
 }

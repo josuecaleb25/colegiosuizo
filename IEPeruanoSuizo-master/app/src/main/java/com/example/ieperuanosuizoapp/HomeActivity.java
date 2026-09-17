@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.Outline;
 import android.os.Bundle;
 import android.os.Handler;
@@ -662,21 +663,10 @@ public class HomeActivity extends AppCompatActivity {
         // Configurar hora del comunicado
         TextView tvHora = cardView.findViewById(R.id.tv_hora_comunicado);
         if (comunicado.fechaPublicacion != null && !comunicado.fechaPublicacion.isEmpty()) {
-            try {
-                // Formato del backend: "2024-05-14T10:30:00"
-                String[] partes = comunicado.fechaPublicacion.split("T");
-                if (partes.length > 1) {
-                    String[] horaPartes = partes[1].split(":");
-                    int hora = Integer.parseInt(horaPartes[0]);
-                    int minuto = Integer.parseInt(horaPartes[1]);
-                    String ampm = hora >= 12 ? "PM" : "AM";
-                    if (hora > 12) hora -= 12;
-                    if (hora == 0) hora = 12;
-                    tvHora.setText(String.format("%d:%02d %s", hora, minuto, ampm));
-                } else {
-                    tvHora.setVisibility(View.GONE);
-                }
-            } catch (Exception e) {
+            String hora = FechaUtils.formatHour(comunicado.fechaPublicacion);
+            if (!"--:--".equals(hora)) {
+                tvHora.setText(hora);
+            } else {
                 tvHora.setVisibility(View.GONE);
             }
         } else {
@@ -718,21 +708,10 @@ public class HomeActivity extends AppCompatActivity {
         // Configurar hora del comunicado
         TextView tvHora = view.findViewById(R.id.tv_hora_comunicado);
         if (comunicado.fechaPublicacion != null && !comunicado.fechaPublicacion.isEmpty()) {
-            try {
-                // Formato del backend: "2024-05-14T10:30:00"
-                String[] partes = comunicado.fechaPublicacion.split("T");
-                if (partes.length > 1) {
-                    String[] horaPartes = partes[1].split(":");
-                    int hora = Integer.parseInt(horaPartes[0]);
-                    int minuto = Integer.parseInt(horaPartes[1]);
-                    String ampm = hora >= 12 ? "PM" : "AM";
-                    if (hora > 12) hora -= 12;
-                    if (hora == 0) hora = 12;
-                    tvHora.setText(String.format("%d:%02d %s", hora, minuto, ampm));
-                } else {
-                    tvHora.setVisibility(View.GONE);
-                }
-            } catch (Exception e) {
+            String hora = FechaUtils.formatHour(comunicado.fechaPublicacion);
+            if (!"--:--".equals(hora)) {
+                tvHora.setText(hora);
+            } else {
                 tvHora.setVisibility(View.GONE);
             }
         } else {
@@ -795,21 +774,11 @@ public class HomeActivity extends AppCompatActivity {
         // Hora
         TextView tvHoraDetalle = modalView.findViewById(R.id.tv_hora_detalle);
         if (comunicado.fechaPublicacion != null && !comunicado.fechaPublicacion.isEmpty()) {
-            try {
-                String[] partes = comunicado.fechaPublicacion.split("T");
-                if (partes.length > 1) {
-                    String[] horaPartes = partes[1].split(":");
-                    int hora = Integer.parseInt(horaPartes[0]);
-                    int minuto = Integer.parseInt(horaPartes[1]);
-                    String ampm = hora >= 12 ? "PM" : "AM";
-                    if (hora > 12) hora -= 12;
-                    if (hora == 0) hora = 12;
-                    tvHoraDetalle.setText(String.format("%d:%02d %s", hora, minuto, ampm));
+            String hora = FechaUtils.formatHour(comunicado.fechaPublicacion);
+            if (!"--:--".equals(hora)) {
+                tvHoraDetalle.setText(hora);
                     tvHoraDetalle.setVisibility(View.VISIBLE);
-                } else {
-                    tvHoraDetalle.setVisibility(View.GONE);
-                }
-            } catch (Exception e) {
+            } else {
                 tvHoraDetalle.setVisibility(View.GONE);
             }
         } else {
@@ -848,49 +817,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private String obtenerFechaFormateada(String fechaPublicacion) {
-        if (fechaPublicacion == null || fechaPublicacion.isEmpty()) return "";
-        try {
-            // Parsear fecha ISO 8601 con zona horaria UTC
-            SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
-            isoFormat.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
-            
-            // Remover la 'Z' y milisegundos si existen
-            String fechaLimpia = fechaPublicacion.replace("Z", "").split("\\.")[0];
-            Date fechaUTC = isoFormat.parse(fechaLimpia);
-            
-            // Convertir a zona horaria de Perú (UTC-5)
-            Calendar fechaCom = Calendar.getInstance();
-            fechaCom.setTime(fechaUTC);
-            fechaCom.setTimeZone(java.util.TimeZone.getTimeZone("America/Lima"));
-            
-            Calendar hoy = Calendar.getInstance();
-            hoy.setTimeZone(java.util.TimeZone.getTimeZone("America/Lima"));
-            
-            Calendar ayer = Calendar.getInstance();
-            ayer.setTimeZone(java.util.TimeZone.getTimeZone("America/Lima"));
-            ayer.add(Calendar.DAY_OF_YEAR, -1);
-            
-            int dia = fechaCom.get(Calendar.DAY_OF_MONTH);
-            int mes = fechaCom.get(Calendar.MONTH);
-            
-            String[] meses = {"Enero","Febrero","Marzo","Abril","Mayo","Junio",
-                              "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"};
-            if (fechaCom.get(Calendar.YEAR) == hoy.get(Calendar.YEAR) &&
-                fechaCom.get(Calendar.DAY_OF_YEAR) == hoy.get(Calendar.DAY_OF_YEAR)) {
-                return "Hoy, " + dia + " de " + meses[mes];
-            } else if (fechaCom.get(Calendar.YEAR) == ayer.get(Calendar.YEAR) &&
-                       fechaCom.get(Calendar.DAY_OF_YEAR) == ayer.get(Calendar.DAY_OF_YEAR)) {
-                return "Ayer, " + dia + " de " + meses[mes];
-            } else {
-                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("EEEE, d 'de' MMMM", new Locale("es", "ES"));
-                sdf.setTimeZone(java.util.TimeZone.getTimeZone("America/Lima"));
-                String r = sdf.format(fechaCom.getTime());
-                return r.substring(0, 1).toUpperCase() + r.substring(1);
-            }
-        } catch (Exception e) {
-            android.util.Log.e("HomeActivity", "Error parseando fecha: " + fechaPublicacion, e);
-            return "";
-        }
+        return FechaUtils.formatDateLabel(fechaPublicacion);
     }
 
     private void mostrarDialogoEnviarComunicado() {
@@ -1093,14 +1020,14 @@ public class HomeActivity extends AppCompatActivity {
                         int rachaActual = jsonData.has("racha_actual") ? jsonData.get("racha_actual").getAsInt() : 0;
                         
                         // Obtener asistencias de la semana
-                        com.google.gson.JsonObject asistenciasSemana = jsonData.has("asistencias_semana") ? 
-                            jsonData.getAsJsonObject("asistencias_semana") : new com.google.gson.JsonObject();
-                        
-                        boolean lunes = asistenciasSemana.has("lunes") && asistenciasSemana.get("lunes").getAsBoolean();
-                        boolean martes = asistenciasSemana.has("martes") && asistenciasSemana.get("martes").getAsBoolean();
-                        boolean miercoles = asistenciasSemana.has("miercoles") && asistenciasSemana.get("miercoles").getAsBoolean();
-                        boolean jueves = asistenciasSemana.has("jueves") && asistenciasSemana.get("jueves").getAsBoolean();
-                        boolean viernes = asistenciasSemana.has("viernes") && asistenciasSemana.get("viernes").getAsBoolean();
+                        com.google.gson.JsonObject estadosSemana = jsonData.has("estados_semana")
+                            ? jsonData.getAsJsonObject("estados_semana") : new com.google.gson.JsonObject();
+
+                        String lunes = obtenerEstadoDia(estadosSemana, "lunes");
+                        String martes = obtenerEstadoDia(estadosSemana, "martes");
+                        String miercoles = obtenerEstadoDia(estadosSemana, "miercoles");
+                        String jueves = obtenerEstadoDia(estadosSemana, "jueves");
+                        String viernes = obtenerEstadoDia(estadosSemana, "viernes");
                         
                         // Actualizar UI
                         actualizarUIAsistencia(rachaActual, lunes, martes, miercoles, jueves, viernes);
@@ -1115,31 +1042,69 @@ public class HomeActivity extends AppCompatActivity {
                 public void onFailure(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<Object>> call, Throwable t) {
                     android.util.Log.e("HomeActivity", "Error al cargar días asistidos: " + t.getMessage());
                     // Resetear valores por defecto si falla la conexión
-                    actualizarUIAsistencia(0, false, false, false, false, false);
+                    actualizarUIAsistencia(0, null, null, null, null, null);
                 }
             });
     }
     
-    private void actualizarUIAsistencia(int racha, boolean lunes, boolean martes, boolean miercoles, boolean jueves, boolean viernes) {
+    private String obtenerEstadoDia(com.google.gson.JsonObject estadosSemana, String dia) {
+        if (!estadosSemana.has(dia) || estadosSemana.get(dia).isJsonNull()) return null;
+        String estado = estadosSemana.get(dia).getAsString();
+        return estado == null || estado.trim().isEmpty() ? null : estado.toLowerCase(Locale.ROOT);
+    }
+
+    private void actualizarUIAsistencia(int racha, String lunes, String martes, String miercoles, String jueves, String viernes) {
         // Actualizar racha (días seguidos)
         TextView tvRacha = findViewById(R.id.tv_streak_number);
         if (tvRacha != null) {
             tvRacha.setText(String.valueOf(racha));
         }
         
-        // Actualizar checkmarks de días de la semana
-        ImageView checkLunes = findViewById(R.id.check_lunes);
-        ImageView checkMartes = findViewById(R.id.check_martes);
-        ImageView checkMiercoles = findViewById(R.id.check_miercoles);
-        ImageView checkJueves = findViewById(R.id.check_jueves);
-        ImageView checkViernes = findViewById(R.id.check_viernes);
-        
-        // Actualizar visibilidad según asistencia
-        if (checkLunes != null) checkLunes.setVisibility(lunes ? View.VISIBLE : View.INVISIBLE);
-        if (checkMartes != null) checkMartes.setVisibility(martes ? View.VISIBLE : View.INVISIBLE);
-        if (checkMiercoles != null) checkMiercoles.setVisibility(miercoles ? View.VISIBLE : View.INVISIBLE);
-        if (checkJueves != null) checkJueves.setVisibility(jueves ? View.VISIBLE : View.INVISIBLE);
-        if (checkViernes != null) checkViernes.setVisibility(viernes ? View.VISIBLE : View.INVISIBLE);
+        actualizarIndicadorEstado((TextView) findViewById(R.id.check_lunes), lunes);
+        actualizarIndicadorEstado((TextView) findViewById(R.id.check_martes), martes);
+        actualizarIndicadorEstado((TextView) findViewById(R.id.check_miercoles), miercoles);
+        actualizarIndicadorEstado((TextView) findViewById(R.id.check_jueves), jueves);
+        actualizarIndicadorEstado((TextView) findViewById(R.id.check_viernes), viernes);
+    }
+
+    private void actualizarIndicadorEstado(TextView indicador, String estado) {
+        if (indicador == null) return;
+        if (estado == null || estado.trim().isEmpty()) {
+            indicador.setText("");
+            indicador.setVisibility(View.INVISIBLE);
+            return;
+        }
+
+        String letra;
+        int color;
+        switch (estado.toLowerCase(Locale.ROOT)) {
+            case "presente":
+            case "asistido":
+                letra = "A";
+                color = Color.rgb(39, 174, 96);
+                break;
+            case "tardanza":
+                letra = "T";
+                color = Color.rgb(239, 108, 0);
+                break;
+            case "falta":
+            case "ausente":
+                letra = "F";
+                color = Color.rgb(186, 25, 36);
+                break;
+            default:
+                indicador.setText("");
+                indicador.setVisibility(View.INVISIBLE);
+                return;
+        }
+
+        GradientDrawable background = new GradientDrawable();
+        background.setShape(GradientDrawable.OVAL);
+        background.setColor(color);
+        indicador.setBackground(background);
+        indicador.setText(letra);
+        indicador.setTextColor(Color.WHITE);
+        indicador.setVisibility(View.VISIBLE);
     }
     
     private void cargarHorarioActual() {
@@ -1517,15 +1482,15 @@ public class HomeActivity extends AppCompatActivity {
         programarProximaActualizacion();
     }
 
-    private void guardarAsistenciaCache(int racha, boolean lunes, boolean martes, boolean miercoles, boolean jueves, boolean viernes) {
+    private void guardarAsistenciaCache(int racha, String lunes, String martes, String miercoles, String jueves, String viernes) {
         SharedPreferences prefs = getSharedPreferences("cache_prefs", MODE_PRIVATE);
         prefs.edit()
             .putInt("asistencia_racha", racha)
-            .putBoolean("asistencia_lunes", lunes)
-            .putBoolean("asistencia_martes", martes)
-            .putBoolean("asistencia_miercoles", miercoles)
-            .putBoolean("asistencia_jueves", jueves)
-            .putBoolean("asistencia_viernes", viernes)
+            .putString("asistencia_lunes_estado", lunes)
+            .putString("asistencia_martes_estado", martes)
+            .putString("asistencia_miercoles_estado", miercoles)
+            .putString("asistencia_jueves_estado", jueves)
+            .putString("asistencia_viernes_estado", viernes)
             .putLong("asistencia_time", System.currentTimeMillis())
             .apply();
     }
@@ -1534,12 +1499,18 @@ public class HomeActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("cache_prefs", MODE_PRIVATE);
         if (!prefs.contains("asistencia_racha")) return;
         int racha = prefs.getInt("asistencia_racha", 0);
-        boolean lunes = prefs.getBoolean("asistencia_lunes", false);
-        boolean martes = prefs.getBoolean("asistencia_martes", false);
-        boolean miercoles = prefs.getBoolean("asistencia_miercoles", false);
-        boolean jueves = prefs.getBoolean("asistencia_jueves", false);
-        boolean viernes = prefs.getBoolean("asistencia_viernes", false);
+        String lunes = obtenerEstadoCache(prefs, "lunes");
+        String martes = obtenerEstadoCache(prefs, "martes");
+        String miercoles = obtenerEstadoCache(prefs, "miercoles");
+        String jueves = obtenerEstadoCache(prefs, "jueves");
+        String viernes = obtenerEstadoCache(prefs, "viernes");
         actualizarUIAsistencia(racha, lunes, martes, miercoles, jueves, viernes);
+    }
+
+    private String obtenerEstadoCache(SharedPreferences prefs, String dia) {
+        String estado = prefs.getString("asistencia_" + dia + "_estado", null);
+        if (estado != null && !estado.trim().isEmpty()) return estado;
+        return prefs.getBoolean("asistencia_" + dia, false) ? "presente" : null;
     }
 
     private boolean comunicadosCacheExpirados() {

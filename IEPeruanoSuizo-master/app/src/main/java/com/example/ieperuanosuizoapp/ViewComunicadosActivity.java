@@ -58,7 +58,9 @@ public class ViewComunicadosActivity extends AppCompatActivity {
 
         // Actualizar título en el header según el filtro
         TextView tvTitle = findViewById(R.id.tv_title);
-        if ("GLOBAL".equals(tipoFiltro)) {
+        if (comunicadoPendienteId != null) {
+            tvTitle.setText("Comunicado");
+        } else if ("GLOBAL".equals(tipoFiltro)) {
             tvTitle.setText("Comunicados");
         } else if ("MI_SALON".equals(tipoFiltro)) {
             String seccion = userPrefs.getString("user_seccion", "");
@@ -161,6 +163,12 @@ public class ViewComunicadosActivity extends AppCompatActivity {
                             }
                         }
 
+                        if (comunicadoPendienteId != null) {
+                            globales.removeIf(c -> !comunicadoPendienteId.equals(c.id));
+                            miSalon.removeIf(c -> !comunicadoPendienteId.equals(c.id));
+                            otrosSalones.removeIf(c -> !comunicadoPendienteId.equals(c.id));
+                        }
+
                         // Ordenar por fecha (más reciente primero)
                         globales.sort((c1, c2) -> {
                             if (c1.fechaPublicacion == null) return 1;
@@ -196,6 +204,7 @@ public class ViewComunicadosActivity extends AppCompatActivity {
 
     private void mostrarComunicados(List<Comunicado> globales, List<Comunicado> miSalon, List<Comunicado> otrosSalones) {
         containerComunicados.removeAllViews();
+        boolean mostrandoNotificacion = comunicadoPendienteId != null;
 
         String rolNormalizado = userMode != null ? userMode.toUpperCase().trim() : "ALUMNO";
         boolean esProfesor = "PROFESOR".equals(rolNormalizado);
@@ -256,7 +265,7 @@ public class ViewComunicadosActivity extends AppCompatActivity {
 
             if (!globales.isEmpty()) {
                 hayAlgo = true;
-                agregarSectionHeader("Comunicados");
+                if (!mostrandoNotificacion) agregarSectionHeader("Comunicados");
                 String fechaAnterior = "";
                 for (Comunicado c : globales) {
                     String fechaFormateada = obtenerFechaFormateada(c.fechaPublicacion);
@@ -275,7 +284,7 @@ public class ViewComunicadosActivity extends AppCompatActivity {
                 String tituloSalon = (seccionAlumno != null && !seccionAlumno.isEmpty())
                     ? "Comunicados - " + seccionAlumno
                     : "Comunicados de mi Salón";
-                agregarSectionHeader(tituloSalon);
+                if (!mostrandoNotificacion) agregarSectionHeader(tituloSalon);
                 String fechaAnterior = "";
                 for (Comunicado c : miSalon) {
                     String fechaFormateada = obtenerFechaFormateada(c.fechaPublicacion);
@@ -290,7 +299,7 @@ public class ViewComunicadosActivity extends AppCompatActivity {
             if (!otrosSalones.isEmpty() && !esAlumno) {
                 hayAlgo = true;
                 String tituloSalones = esAdmin ? "Comunicados por Salón" : "Comunicados de mis Salones";
-                agregarSectionHeader(tituloSalones);
+                if (!mostrandoNotificacion) agregarSectionHeader(tituloSalones);
                 String fechaAnterior = "";
                 for (Comunicado c : otrosSalones) {
                     String fechaFormateada = obtenerFechaFormateada(c.fechaPublicacion);
@@ -365,20 +374,10 @@ public class ViewComunicadosActivity extends AppCompatActivity {
         // Hora
         TextView tvHora = cardView.findViewById(R.id.tv_hora_comunicado);
         if (comunicado.fechaPublicacion != null && !comunicado.fechaPublicacion.isEmpty()) {
-            try {
-                String[] partes = comunicado.fechaPublicacion.split("T");
-                if (partes.length > 1) {
-                    String[] horaPartes = partes[1].split(":");
-                    int hora = Integer.parseInt(horaPartes[0]);
-                    int minuto = Integer.parseInt(horaPartes[1]);
-                    String ampm = hora >= 12 ? "PM" : "AM";
-                    if (hora > 12) hora -= 12;
-                    if (hora == 0) hora = 12;
-                    tvHora.setText(String.format("%d:%02d %s", hora, minuto, ampm));
-                } else {
-                    tvHora.setVisibility(View.GONE);
-                }
-            } catch (Exception e) {
+            String hora = FechaUtils.formatHour(comunicado.fechaPublicacion);
+            if (!"--:--".equals(hora)) {
+                tvHora.setText(hora);
+            } else {
                 tvHora.setVisibility(View.GONE);
             }
         } else {
@@ -438,21 +437,11 @@ public class ViewComunicadosActivity extends AppCompatActivity {
         // Hora
         TextView tvHora = dialogView.findViewById(R.id.tv_hora_detalle);
         if (comunicado.fechaPublicacion != null && !comunicado.fechaPublicacion.isEmpty()) {
-            try {
-                String[] partes = comunicado.fechaPublicacion.split("T");
-                if (partes.length > 1) {
-                    String[] horaPartes = partes[1].split(":");
-                    int hora = Integer.parseInt(horaPartes[0]);
-                    int minuto = Integer.parseInt(horaPartes[1]);
-                    String ampm = hora >= 12 ? "PM" : "AM";
-                    if (hora > 12) hora -= 12;
-                    if (hora == 0) hora = 12;
-                    tvHora.setText(String.format("%d:%02d %s", hora, minuto, ampm));
+            String hora = FechaUtils.formatHour(comunicado.fechaPublicacion);
+            if (!"--:--".equals(hora)) {
+                tvHora.setText(hora);
                     tvHora.setVisibility(View.VISIBLE);
-                } else {
-                    tvHora.setVisibility(View.GONE);
-                }
-            } catch (Exception e) {
+            } else {
                 tvHora.setVisibility(View.GONE);
             }
         } else {
@@ -492,45 +481,7 @@ public class ViewComunicadosActivity extends AppCompatActivity {
     }
 
     private String obtenerFechaFormateada(String fechaPublicacion) {
-        if (fechaPublicacion == null || fechaPublicacion.isEmpty()) return "Fecha desconocida";
-        try {
-            // Parsear fecha ISO 8601 con zona horaria UTC
-            SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
-            isoFormat.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
-            
-            // Remover la 'Z' y milisegundos si existen
-            String fechaLimpia = fechaPublicacion.replace("Z", "").split("\\.")[0];
-            Date fechaUTC = isoFormat.parse(fechaLimpia);
-            
-            // Convertir a zona horaria de Perú (UTC-5)
-            Calendar fechaComunicado = Calendar.getInstance();
-            fechaComunicado.setTime(fechaUTC);
-            fechaComunicado.setTimeZone(java.util.TimeZone.getTimeZone("America/Lima"));
-            
-            Calendar hoy = Calendar.getInstance();
-            hoy.setTimeZone(java.util.TimeZone.getTimeZone("America/Lima"));
-            
-            Calendar ayer = Calendar.getInstance();
-            ayer.setTimeZone(java.util.TimeZone.getTimeZone("America/Lima"));
-            ayer.add(Calendar.DAY_OF_YEAR, -1);
-
-            int dia = fechaComunicado.get(Calendar.DAY_OF_MONTH);
-            int mes = fechaComunicado.get(Calendar.MONTH);
-
-            if (esMismoDia(fechaComunicado, hoy)) {
-                return "Hoy, " + dia + " de " + obtenerNombreMes(mes);
-            } else if (esMismoDia(fechaComunicado, ayer)) {
-                return "Ayer, " + dia + " de " + obtenerNombreMes(mes);
-            } else {
-                SimpleDateFormat sdf = new SimpleDateFormat("EEEE, d 'de' MMMM", new Locale("es", "ES"));
-                sdf.setTimeZone(java.util.TimeZone.getTimeZone("America/Lima"));
-                String resultado = sdf.format(fechaComunicado.getTime());
-                return resultado.substring(0, 1).toUpperCase() + resultado.substring(1);
-            }
-        } catch (Exception e) {
-            android.util.Log.e("ViewComunicados", "Error parseando fecha: " + fechaPublicacion, e);
-            return "Fecha desconocida";
-        }
+        return FechaUtils.formatDateLabel(fechaPublicacion);
     }
 
     private boolean esMismoDia(Calendar cal1, Calendar cal2) {

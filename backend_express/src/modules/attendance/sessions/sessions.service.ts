@@ -7,7 +7,15 @@ class AttendanceSessionsService {
   }
 
   async getToday() {
-    return sessionsRepository.findLatestByDate(getLimaDate());
+    const session = await sessionsRepository.findLatestByDate(getLimaDate());
+    if (!session || session.estado === 'abierta') return session;
+
+    const attendanceCount = await sessionsRepository.countStudentAttendance(session.id);
+    if (attendanceCount === 0) {
+      await sessionsRepository.deleteEmptyClosed(session.id);
+      return null;
+    }
+    return session;
   }
 
   async create(createdBy: string | null) {
@@ -15,7 +23,7 @@ class AttendanceSessionsService {
     const active = await sessionsRepository.findActive(date);
     if (active) return { data: active, reused: true, message: 'Se reutilizó la sesión de asistencia activa' };
 
-    const existing = await sessionsRepository.findLatestByDate(date);
+    const existing = await this.getToday();
     if (existing) {
       const error: any = new Error('La asistencia del día ya fue completada');
       error.status = 409;

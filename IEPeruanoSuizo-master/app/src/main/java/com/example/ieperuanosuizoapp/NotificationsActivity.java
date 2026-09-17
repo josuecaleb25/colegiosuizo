@@ -20,11 +20,8 @@ import com.example.ieperuanosuizoapp.api.RetrofitClient;
 import com.example.ieperuanosuizoapp.api.models.Notificacion;
 import com.example.ieperuanosuizoapp.api.models.NotificacionesResponse;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -91,16 +88,15 @@ public class NotificationsActivity extends AppCompatActivity {
                         rv.setVisibility(View.VISIBLE);
                         layoutEmpty.setVisibility(View.GONE);
                         String currentGroup = "";
-                        SimpleDateFormat todayFmt = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-                        String today = todayFmt.format(new Date());
+                        String today = FechaUtils.todayKey();
 
                         for (Notificacion n : notificaciones) {
                             String fechaStr = n.getFechaEnvio();
-                            if (fechaStr != null && fechaStr.length() >= 10) {
-                                String fechaDay = fechaStr.substring(0, 10);
+                            String fechaDay = FechaUtils.dayKey(fechaStr);
+                            if (!fechaDay.isEmpty()) {
                                 if (!fechaDay.equals(currentGroup)) {
                                     currentGroup = fechaDay;
-                                    String label = fechaDay.equals(today) ? "Hoy" : formatearFecha(fechaStr);
+                                    String label = fechaDay.equals(today) ? "Hoy" : FechaUtils.formatDateLabel(fechaStr);
                                     items.add(new NotifItem(label, true, null));
                                 }
                             }
@@ -124,14 +120,7 @@ public class NotificationsActivity extends AppCompatActivity {
     }
 
     private String formatearFecha(String fechaIso) {
-        try {
-            SimpleDateFormat iso = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
-            Date d = iso.parse(fechaIso);
-            SimpleDateFormat fmt = new SimpleDateFormat("d 'de' MMMM", new Locale("es", "PE"));
-            return fmt.format(d);
-        } catch (Exception e) {
-            return fechaIso.length() >= 10 ? fechaIso.substring(0, 10) : fechaIso;
-        }
+        return FechaUtils.formatDateLabel(fechaIso);
     }
 
     private static class NotifItem {

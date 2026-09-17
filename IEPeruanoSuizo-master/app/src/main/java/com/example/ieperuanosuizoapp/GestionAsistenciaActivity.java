@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.ieperuanosuizoapp.api.RetrofitClient;
 import com.example.ieperuanosuizoapp.api.models.ApiResponse;
 import com.example.ieperuanosuizoapp.api.models.AsistenciaAlumno;
+import com.example.ieperuanosuizoapp.api.models.AsistenciaResumenDia;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -34,17 +35,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import retrofit2.Response;
 
@@ -100,102 +93,63 @@ public class GestionAsistenciaActivity extends AppCompatActivity {
         rvHistorial.setAdapter(historialAdapter);
     }
 
-    /**
-     * Días hábiles desde el 1 de enero del año en curso hasta hoy (una petición API por fecha).
-     * En el peor caso (fin de año) son ~261 días laborables; en mitad de año, menos.
-     */
-    private List<String> construirFechasLaborablesAnoEnCurso() {
-        List<String> out = new ArrayList<>();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-        Calendar inicio = Calendar.getInstance();
-        inicio.set(Calendar.MONTH, Calendar.JANUARY);
-        inicio.set(Calendar.DAY_OF_MONTH, 1);
-        inicio.set(Calendar.HOUR_OF_DAY, 0);
-        inicio.set(Calendar.MINUTE, 0);
-        inicio.set(Calendar.SECOND, 0);
-        inicio.set(Calendar.MILLISECOND, 0);
-
-        Calendar c = Calendar.getInstance();
-        c.set(Calendar.HOUR_OF_DAY, 0);
-        c.set(Calendar.MINUTE, 0);
-        c.set(Calendar.SECOND, 0);
-        c.set(Calendar.MILLISECOND, 0);
-
-        while (!c.before(inicio)) {
-            int dow = c.get(Calendar.DAY_OF_WEEK);
-            if (dow != Calendar.SATURDAY && dow != Calendar.SUNDAY) {
-                out.add(sdf.format(c.getTime()));
-            }
-            c.add(Calendar.DAY_OF_MONTH, -1);
-        }
-        return out;
-    }
-
     private void cargarHistorial() {
         progressHistorial.setVisibility(View.VISIBLE);
         rvHistorial.setVisibility(View.GONE);
         layoutEmpty.setVisibility(View.GONE);
 
-        new Thread(() -> {
-            List<String> fechas = construirFechasLaborablesAnoEnCurso();
-            // Asegurarnos de que "hoy" esté en la lista para que el registro local se vea
-            String hoy = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Calendar.getInstance().getTime());
-            if (!fechas.contains(hoy)) {
-                fechas.add(0, hoy);
-            }
-            ExecutorService pool = Executors.newFixedThreadPool(8);
-            CountDownLatch latch = new CountDownLatch(fechas.size());
-            List<AsistenciaDiaResumen> acumulado = Collections.synchronizedList(new ArrayList<>());
+        Calendar ahora = Calendar.getInstance();
+        String desde = String.format(Locale.US, "%04d-01-01", ahora.get(Calendar.YEAR));
+        String hasta = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(ahora.getTime());
 
-            for (String fecha : fechas) {
-                pool.execute(() -> {
-                    try {
-                        Response<ApiResponse<List<AsistenciaAlumno>>> response =
-                            RetrofitClient.getApiService().getAsistenciaPorFecha(fecha).execute();
-                        if (response.isSuccessful()
-                            && response.body() != null
-                            && response.body().isSuccess()) {
-                            List<AsistenciaAlumno> data = response.body().getData();
-                            if (data != null && !data.isEmpty()) {
-                                acumulado.add(new AsistenciaDiaResumen(fecha, new ArrayList<>(data)));
-                            }
-                        }
-                    } catch (IOException ignored) {
-                    } finally {
-                        latch.countDown();
+        RetrofitClient.getApiService().getResumenAsistencia(desde, hasta)
+            .enqueue(new retrofit2.Callback<ApiResponse<List<AsistenciaResumenDia>>>() {
+                @Override
+                public void onResponse(retrofit2.Call<ApiResponse<List<AsistenciaResumenDia>>> call,
+                                       Response<ApiResponse<List<AsistenciaResumenDia>>> response) {
+                    progressHistorial.setVisibility(View.GONE);
+                    if (!response.isSuccessful() || response.body() == null || !response.body().isSuccess()) {
+                        mostrarHistorialVacio("No se pudo cargar el historial de asistencias.");
+                        return;
                     }
-                });
-            }
 
-            try {
-                latch.await(240, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            pool.shutdown();
+                    List<AsistenciaResumenDia> resumenes = response.body().getData();
+                    List<AsistenciaDiaResumen> ordenados = new ArrayList<>();
+                    if (resumenes != null) {
+                        for (AsistenciaResumenDia resumen : resumenes) {
+                            ordenados.add(new AsistenciaDiaResumen(
+                                resumen.getFecha(),
+                                resumen.getPresentes(),
+                                resumen.getTardanzas(),
+                                resumen.getAusentes()
+                            ));
+                        }
+                    }
 
-            List<AsistenciaDiaResumen> ordenados = new ArrayList<>(acumulado);
-            
-            // Ya no usamos caché local, todo viene del backend
-            ordenados.sort((a, b) -> b.fechaIso.compareTo(a.fechaIso));
-            
-            List<Object> filas = construirFilasAgrupadas(ordenados);
-
-            runOnUiThread(() -> {
-                if (isFinishing()) {
-                    return;
+                    List<Object> filas = construirFilasAgrupadas(ordenados);
+                    if (filas.isEmpty()) {
+                        mostrarHistorialVacio(null);
+                    } else {
+                        layoutEmpty.setVisibility(View.GONE);
+                        rvHistorial.setVisibility(View.VISIBLE);
+                        historialAdapter.setItems(filas);
+                    }
                 }
-                progressHistorial.setVisibility(View.GONE);
-                if (filas.isEmpty()) {
-                    layoutEmpty.setVisibility(View.VISIBLE);
-                    rvHistorial.setVisibility(View.GONE);
-                } else {
-                    layoutEmpty.setVisibility(View.GONE);
-                    rvHistorial.setVisibility(View.VISIBLE);
-                    historialAdapter.setItems(filas);
+
+                @Override
+                public void onFailure(retrofit2.Call<ApiResponse<List<AsistenciaResumenDia>>> call, Throwable t) {
+                    progressHistorial.setVisibility(View.GONE);
+                    mostrarHistorialVacio("No se pudo cargar el historial de asistencias.");
                 }
             });
-        }).start();
+    }
+
+    private void mostrarHistorialVacio(String mensaje) {
+        layoutEmpty.setVisibility(View.VISIBLE);
+        rvHistorial.setVisibility(View.GONE);
+        if (mensaje != null) {
+            Toast.makeText(this, mensaje, Toast.LENGTH_LONG).show();
+        }
     }
 
     private List<Object> construirFilasAgrupadas(List<AsistenciaDiaResumen> ordenadosDesc) {
@@ -223,10 +177,41 @@ public class GestionAsistenciaActivity extends AppCompatActivity {
     }
 
     private void mostrarDetalleDia(AsistenciaDiaResumen resumen) {
-        DetalleAsistenciaActivity.dataTransfer = resumen.alumnos;
-        DetalleAsistenciaActivity.dateTransfer = resumen.fechaIso;
-        Intent intent = new Intent(this, DetalleAsistenciaActivity.class);
-        startActivity(intent);
+        cargarDetalleDia(resumen, () -> {
+            DetalleAsistenciaActivity.dataTransfer = resumen.alumnos;
+            DetalleAsistenciaActivity.dateTransfer = resumen.fechaIso;
+            startActivity(new Intent(this, DetalleAsistenciaActivity.class));
+        });
+    }
+
+    private void cargarDetalleDia(AsistenciaDiaResumen resumen, Runnable onSuccess) {
+        android.app.ProgressDialog progress = new android.app.ProgressDialog(this);
+        progress.setMessage("Cargando detalle...");
+        progress.setCancelable(false);
+        progress.show();
+
+        RetrofitClient.getApiService().getAsistenciaPorFecha(resumen.fechaIso)
+            .enqueue(new retrofit2.Callback<ApiResponse<List<AsistenciaAlumno>>>() {
+                @Override
+                public void onResponse(retrofit2.Call<ApiResponse<List<AsistenciaAlumno>>> call,
+                                       Response<ApiResponse<List<AsistenciaAlumno>>> response) {
+                    progress.dismiss();
+                    if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                        resumen.setAlumnos(response.body().getData());
+                        onSuccess.run();
+                    } else {
+                        Toast.makeText(GestionAsistenciaActivity.this,
+                            "No se pudo cargar el detalle de ese día.", Toast.LENGTH_LONG).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(retrofit2.Call<ApiResponse<List<AsistenciaAlumno>>> call, Throwable t) {
+                    progress.dismiss();
+                    Toast.makeText(GestionAsistenciaActivity.this,
+                        "Sin conexión: no se pudo cargar el detalle.", Toast.LENGTH_LONG).show();
+                }
+            });
     }
 
     private void confirmarEliminarRegistroLocal(AsistenciaDiaResumen resumen) {
@@ -242,6 +227,11 @@ public class GestionAsistenciaActivity extends AppCompatActivity {
     }
 
     private void eliminarAsistenciasDelBackend(AsistenciaDiaResumen resumen) {
+        if (!resumen.detalleCargado) {
+            cargarDetalleDia(resumen, () -> eliminarAsistenciasDelBackend(resumen));
+            return;
+        }
+
         // Mostrar progreso
         android.app.ProgressDialog progress = new android.app.ProgressDialog(this);
         progress.setMessage("Eliminando asistencias...");
@@ -444,7 +434,8 @@ public class GestionAsistenciaActivity extends AppCompatActivity {
 
     private static class AsistenciaDiaResumen {
         final String fechaIso;
-        final List<AsistenciaAlumno> alumnos;
+        List<AsistenciaAlumno> alumnos;
+        boolean detalleCargado;
         final boolean desdeLocal;
         final int presentesAtiempo;
         final int tardanzas;
@@ -456,7 +447,8 @@ public class GestionAsistenciaActivity extends AppCompatActivity {
 
         AsistenciaDiaResumen(String fechaIso, List<AsistenciaAlumno> alumnos, boolean desdeLocal) {
             this.fechaIso = fechaIso;
-            this.alumnos = alumnos;
+            this.alumnos = alumnos != null ? alumnos : new ArrayList<>();
+            this.detalleCargado = true;
             this.desdeLocal = desdeLocal;
             int at = 0;
             int tard = 0;
@@ -477,6 +469,21 @@ public class GestionAsistenciaActivity extends AppCompatActivity {
             this.presentesAtiempo = at;
             this.tardanzas = tard;
             this.ausentes = aus;
+        }
+
+        AsistenciaDiaResumen(String fechaIso, int presentes, int tardanzas, int ausentes) {
+            this.fechaIso = fechaIso;
+            this.alumnos = new ArrayList<>();
+            this.detalleCargado = false;
+            this.desdeLocal = false;
+            this.presentesAtiempo = presentes;
+            this.tardanzas = tardanzas;
+            this.ausentes = ausentes;
+        }
+
+        void setAlumnos(List<AsistenciaAlumno> alumnos) {
+            this.alumnos = alumnos != null ? new ArrayList<>(alumnos) : new ArrayList<>();
+            this.detalleCargado = true;
         }
     }
 

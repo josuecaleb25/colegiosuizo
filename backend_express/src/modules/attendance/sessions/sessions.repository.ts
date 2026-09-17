@@ -44,6 +44,25 @@ class AttendanceSessionsRepository {
     if (error) throw error;
     return data;
   }
+
+  async countStudentAttendance(sessionId: string) {
+    const { count, error } = await supabase
+      .from('asistencias')
+      .select('id', { count: 'exact', head: true })
+      .eq('sesion_id', sessionId)
+      .eq('tipo_persona', 'alumno');
+    if (error) throw error;
+    return count || 0;
+  }
+
+  async deleteEmptyClosed(id: string) {
+    const { error } = await supabase
+      .from('asistencia_sesiones')
+      .delete()
+      .eq('id', id)
+      .eq('estado', 'cerrada');
+    if (error) throw error;
+  }
 }
 
 export default new AttendanceSessionsRepository();

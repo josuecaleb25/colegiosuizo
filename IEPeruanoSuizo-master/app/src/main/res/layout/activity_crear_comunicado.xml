@@ -41,7 +41,7 @@
             android:id="@+id/tv_title_header"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/potanosansbold"
+            android:fontFamily="@font/dmsanssemibold"
             android:text="Crear comunicado"
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="18sp"
@@ -71,7 +71,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/poppinsregular"
+                android:fontFamily="@font/dmsansregular"
                 android:text="Escribe el comunicado que deseas publicar"
                 android:textColor="#5E5F60"
                 android:textSize="13sp" />
@@ -81,7 +81,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:fontFamily="@font/poppinssemibold"
+                android:fontFamily="@font/dmsanssemibold"
                 android:text="Asunto:"
                 android:textColor="#BA1924"
                 android:textSize="13sp" />
@@ -92,7 +92,7 @@
                 android:layout_height="50dp"
                 android:layout_marginTop="8dp"
                 android:background="@drawable/input_border_selector"
-                android:fontFamily="@font/poppinsregular"
+                android:fontFamily="@font/dmsanssemibold"
                 android:paddingHorizontal="16dp"
                 android:textColor="#141A1E"
                 android:textSize="14sp"
@@ -103,7 +103,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:fontFamily="@font/poppinssemibold"
+                android:fontFamily="@font/dmsanssemibold"
                 android:text="Descripcion:"
                 android:textColor="#BA1924"
                 android:textSize="13sp" />
@@ -127,7 +127,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:fontFamily="@font/poppinssemibold"
+                android:fontFamily="@font/dmsanssemibold"
                 android:text="Seleccionar Destinatarios:"
                 android:textColor="#BA1924"
                 android:textSize="13sp" />
@@ -157,7 +157,7 @@
                     android:paddingTop="0dp"
                     android:paddingBottom="0dp"
                     android:textColor="@android:color/white"
-                    android:fontFamily="@font/poppinsregular"
+                    android:fontFamily="@font/dmsansregular"
                     android:textSize="14sp"
                     android:dropDownHeight="150dp"
                     android:popupBackground="@android:color/white"
@@ -169,7 +169,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:fontFamily="@font/poppinssemibold"
+                android:fontFamily="@font/dmsanssemibold"
                 android:text="Adjuntar Imagen:"
                 android:textColor="#BA1924"
                 android:textSize="14sp" />
@@ -203,7 +203,7 @@
                 android:text="Crear"
                 android:textAllCaps="false"
                 android:textColor="@android:color/white"
-                android:fontFamily="@font/poppinssemibold"
+                android:fontFamily="@font/dmsansmedium"
                 android:backgroundTint="#BA1924"
                 app:cornerRadius="12dp" />
 

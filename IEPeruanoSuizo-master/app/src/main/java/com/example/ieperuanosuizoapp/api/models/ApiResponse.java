@@ -4,6 +4,7 @@ import java.util.List;
 
 public class ApiResponse<T> {
     private boolean success;
+    private String code;
     private String message;
     private T data;
     private int total;
@@ -14,6 +15,14 @@ public class ApiResponse<T> {
 
     public void setSuccess(boolean success) {
         this.success = success;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public String getMessage() {

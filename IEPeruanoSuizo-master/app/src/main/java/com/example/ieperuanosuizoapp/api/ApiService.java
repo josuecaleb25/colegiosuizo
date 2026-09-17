@@ -52,6 +52,10 @@ public interface ApiService {
     @GET("asistencia/sesiones/activa")
     Call<ApiResponse<com.example.ieperuanosuizoapp.api.models.SesionAsistencia>> getSesionActiva();
 
+    // Obtener la sesión del día, abierta o cerrada
+    @GET("asistencia/sesiones/hoy")
+    Call<ApiResponse<com.example.ieperuanosuizoapp.api.models.SesionAsistencia>> getSesionDelDia();
+
     // Crear una sesión de asistencia
     @POST("asistencia/sesiones")
     Call<ApiResponse<com.example.ieperuanosuizoapp.api.models.SesionAsistencia>> crearSesion(@Body Map<String, String> body);
@@ -171,6 +175,12 @@ public interface ApiService {
     @GET("admin/asistencia/fecha")
     Call<ApiResponse<List<AsistenciaAlumno>>> getAsistenciaPorFecha(
         @Query("fecha") String fecha
+    );
+
+    @GET("admin/asistencia/historial")
+    Call<ApiResponse<List<com.example.ieperuanosuizoapp.api.models.AsistenciaResumenDia>>> getResumenAsistencia(
+        @Query("desde") String desde,
+        @Query("hasta") String hasta
     );
     
     // Asistencia - Obtener días asistidos de un alumno
