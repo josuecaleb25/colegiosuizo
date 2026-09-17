@@ -20,12 +20,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="visible" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/bg_scanner_overlay"
-            android:importantForAccessibility="no" />
     </FrameLayout>
 
     <ImageButton
@@ -58,39 +52,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <FrameLayout
-        android:id="@+id/scanner_viewfinder"
-        android:layout_width="336dp"
-        android:layout_height="343dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <View
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/bg_scanner_corner" />
-        <View
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_gravity="top|end"
-            android:rotation="90"
-            android:background="@drawable/bg_scanner_corner" />
-        <View
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_gravity="bottom|start"
-            android:rotation="270"
-            android:background="@drawable/bg_scanner_corner" />
-        <View
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_gravity="bottom|end"
-            android:rotation="180"
-            android:background="@drawable/bg_scanner_corner" />
-    </FrameLayout>
 
     <LinearLayout
         android:id="@+id/scanner_bottom_bar"

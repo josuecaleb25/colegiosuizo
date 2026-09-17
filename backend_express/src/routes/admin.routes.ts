@@ -207,13 +207,22 @@ router.get('/asistencia/historial', async (req, res) => {
     }
 
     let rows: any[] = [];
+    let resumen = new Map<string, { fecha: string; presentes: number; tardanzas: number; ausentes: number }>();
     const { data: rpcData, error: rpcError } = await supabase.rpc('resumen_asistencias_por_rango', {
       p_desde: desde,
       p_hasta: hasta
     });
 
     if (!rpcError) {
-      rows = rpcData || [];
+      for (const row of rpcData || []) {
+        const fecha = String(row.fecha);
+        resumen.set(fecha, {
+          fecha,
+          presentes: Number(row.presentes) || 0,
+          tardanzas: Number(row.tardanzas) || 0,
+          ausentes: Number(row.ausentes) || 0
+        });
+      }
     } else if (rpcError.code === 'PGRST202' || rpcError.code === '42883') {
       // Fallback for deployments where the summary function has not been applied yet.
       for (let offset = 0; ; offset += 1000) {
@@ -232,15 +241,16 @@ router.get('/asistencia/historial', async (req, res) => {
       throw rpcError;
     }
 
-    const resumen = new Map<string, { fecha: string; presentes: number; tardanzas: number; ausentes: number }>();
-    for (const row of rows) {
-      const fecha = String(row.fecha);
-      const actual = resumen.get(fecha) || { fecha, presentes: 0, tardanzas: 0, ausentes: 0 };
-      const estado = String(row.estado || '').toLowerCase();
-      if (estado === 'tardanza') actual.tardanzas++;
-      else if (estado === 'falta' || estado === 'ausente') actual.ausentes++;
-      else if (estado === 'presente') actual.presentes++;
-      resumen.set(fecha, actual);
+    if (rpcError) {
+      for (const row of rows) {
+        const fecha = String(row.fecha);
+        const actual = resumen.get(fecha) || { fecha, presentes: 0, tardanzas: 0, ausentes: 0 };
+        const estado = String(row.estado || '').toLowerCase();
+        if (estado === 'tardanza') actual.tardanzas++;
+        else if (estado === 'falta' || estado === 'ausente') actual.ausentes++;
+        else if (estado === 'presente') actual.presentes++;
+        resumen.set(fecha, actual);
+      }
     }
 
     return res.json({
