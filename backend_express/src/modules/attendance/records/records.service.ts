@@ -1,5 +1,6 @@
 import notificationService from '../../notifications/notifications.service';
 import recordsRepository from './records.repository';
+import { attendanceNotificationTitle, buildAttendanceMessage } from '../attendance-notification-text';
 
 const LIMA_TIME_ZONE = 'America/Lima';
 
@@ -31,7 +32,7 @@ class AttendanceRecordsService {
     });
 
     const person = personFromStudent(student);
-    await this.notify(student.id, person, input.status, date, data?.id);
+    await this.notify(student.id, person, input.status, date, data?.id, data?.hora_entrada);
     return data;
   }
 
@@ -70,8 +71,8 @@ class AttendanceRecordsService {
       try {
         await notificationService.enviarAEstudiante(studentId, {
           tipo: 'asistencia',
-          titulo: 'Ausencia registrada',
-          mensaje: `No se registró asistencia de su hijo/a el ${date}.`,
+          titulo: attendanceNotificationTitle('falta'),
+          mensaje: buildAttendanceMessage({ status: 'falta', date }),
           asistenciaId: attendance?.id || null,
           datos: { alumno_id: studentId, estado: 'falta', fecha: date }
         });
@@ -94,16 +95,13 @@ class AttendanceRecordsService {
     return { existing: false, data };
   }
 
-  private async notify(studentId: string, person: any, status: string, date: string, attendanceId?: string) {
+  private async notify(studentId: string, person: any, status: string, date: string, attendanceId?: string, time?: string | null) {
     const name = person ? `${person.nombres} ${person.apellidos}` : 'El estudiante';
-    const statusText = status === 'presente' ? 'a tiempo' : status === 'tardanza' ? 'con tardanza' : status.toLowerCase();
     try {
       await notificationService.enviarAEstudiante(studentId, {
         tipo: 'asistencia',
-        titulo: status === 'falta' ? 'Ausencia registrada' : 'Asistencia registrada',
-        mensaje: status === 'falta'
-          ? `${name} no registró asistencia el ${date}.`
-          : `${name} registró asistencia ${statusText}.`,
+          titulo: attendanceNotificationTitle(status),
+          mensaje: buildAttendanceMessage({ name, status, time, date }),
         asistenciaId: attendanceId || null,
         datos: { alumno_id: studentId, estado: status, fecha: date }
       });

@@ -1,5 +1,6 @@
 import notificationService from '../../notifications/notifications.service';
 import qrRepository from './qr.repository';
+import { attendanceNotificationTitle, buildAttendanceMessage, formatAttendanceTime } from '../attendance-notification-text';
 
 const LIMA_TIME_ZONE = 'America/Lima';
 
@@ -47,16 +48,20 @@ class QrAttendanceService {
 
   async notifyStudent(result: any) {
     if (!result.created || !result.studentId) return;
-    const statusText = result.status === 'presente' ? 'a tiempo' : 'con tardanza';
     await notificationService.enviarAEstudiante(result.studentId, {
       tipo: 'asistencia',
-      titulo: 'Asistencia registrada',
-      mensaje: `Su hijo/a ${result.studentName} registró asistencia ${statusText} a las ${result.time}.`,
+      titulo: attendanceNotificationTitle(result.status),
+      mensaje: buildAttendanceMessage({
+        name: result.studentName,
+        status: result.status,
+        time: result.time,
+        date: result.date
+      }),
       asistenciaId: result.attendanceId,
       datos: {
         alumno_id: String(result.studentId),
         estado: result.status,
-        hora: result.time,
+        hora: formatAttendanceTime(result.time),
         fecha: result.date
       }
     });

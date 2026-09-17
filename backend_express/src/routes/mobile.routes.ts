@@ -3,6 +3,7 @@ import supabase from '../config/database';
 import { authMiddleware, optionalAuthMiddleware, AuthRequest } from '../middleware/auth';
 import notificationService from '../modules/notifications/notifications.service';
 import { scanAttendanceQr } from '../modules/attendance/qr/qr.controller';
+import { attendanceNotificationTitle, buildAttendanceMessage, formatAttendanceTime } from '../modules/attendance/attendance-notification-text';
 import { getLimaDate } from '../services/attendance-session.service';
 
 const router = Router();
@@ -394,16 +395,20 @@ router.post('/asistencia/escanear-qr', authMiddleware, async (req: AuthRequest, 
           if (alumnoError || !alumno) return;
 
           const nombreCompleto = `${personaData?.nombres} ${personaData?.apellidos}`;
-          const estadoTexto = estadoRegistrado === 'presente' ? 'a tiempo' : 'con tardanza';
           await notificationService.enviarAEstudiante(alumno.id, {
             tipo: 'asistencia',
-            titulo: 'Asistencia registrada',
-            mensaje: `Su hijo/a ${nombreCompleto} registró asistencia ${estadoTexto} a las ${horaFormateada}.`,
+            titulo: attendanceNotificationTitle(estadoRegistrado),
+            mensaje: buildAttendanceMessage({
+              name: nombreCompleto,
+              status: estadoRegistrado,
+              time: horaFormateada,
+              date: fechaLima
+            }),
             asistenciaId,
             datos: {
               alumno_id: alumno.id.toString(),
               estado: estadoRegistrado,
-              hora: horaFormateada,
+              hora: formatAttendanceTime(horaFormateada),
               fecha: fechaLima
             }
           });

@@ -1,5 +1,6 @@
 import { messaging } from '../config/firebase';
 import supabase from '../config/database';
+import { attendanceNotificationTitle, buildAttendanceMessage } from '../modules/attendance/attendance-notification-text';
 
 interface NotificationData {
   tipo: 'asistencia' | 'comunicado' | 'calificacion';
@@ -84,8 +85,8 @@ class NotificationService {
       estudiante_id: recipient.estudianteId || null,
       asistencia_id: registro.asistenciaId,
       tipo: 'asistencia',
-      titulo: 'Ausencia registrada',
-      mensaje: `No se registró asistencia de su hijo/a el ${registro.fecha}.`,
+      titulo: attendanceNotificationTitle('falta'),
+      mensaje: buildAttendanceMessage({ status: 'falta', date: registro.fecha }),
       datos: {
         alumno_id: registro.estudianteId,
         estado: 'falta',
@@ -125,8 +126,8 @@ class NotificationService {
         return messaging!.send({
           token: row.token,
           notification: {
-            title: 'Ausencia registrada',
-            body: `No se registró asistencia de su hijo/a el ${registro.fecha}.`
+            title: attendanceNotificationTitle('falta'),
+            body: buildAttendanceMessage({ status: 'falta', date: registro.fecha })
           },
           data: {
             tipo: 'asistencia',
