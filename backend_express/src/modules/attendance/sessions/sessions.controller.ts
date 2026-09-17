@@ -16,6 +16,20 @@ export async function getActiveSession(_req: AuthRequest, res: Response) {
   }
 }
 
+export async function getTodaySession(_req: AuthRequest, res: Response) {
+  try {
+    const data = await sessionsService.getToday();
+    return res.json({
+      success: true,
+      data: data || null,
+      message: data ? 'Sesión del día encontrada' : 'No hay sesión registrada hoy'
+    });
+  } catch (error: any) {
+    console.error('Error getting today attendance session:', error.message);
+    return res.status(500).json({ success: false, message: 'Error al obtener la sesión del día' });
+  }
+}
+
 export async function createSession(req: AuthRequest, res: Response) {
   try {
     const result = await sessionsService.create(req.body?.creado_por || null);
