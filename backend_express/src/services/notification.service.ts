@@ -29,14 +29,117 @@ class NotificationService {
     if (recipients.length === 0) {
       return { success: false, message: 'No se encontró la cuenta del alumno' };
     }
-    await this.guardarHistorial(recipients, notificacion);
-    return this.enviarPush(recipients, notificacion);
+    const nuevosDestinatarios = await this.guardarHistorial(recipients, notificacion);
+    return this.enviarPush(nuevosDestinatarios, notificacion);
   }
 
   async enviarAMultiplesEstudiantes(estudianteIds: string[], notificacion: NotificationData) {
     const recipients = await this.obtenerDestinatariosDeAlumnos(estudianteIds);
-    await this.guardarHistorial(recipients, notificacion);
-    return this.enviarPush(recipients, notificacion);
+    const nuevosDestinatarios = await this.guardarHistorial(recipients, notificacion);
+    return this.enviarPush(nuevosDestinatarios, notificacion);
+  }
+
+  async enviarAusencias(registros: Array<{ estudianteId: string; asistenciaId: string; fecha: string }>) {
+    const unicosRegistros = [...new Map(registros.map((registro) => [registro.asistenciaId, registro])).values()];
+    if (unicosRegistros.length === 0) return { success: true, enviados: 0, total: 0 };
+
+    const studentIds = unicosRegistros.map((registro) => registro.estudianteId);
+    const recipients = await this.obtenerDestinatariosDeAlumnos(studentIds);
+    const recipientByStudent = new Map(
+      recipients.map((recipient) => [recipient.estudianteId, recipient])
+    );
+    const attendanceIds = unicosRegistros.map((registro) => registro.asistenciaId);
+
+    const { data: existentes, error: existentesError } = await supabase
+      .from('notificaciones_historial')
+      .select('asistencia_id, persona_id')
+      .eq('tipo', 'asistencia')
+      .in('asistencia_id', attendanceIds);
+    if (existentesError) throw existentesError;
+
+    const notificados = new Set((existentes || []).map((row: any) =>
+      `${row.asistencia_id}:${row.persona_id}`
+    ));
+    const pendientes = unicosRegistros
+      .map((registro) => ({
+        registro,
+        recipient: recipientByStudent.get(registro.estudianteId)
+      }))
+      .filter((item) => item.recipient)
+      .filter(({ registro, recipient }) =>
+        !notificados.has(`${registro.asistenciaId}:${recipient!.personaId}`)
+      ) as Array<{
+        registro: { estudianteId: string; asistenciaId: string; fecha: string };
+        recipient: NotificationRecipient;
+      }>;
+
+    if (pendientes.length === 0) return { success: true, enviados: 0, total: 0 };
+
+    const history = pendientes.map(({ registro, recipient }) => ({
+      persona_id: recipient.personaId,
+      estudiante_id: recipient.estudianteId || null,
+      asistencia_id: registro.asistenciaId,
+      tipo: 'asistencia',
+      titulo: 'Ausencia registrada',
+      mensaje: `No se registró asistencia de su hijo/a el ${registro.fecha}.`,
+      datos: {
+        alumno_id: registro.estudianteId,
+        estado: 'falta',
+        fecha: registro.fecha
+      }
+    }));
+    const { error: historyError } = await supabase
+      .from('notificaciones_historial')
+      .insert(history);
+    if (historyError) throw historyError;
+
+    if (!this.isFirebaseAvailable()) {
+      return { success: false, message: 'Firebase no disponible', enviados: 0, total: pendientes.length };
+    }
+
+    const personaIds = [...new Set(pendientes.map(({ recipient }) => recipient.personaId))];
+    const tokenBatches = await Promise.all(this.dividirEnLotes(personaIds, 100).map(async (batch) => {
+      const { data, error } = await supabase
+        .from('device_tokens')
+        .select('token, persona_id')
+        .in('persona_id', batch);
+      if (error) throw error;
+      return data || [];
+    }));
+    const tokens = tokenBatches.flat();
+    const pendingByPersona = new Map(
+      pendientes.map(({ registro, recipient }) => [recipient.personaId, registro])
+    );
+
+    let enviados = 0;
+    for (const lote of this.dividirEnLotes(tokens, 500)) {
+      const resultados = await Promise.all(lote.map((row: { token: string; persona_id: string }) => {
+        const registro = pendingByPersona.get(row.persona_id);
+        if (!registro) return Promise.resolve(null);
+        return messaging!.send({
+          token: row.token,
+          notification: {
+            title: 'Ausencia registrada',
+            body: `No se registró asistencia de su hijo/a el ${registro.fecha}.`
+          },
+          data: {
+            tipo: 'asistencia',
+            asistencia_id: registro.asistenciaId,
+            alumno_id: registro.estudianteId,
+            estado: 'falta',
+            fecha: registro.fecha
+          },
+          android: { priority: 'high', notification: { sound: 'default', channelId: 'asistencia_channel' } }
+        }).then(() => true).catch((error: any) => {
+          if (this.esTokenFCMInvalido(error)) return this.eliminarTokenInvalido(row.token);
+          console.error(`Failed to send absence notification to token ${row.token.substring(0, 20)}...:`, error.message);
+          return null;
+        });
+      }));
+      enviados += resultados.filter(Boolean).length;
+    }
+
+    return { success: true, enviados, total: tokens.length };
   }
 
   // Comunicado dirigido a alumnos de la sección y docentes asignados.
@@ -61,8 +164,8 @@ class NotificationService {
       if (recipients.length === 0) {
         return { success: false, message: 'No hay destinatarios en esta sección' };
       }
-      await this.guardarHistorial(recipients, notificacion);
-      return this.enviarPush(recipients, notificacion);
+      const nuevosDestinatarios = await this.guardarHistorial(recipients, notificacion);
+      return this.enviarPush(nuevosDestinatarios, notificacion);
     } catch (error: any) {
       console.error('Error al enviar comunicado a sección:', error.message);
       return { success: false, error: error.message };
@@ -102,8 +205,8 @@ class NotificationService {
     }
 
     const uniqueRecipients = this.unicos(recipients);
-    await this.guardarHistorial(uniqueRecipients, notificacion);
-    return this.enviarPush(uniqueRecipients, notificacion);
+    const nuevosDestinatarios = await this.guardarHistorial(uniqueRecipients, notificacion);
+    return this.enviarPush(nuevosDestinatarios, notificacion);
   }
 
   private async obtenerDestinatariosDeAlumnos(estudianteIds: string[]) {
@@ -210,8 +313,29 @@ class NotificationService {
   }
 
   private async guardarHistorial(recipients: NotificationRecipient[], notificacion: NotificationData) {
-    if (recipients.length === 0) return;
-    const registros = this.unicos(recipients).map((recipient) => ({
+    const unicosRecipients = this.unicos(recipients);
+    if (unicosRecipients.length === 0) return [];
+
+    let nuevosRecipients = unicosRecipients;
+    if (notificacion.asistenciaId) {
+      const { data: existentes, error: existentesError } = await supabase
+        .from('notificaciones_historial')
+        .select('persona_id')
+        .eq('tipo', notificacion.tipo)
+        .eq('asistencia_id', notificacion.asistenciaId);
+      if (existentesError) throw existentesError;
+
+      const personasNotificadas = new Set((existentes || [])
+        .map((row: { persona_id: string | null }) => row.persona_id)
+        .filter(Boolean));
+      nuevosRecipients = unicosRecipients.filter(
+        (recipient) => !personasNotificadas.has(recipient.personaId)
+      );
+    }
+
+    if (nuevosRecipients.length === 0) return [];
+
+    const registros = nuevosRecipients.map((recipient) => ({
       persona_id: recipient.personaId,
       estudiante_id: recipient.estudianteId || null,
       asistencia_id: notificacion.asistenciaId || null,
@@ -222,6 +346,7 @@ class NotificationService {
     }));
     const { error } = await supabase.from('notificaciones_historial').insert(registros);
     if (error) console.error('Error al guardar historial de notificaciones:', error.message);
+    return nuevosRecipients;
   }
 
   private dividirEnLotes<T>(array: T[], tamano: number): T[][] {

@@ -3,6 +3,7 @@ import supabase from '../config/database';
 import { authMiddleware, optionalAuthMiddleware, AuthRequest } from '../middleware/auth';
 import notificationService from '../modules/notifications/notifications.service';
 import { scanAttendanceQr } from '../modules/attendance/qr/qr.controller';
+import { getLimaDate } from '../services/attendance-session.service';
 
 const router = Router();
 
@@ -442,27 +443,28 @@ router.get('/asistencia/dias-asistidos/:personaId', async (req, res) => {
 
     let fechaInicio: string;
     let fechaFin: string;
+    const hoyLima = getLimaDate();
+    const fechaDesdeMediodia = (date: Date) => date.toISOString().split('T')[0];
 
     if (semana === 'actual') {
       // Obtener lunes y viernes de la semana actual
-      const hoy = new Date();
-      const diaSemana = hoy.getDay(); // 0=domingo, 1=lunes, etc.
+      const hoy = new Date(`${hoyLima}T12:00:00Z`);
+      const diaSemana = hoy.getUTCDay(); // 0=domingo, 1=lunes, etc.
       const diasDesdeLunes = diaSemana === 0 ? 6 : diaSemana - 1; // Ajustar para que lunes sea 0
       
       const lunes = new Date(hoy);
-      lunes.setDate(hoy.getDate() - diasDesdeLunes);
-      fechaInicio = lunes.toISOString().split('T')[0];
+      lunes.setUTCDate(hoy.getUTCDate() - diasDesdeLunes);
+      fechaInicio = fechaDesdeMediodia(lunes);
       
       const viernes = new Date(lunes);
-      viernes.setDate(lunes.getDate() + 4); // Lunes + 4 días = Viernes
-      fechaFin = viernes.toISOString().split('T')[0];
+      viernes.setUTCDate(lunes.getUTCDate() + 4); // Lunes + 4 días = Viernes
+      fechaFin = fechaDesdeMediodia(viernes);
     } else {
       // Por defecto, últimos 30 días
-      const hoy = new Date();
-      fechaFin = hoy.toISOString().split('T')[0];
-      const hace30Dias = new Date(hoy);
-      hace30Dias.setDate(hoy.getDate() - 30);
-      fechaInicio = hace30Dias.toISOString().split('T')[0];
+      fechaFin = hoyLima;
+      const hace30Dias = new Date(`${hoyLima}T12:00:00Z`);
+      hace30Dias.setUTCDate(hace30Dias.getUTCDate() - 30);
+      fechaInicio = fechaDesdeMediodia(hace30Dias);
     }
 
     // Obtener asistencias del alumno (presente y tardanza cuentan)
@@ -535,15 +537,30 @@ router.get('/asistencia/dias-asistidos/:personaId', async (req, res) => {
       jueves: false,
       viernes: false
     };
+    const estadosSemana: { [key: string]: string | null } = {
+      lunes: null,
+      martes: null,
+      miercoles: null,
+      jueves: null,
+      viernes: null
+    };
+
+    const normalizarEstado = (estado: string | null) => {
+      if (estado === 'ausente') return 'falta';
+      if (estado === 'presente' || estado === 'tardanza' || estado === 'falta') return estado;
+      return null;
+    };
 
     if (semana === 'actual' && asistencias) {
       asistencias.forEach(asistencia => {
-        const fecha = new Date(asistencia.fecha + 'T00:00:00');
-        const dia = fecha.getDay(); // 0=domingo, 1=lunes, etc.
+        const fecha = new Date(asistencia.fecha + 'T12:00:00Z');
+        const dia = fecha.getUTCDay(); // 0=domingo, 1=lunes, etc.
         const nombreDia = diasSemana[dia];
         
         if (nombreDia in asistenciasSemana) {
-          asistenciasSemana[nombreDia] = true;
+          const estado = normalizarEstado(asistencia.estado);
+          estadosSemana[nombreDia] = estado;
+          asistenciasSemana[nombreDia] = estado === 'presente' || estado === 'tardanza';
         }
       });
     }
@@ -556,6 +573,7 @@ router.get('/asistencia/dias-asistidos/:personaId', async (req, res) => {
         dias_tardanza: diasTardanza,
         racha_actual: rachaActual,
         asistencias_semana: asistenciasSemana,
+        estados_semana: estadosSemana,
         historial: asistencias?.map(a => ({
           fecha: a.fecha,
           estado: a.estado,

@@ -1,4 +1,5 @@
 import supabase from '../config/database';
+import notificationService from '../modules/notifications/notifications.service';
 
 const LIMA_TIME_ZONE = 'America/Lima';
 
@@ -21,6 +22,40 @@ async function getSession(id: string) {
   return data;
 }
 
+async function notifySessionAbsences(sessionId: string, sessionDate: string) {
+  const { data: absences, error: absencesError } = await supabase
+    .from('asistencias')
+    .select('id, persona_id, fecha')
+    .eq('sesion_id', sessionId)
+    .eq('tipo_persona', 'alumno')
+    .in('estado', ['falta', 'ausente']);
+  if (absencesError) throw absencesError;
+  if (!absences || absences.length === 0) return;
+
+  const personaIds = [...new Set(absences.map((absence: any) => absence.persona_id).filter(Boolean))];
+  const { data: students, error: studentsError } = await supabase
+    .from('alumnos')
+    .select('id, persona_id')
+    .in('persona_id', personaIds);
+  if (studentsError) throw studentsError;
+
+  const studentByPersona = new Map(
+    (students || []).map((student: any) => [student.persona_id, student])
+  );
+  const pending = absences
+    .map((absence: any) => ({
+      absence,
+      student: studentByPersona.get(absence.persona_id)
+    }))
+    .filter((item: any) => item.student);
+
+  await notificationService.enviarAusencias(pending.map(({ absence, student }: any) => ({
+    estudianteId: student.id,
+    asistenciaId: absence.id,
+    fecha: absence.fecha || sessionDate
+  })));
+}
+
 /**
  * Closes a session and records absences. The SQL migration supplies the atomic
  * RPC. The fallback keeps deployments compatible while that migration is being
@@ -32,7 +67,15 @@ export async function closeAttendanceSession(id: string) {
   });
 
   if (!rpcError) {
-    return getSession(id);
+    const session = await getSession(id);
+    if (session?.fecha) {
+      try {
+        await notifySessionAbsences(id, session.fecha);
+      } catch (notificationError: any) {
+        console.error('Failed to process absence notifications after session close:', notificationError.message);
+      }
+    }
+    return session;
   }
   if (rpcError?.message?.includes('SESSION_NOT_FOUND')) {
     const error: any = new Error('Sesión no encontrada');
@@ -49,7 +92,14 @@ export async function closeAttendanceSession(id: string) {
     error.code = 'SESSION_NOT_FOUND';
     throw error;
   }
-  if (session.estado === 'cerrada') return session;
+  if (session.estado === 'cerrada') {
+    try {
+      await notifySessionAbsences(id, session.fecha);
+    } catch (notificationError: any) {
+      console.error('Failed to retry absence notifications after session close:', notificationError.message);
+    }
+    return session;
+  }
 
   const { data: students, error: studentsError } = await supabase
     .from('alumnos')
@@ -92,5 +142,13 @@ export async function closeAttendanceSession(id: string) {
     .maybeSingle();
   if (closeError) throw closeError;
 
-  return closed || getSession(id);
+  const result = closed || await getSession(id);
+  if (result?.fecha) {
+    try {
+      await notifySessionAbsences(id, result.fecha);
+    } catch (notificationError: any) {
+      console.error('Failed to process absence notifications after session close:', notificationError.message);
+    }
+  }
+  return result;
 }
