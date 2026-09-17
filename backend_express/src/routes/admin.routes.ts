@@ -184,6 +184,81 @@ router.get('/alumnos/estadisticas', async (req, res) => {
   }
 });
 
+// GET /api/admin/asistencia/historial - Obtener resumen de asistencias por rango
+router.get('/asistencia/historial', async (req, res) => {
+  try {
+    const desde = String(req.query.desde || '');
+    const hasta = String(req.query.hasta || '');
+    const fechaValida = /^\d{4}-\d{2}-\d{2}$/;
+
+    if (!fechaValida.test(desde) || !fechaValida.test(hasta)) {
+      return res.status(400).json({
+        success: false,
+        code: 'INVALID_DATE_RANGE',
+        message: 'Las fechas deben tener el formato YYYY-MM-DD'
+      });
+    }
+    if (desde > hasta) {
+      return res.status(400).json({
+        success: false,
+        code: 'INVALID_DATE_RANGE',
+        message: 'La fecha inicial no puede ser posterior a la fecha final'
+      });
+    }
+
+    let rows: any[] = [];
+    const { data: rpcData, error: rpcError } = await supabase.rpc('resumen_asistencias_por_rango', {
+      p_desde: desde,
+      p_hasta: hasta
+    });
+
+    if (!rpcError) {
+      rows = rpcData || [];
+    } else if (rpcError.code === 'PGRST202' || rpcError.code === '42883') {
+      // Fallback for deployments where the summary function has not been applied yet.
+      for (let offset = 0; ; offset += 1000) {
+        const { data, error } = await supabase
+          .from('asistencias')
+          .select('fecha, estado')
+          .eq('tipo_persona', 'alumno')
+          .gte('fecha', desde)
+          .lte('fecha', hasta)
+          .range(offset, offset + 999);
+        if (error) throw error;
+        rows.push(...(data || []));
+        if (!data || data.length < 1000) break;
+      }
+    } else {
+      throw rpcError;
+    }
+
+    const resumen = new Map<string, { fecha: string; presentes: number; tardanzas: number; ausentes: number }>();
+    for (const row of rows) {
+      const fecha = String(row.fecha);
+      const actual = resumen.get(fecha) || { fecha, presentes: 0, tardanzas: 0, ausentes: 0 };
+      const estado = String(row.estado || '').toLowerCase();
+      if (estado === 'tardanza') actual.tardanzas++;
+      else if (estado === 'falta' || estado === 'ausente') actual.ausentes++;
+      else if (estado === 'presente') actual.presentes++;
+      resumen.set(fecha, actual);
+    }
+
+    return res.json({
+      success: true,
+      data: [...resumen.values()].sort((a, b) => b.fecha.localeCompare(a.fecha)),
+      total: resumen.size
+    });
+  } catch (error: any) {
+    console.error('Attendance history summary failed:', error.message);
+    return res.status(500).json({
+      success: false,
+      code: 'ATTENDANCE_HISTORY_FAILED',
+      message: 'No se pudo cargar el historial de asistencias',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 // GET /api/admin/asistencia/fecha - Obtener asistencias por fecha
 router.get('/asistencia/fecha', async (req, res) => {
   try {
@@ -224,30 +299,36 @@ router.get('/asistencia/fecha', async (req, res) => {
       });
     }
 
-    // Obtener información de los alumnos (sin filtro IN para evitar headers overflow)
-    const { data: alumnos, error: alumnosError } = await supabase
-      .from('alumnos')
-      .select(`
-        id,
-        persona_id,
-        personas!inner (
+    // Obtener solo los alumnos del día en lotes para evitar respuestas innecesarias.
+    const personaIds = [...new Set(asistencias.map((asistencia: any) => asistencia.persona_id).filter(Boolean))];
+    const alumnos: any[] = [];
+    for (let index = 0; index < personaIds.length; index += 100) {
+      const { data, error: alumnosError } = await supabase
+        .from('alumnos')
+        .select(`
           id,
-          nombres,
-          apellidos
-        ),
-        matriculas!inner (
-          secciones!inner (
-            nombre,
-            grados!inner (
-              nombre
+          persona_id,
+          personas!inner (
+            id,
+            nombres,
+            apellidos
+          ),
+          matriculas!inner (
+            secciones!inner (
+              nombre,
+              grados!inner (
+                nombre
+              )
             )
           )
-        )
-      `);
+        `)
+        .in('persona_id', personaIds.slice(index, index + 100));
 
-    if (alumnosError) {
-      console.error('Student query failed:', alumnosError);
-      throw alumnosError;
+      if (alumnosError) {
+        console.error('Student query failed:', alumnosError);
+        throw alumnosError;
+      }
+      alumnos.push(...(data || []));
     }
 
     // Indexar alumnos por persona_id para búsqueda rápida
