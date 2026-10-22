@@ -1,19 +1,14 @@
 import { Router } from 'express';
 import supabase from '../config/database';
+import { AuthRequest, authMiddleware } from '../middleware/auth';
 
 const router = Router();
 
 // GET /api/secciones - Obtener secciones disponibles según el rol
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const { usuario_id, rol } = req.query;
-
-    if (!usuario_id || !rol) {
-      return res.status(400).json({
-        success: false,
-        message: 'Se requiere usuario_id y rol'
-      });
-    }
+    const usuario_id = req.user?.id;
+    const rol = req.user?.rol;
 
     let secciones: any[] = [];
 
@@ -91,27 +86,6 @@ router.get('/', async (req, res) => {
 
       secciones = Array.from(seccionesUnicas.values());
 
-    }
-    else if (rol === 'alumno' || rol === 'padre') {
-      // Leaderboard público: todos ven todas las secciones
-      const { data, error } = await supabase
-        .from('secciones')
-        .select(`
-          id,
-          nombre,
-          grados!inner (
-            nombre
-          )
-        `);
-
-      if (!error && data) {
-        secciones = data.map((s: any) => ({
-          id: s.id,
-          nombre: s.grados?.nombre ? `${s.grados.nombre} ${s.nombre}` : s.nombre,
-          grado: s.grados?.nombre || '',
-          seccion: s.nombre
-        }));
-      }
     }
     else {
       // Otros roles no tienen acceso a secciones

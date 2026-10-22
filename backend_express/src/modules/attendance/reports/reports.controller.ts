@@ -27,17 +27,6 @@ export async function getDay(req: Request, res: Response) {
   }
 }
 
-export async function getLeaderboard(req: Request, res: Response) {
-  try {
-    const { seccion_id, tipo, mes } = req.query;
-    if (!tipo || !mes) return res.status(400).json({ success: false, message: 'Se requiere tipo y mes' });
-    const data = await reportsService.leaderboard(seccion_id ? String(seccion_id) : undefined, String(tipo), String(mes));
-    res.json({ success: true, data });
-  } catch (error) {
-    sendError(res, error, 'No se pudo obtener el ranking de asistencia');
-  }
-}
-
 export async function getStatistics(req: Request, res: Response) {
   try {
     const { fecha_inicio, fecha_fin, seccion_id } = req.query;

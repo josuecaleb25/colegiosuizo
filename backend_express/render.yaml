@@ -4,6 +4,7 @@ services:
     env: node
     region: oregon
     plan: free
+    healthCheckPath: /healthz
     buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
@@ -13,14 +14,14 @@ services:
         value: 8000
       - key: SUPABASE_URL
         sync: false
-      - key: SUPABASE_ANON_KEY
+      - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: JWT_SECRET
         sync: false
       - key: JWT_EXPIRES_IN
-        value: 7d
+        value: 8h
       - key: ALLOWED_ORIGINS
-        value: "*"
+        sync: false
       - key: FIREBASE_SERVICE_ACCOUNT
         sync: false
       - key: ATTENDANCE_AUTO_CLOSE_ENABLED

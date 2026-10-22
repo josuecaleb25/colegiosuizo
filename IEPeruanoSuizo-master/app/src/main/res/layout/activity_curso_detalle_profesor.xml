@@ -57,30 +57,13 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- TABS -->
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tab_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/homeHeaderBackground"
-        app:tabIndicatorColor="#BA1924"
-        app:tabSelectedTextColor="#BA1924"
-        app:tabTextColor="#5E5F60"
-        app:tabIndicatorHeight="3dp"
-        app:tabIndicatorFullWidth="false"
-        app:tabMode="fixed"
-        app:tabTextAppearance="@style/CustomTabTextAppearance"
-        app:tabSelectedTextAppearance="@style/CustomTabTextAppearance"
-        app:layout_constraintTop_toBottomOf="@id/header_layout" />
-
-    <!-- VIEW PAGER -->
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/view_pager"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:background="?attr/homeContentBackground"
         app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
-        app:layout_constraintTop_toBottomOf="@id/tab_layout" />
+        app:layout_constraintTop_toBottomOf="@id/header_layout" />
 
     <!-- BOTTOM NAVIGATION -->
     <com.google.android.material.bottomnavigation.BottomNavigationView

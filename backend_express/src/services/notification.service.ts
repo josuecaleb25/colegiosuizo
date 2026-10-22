@@ -3,7 +3,7 @@ import supabase from '../config/database';
 import { attendanceNotificationTitle, buildAttendanceMessage } from '../modules/attendance/attendance-notification-text';
 
 interface NotificationData {
-  tipo: 'asistencia' | 'comunicado' | 'calificacion';
+  tipo: 'asistencia' | 'comunicado';
   titulo: string;
   mensaje: string;
   datos?: Record<string, string>;

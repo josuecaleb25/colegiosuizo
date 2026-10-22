@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import supabase from '../config/database';
-import { authMiddleware, requireRoles } from '../middleware/auth';
+import { authMiddleware, requireRoles, requireSelfOrAdmin } from '../middleware/auth';
+import { requireSectionAccess } from '../middleware/student-access';
 
 const router = Router();
 
@@ -20,7 +21,7 @@ router.get('/test', (req, res) => {
 });
 
 // GET /api/horarios/alumno/:personaId - Horario de un alumno por persona_id
-router.get('/alumno/:personaId', async (req, res) => {
+router.get('/alumno/:personaId', requireSelfOrAdmin(req => req.params.personaId), async (req, res) => {
   try {
     const { personaId } = req.params;
     const { fecha } = req.query; // Parámetro de fecha opcional
@@ -168,7 +169,7 @@ router.get('/alumno/:personaId', async (req, res) => {
 });
 
 // GET /api/horarios/profesor/:personaId - Horario de un profesor por persona_id
-router.get('/profesor/:personaId', async (req, res) => {
+router.get('/profesor/:personaId', requireSelfOrAdmin(req => req.params.personaId), async (req, res) => {
   try {
     const { personaId } = req.params;
     const { fecha } = req.query; // Parámetro de fecha opcional
@@ -290,7 +291,7 @@ router.get('/profesor/:personaId', async (req, res) => {
 });
 
 // GET /api/horarios/seccion/:seccionId - Horario de una sección
-router.get('/seccion/:seccionId', async (req, res) => {
+router.get('/seccion/:seccionId', requireSectionAccess(req => req.params.seccionId), async (req, res) => {
   try {
     const { seccionId } = req.params;
 

@@ -24,18 +24,18 @@ cp .env.example .env
 ```env
 # Supabase Configuration
 SUPABASE_URL=https://dhirwwytreumhebccuht.supabase.co
-SUPABASE_ANON_KEY=tu_anon_key_aqui
+SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key_aqui
 
 # Server
 PORT=8000
 NODE_ENV=development
 
 # JWT
-JWT_SECRET=tu_secret_key
-JWT_EXPIRES_IN=7d
+JWT_SECRET=replace-with-a-random-secret-at-least-32-bytes-long
+JWT_EXPIRES_IN=8h
 
 # CORS
-ALLOWED_ORIGINS=*
+ALLOWED_ORIGINS=http://localhost:3000
 ```
 
 ### Obtener las credenciales de Supabase
@@ -44,7 +44,9 @@ ALLOWED_ORIGINS=*
 2. Ve a **Settings** > **API**
 3. Copia:
    - **Project URL** → `SUPABASE_URL`
-   - **anon public** key → `SUPABASE_ANON_KEY`
+   - **service_role** secret → `SUPABASE_SERVICE_ROLE_KEY`
+
+`SUPABASE_SERVICE_ROLE_KEY` se configura únicamente en el backend y en Render. No se debe incluir en la app Android ni en código cliente.
 
 ## Scripts
 
@@ -116,16 +118,3 @@ backend_express/
 3. Configurar variables de entorno
 4. Railway detectará automáticamente Node.js
 5. Build y deploy automático
-
-## Credenciales de Prueba
-
-**Admin:**
-- Email: `admin@colegio.com`
-- Password: `admin123`
-
-**Profesor:**
-- Email: `profesor@colegio.com`
-- Password: `profesor123`
-
-**Alumnos/Padres:**
-- Password: `Suizo2026*`

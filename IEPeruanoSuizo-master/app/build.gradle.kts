@@ -3,6 +3,12 @@ plugins {
     alias(libs.plugins.google.services)
 }
 
+val configuredApiBaseUrl = providers.gradleProperty("API_BASE_URL")
+    .orElse(providers.environmentVariable("API_BASE_URL"))
+    .orElse("")
+    .get()
+val debugApiBaseUrl = configuredApiBaseUrl.ifBlank { "http://10.0.2.2:8000/api/" }
+
 android {
     namespace = "com.example.ieperuanosuizoapp"
     compileSdk = 34
@@ -17,8 +23,19 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     buildTypes {
+        debug {
+            buildConfigField("String", "API_BASE_URL", "\"$debugApiBaseUrl\"")
+        }
         release {
+            if (configuredApiBaseUrl.isBlank()) {
+                throw GradleException("Configure API_BASE_URL with the deployed backend URL before building release")
+            }
+            buildConfigField("String", "API_BASE_URL", "\"$configuredApiBaseUrl\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

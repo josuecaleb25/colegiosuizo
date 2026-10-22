@@ -77,10 +77,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 Log.d(TAG, "Notificación de comunicado recibida");
                 break;
                 
-            case "calificacion":
-                Log.d(TAG, "Notificación de calificación recibida");
-                break;
-                
             default:
                 Log.d(TAG, "Tipo de notificación desconocido: " + tipo);
         }
@@ -174,7 +170,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                     CHANNEL_NAME,
                     NotificationManager.IMPORTANCE_HIGH
             );
-            channel.setDescription("Notificaciones de asistencia, comunicados y calificaciones");
+            channel.setDescription("Notificaciones de asistencia y comunicados");
             channel.enableVibration(true);
             notificationManager.createNotificationChannel(channel);
         }

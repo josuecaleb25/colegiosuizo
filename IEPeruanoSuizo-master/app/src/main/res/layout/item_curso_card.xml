@@ -41,7 +41,7 @@
                 android:text="Matematica"
                 android:textColor="?attr/homeTextColorSebastian"
                 android:textSize="13sp"
-                app:layout_constraintEnd_toStartOf="@+id/ll_grade"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -83,34 +83,6 @@
                     android:textSize="11sp" />
             </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/ll_grade"
-                android:layout_width="100dp"
-                android:layout_height="wrap_content"
-                android:gravity="end"
-                android:orientation="vertical"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="@font/leaguespartanmedium"
-                    android:text="Promedio"
-                    android:textColor="?attr/homeTextColorSebastian"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:id="@+id/tv_promedio"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:fontFamily="@font/leaguespartanbold"
-                    android:text="- - / 20"
-                    android:textColor="?attr/homeTextColorSebastian"
-                    android:textSize="15sp" />
-            </LinearLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView>

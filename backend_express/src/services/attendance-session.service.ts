@@ -61,11 +61,6 @@ async function notifySessionAbsences(sessionId: string, sessionDate: string) {
   })));
 }
 
-/**
- * Closes a session and records absences. The SQL migration supplies the atomic
- * RPC. The fallback keeps deployments compatible while that migration is being
- * applied, but the database function remains the concurrency guarantee.
- */
 export async function closeAttendanceSession(id: string) {
   const { error: rpcError } = await supabase.rpc('cerrar_sesion_asistencia_atomica', {
     p_sesion_id: id

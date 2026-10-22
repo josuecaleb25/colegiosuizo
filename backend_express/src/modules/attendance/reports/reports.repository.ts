@@ -15,36 +15,10 @@ class AttendanceReportsRepository {
       .select('id, persona_id, fecha, hora_entrada, estado, sesion_id')
       .eq('fecha', date)
       .eq('sesion_id', sessionId)
-      .eq('tipo_persona', 'alumno');
+      .eq('tipo_persona', 'alumno')
+      .limit(2500);
     if (error) throw error;
     return { session, records: data || [] };
-  }
-
-  async findLeaderboardStudents(sectionId?: string) {
-    let query: any = supabase
-      .from('alumnos')
-      .select('id, persona_id, personas!inner(id, nombres, apellidos), matriculas!inner(seccion_id, secciones!inner(id, nombre, grados!inner(nombre)))')
-      .eq('estado', 'activo');
-    if (sectionId && sectionId !== 'todos') query = query.eq('matriculas.seccion_id', sectionId);
-    const { data, error } = await query;
-    if (error) throw error;
-    return data || [];
-  }
-
-  async findRecordsForPeople(personaIds: string[], from: string, to: string) {
-    const records: any[] = [];
-    for (let i = 0; i < personaIds.length; i += 50) {
-      const { data, error } = await supabase
-        .from('asistencias')
-        .select('persona_id, estado, hora_entrada, fecha')
-        .in('persona_id', personaIds.slice(i, i + 50))
-        .gte('fecha', from)
-        .lte('fecha', to)
-        .eq('tipo_persona', 'alumno');
-      if (error) throw error;
-      records.push(...(data || []));
-    }
-    return records;
   }
 
   async findRecords(filters: { date: string; sectionId?: string; studentId?: string }) {
@@ -67,7 +41,7 @@ class AttendanceReportsRepository {
       .eq('fecha', filters.date)
       .eq('tipo_persona', 'alumno')
       .order('hora_entrada', { ascending: false, nullsFirst: false })
-      .limit(500);
+      .limit(2500);
 
     if (filters.studentId) {
       const student = await this.findStudent(filters.studentId);
@@ -123,17 +97,39 @@ class AttendanceReportsRepository {
       if (personaIds.length === 0) return [];
     }
 
-    let query: any = supabase
-      .from('asistencias')
-      .select('estado, fecha')
-      .eq('tipo_persona', 'alumno');
-    if (filters.from) query = query.gte('fecha', filters.from);
-    if (filters.to) query = query.lte('fecha', filters.to);
-    if (personaIds) query = query.in('persona_id', personaIds);
+    const peopleBatches = personaIds
+      ? Array.from({ length: Math.ceil(personaIds.length / 250) }, (_, index) => personaIds.slice(index * 250, (index + 1) * 250))
+      : [undefined];
+    const statuses = ['__total__', 'presente', 'tardanza', 'falta', 'justificado'];
+    const jobs = statuses.flatMap(status => peopleBatches.map(personBatch => ({ status, personBatch })));
+    const counts: Record<string, number> = { __total__: 0, presente: 0, tardanza: 0, falta: 0, justificado: 0 };
 
-    const { data, error } = await query;
-    if (error) throw error;
-    return data || [];
+    for (let i = 0; i < jobs.length; i += 4) {
+      const results = await Promise.all(jobs.slice(i, i + 4).map(async ({ status, personBatch }) => {
+        let query: any = supabase
+          .from('asistencias')
+          .select('id', { count: 'exact', head: true })
+          .eq('tipo_persona', 'alumno');
+        if (status !== '__total__') query = query.eq('estado', status);
+        if (filters.from) query = query.gte('fecha', filters.from);
+        if (filters.to) query = query.lte('fecha', filters.to);
+        if (personBatch) query = query.in('persona_id', personBatch);
+        return { status, result: await query };
+      }));
+
+      for (const { status, result } of results) {
+        if (result.error) throw result.error;
+        counts[status] += result.count || 0;
+      }
+    }
+
+    return {
+      total: counts.__total__,
+      presentes: counts.presente,
+      tardanzas: counts.tardanza,
+      faltas: counts.falta,
+      justificados: counts.justificado
+    };
   }
 
   private async enrichRecords(records: any[]) {

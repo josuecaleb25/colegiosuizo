@@ -6,13 +6,30 @@ import apiRoutes from './routes';
 dotenv.config();
 
 const app = express();
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
+app.set('trust proxy', 1);
+app.disable('x-powered-by');
 
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
-  credentials: true
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(null, false);
+  },
+  credentials: false
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+});
+app.use(express.json({ limit: '128kb' }));
+app.use(express.urlencoded({ extended: false, limit: '128kb', parameterLimit: 100 }));
 
 app.get('/', (_req, res) => {
   res.json({
@@ -27,8 +44,6 @@ app.get('/', (_req, res) => {
       asistencia: '/api/asistencia',
       mobile: '/api/mobile',
       cursos: '/api/cursos',
-      calificaciones: '/api/calificaciones',
-      evaluaciones: '/api/evaluaciones',
       horarios: '/api/horarios',
       comunicados: '/api/comunicados',
       usuarios: '/api/usuarios',
@@ -39,18 +54,18 @@ app.get('/', (_req, res) => {
   });
 });
 
-app.use('/api', apiRoutes);
-
-app.post('/api/test-fcm', (req, res) => {
-  res.json({ success: true, message: 'Test FCM OK', received: req.body });
+app.get('/healthz', (_req, res) => {
+  res.status(200).json({ status: 'ok' });
 });
 
+app.use('/api', apiRoutes);
+
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({
+  const status = Number.isInteger(err.status) && err.status >= 400 && err.status < 500 ? err.status : 500;
+  console.error('Request failed:', { status, name: err.name || 'Error' });
+  res.status(status).json({
     success: false,
-    message: err.message || 'Error interno del servidor',
-    error: process.env.NODE_ENV === 'development' ? err : {}
+    message: status === 413 ? 'La solicitud es demasiado grande' : 'Error interno del servidor'
   });
 });
 

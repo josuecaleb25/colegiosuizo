@@ -137,20 +137,6 @@ public interface ApiService {
         @Query("rol") String rol
     );
 
-    // Leaderboard
-    @GET("asistencia/leaderboard")
-    Call<ApiResponse<List<com.example.ieperuanosuizoapp.api.models.LeaderboardEntry>>> getLeaderboard(
-        @Query("seccion_id") String seccionId,
-        @Query("tipo") String tipo,
-        @Query("mes") String mes
-    );
-
-    @GET("asistencia/leaderboard")
-    Call<ApiResponse<List<com.example.ieperuanosuizoapp.api.models.LeaderboardEntry>>> getLeaderboardAll(
-        @Query("tipo") String tipo,
-        @Query("mes") String mes
-    );
-    
     // Perfil de Usuario
     @GET("usuarios/perfil/{user_id}")
     Call<ApiResponse<Object>> getPerfilUsuario(
@@ -198,55 +184,6 @@ public interface ApiService {
     @POST("asistencia/eliminar-batch")
     Call<ApiResponse<Object>> eliminarAsistenciasBatch(@Body Map<String, Object> body);
     
-    // ============================================
-    // EVALUACIONES Y CALIFICACIONES
-    // ============================================
-    
-    // Obtener evaluaciones de un curso
-    @GET("evaluaciones/curso/{curso_id}")
-    Call<ApiResponse<List<com.example.ieperuanosuizoapp.api.models.Evaluacion>>> getEvaluacionesCurso(
-        @retrofit2.http.Path("curso_id") String cursoId
-    );
-    
-    // Crear nueva evaluación
-    @POST("evaluaciones")
-    Call<ApiResponse<com.example.ieperuanosuizoapp.api.models.Evaluacion>> crearEvaluacion(
-        @Body com.example.ieperuanosuizoapp.api.models.Evaluacion evaluacion
-    );
-    
-    // Actualizar evaluación
-    @retrofit2.http.PUT("evaluaciones/{id}")
-    Call<ApiResponse<com.example.ieperuanosuizoapp.api.models.Evaluacion>> actualizarEvaluacion(
-        @retrofit2.http.Path("id") String evaluacionId,
-        @Body Map<String, Object> datos
-    );
-    
-    // Eliminar evaluación
-    @retrofit2.http.DELETE("evaluaciones/{id}")
-    Call<ApiResponse<Object>> eliminarEvaluacion(
-        @retrofit2.http.Path("id") String evaluacionId
-    );
-    
-    // Obtener calificaciones de un alumno en un curso
-    @GET("evaluaciones/calificaciones/alumno/{alumno_id}/curso/{curso_id}")
-    Call<ApiResponse<List<com.example.ieperuanosuizoapp.api.models.Calificacion>>> getCalificacionesAlumno(
-        @retrofit2.http.Path("alumno_id") String alumnoId,
-        @retrofit2.http.Path("curso_id") String cursoId
-    );
-    
-    // Obtener todas las calificaciones de un curso
-    @GET("evaluaciones/calificaciones/curso/{curso_id}")
-    Call<ApiResponse<List<com.example.ieperuanosuizoapp.api.models.Calificacion>>> getCalificacionesCurso(
-        @retrofit2.http.Path("curso_id") String cursoId
-    );
-    
-    // Actualizar una calificación
-    @retrofit2.http.PUT("evaluaciones/calificaciones/{id}")
-    Call<ApiResponse<com.example.ieperuanosuizoapp.api.models.Calificacion>> actualizarCalificacion(
-        @retrofit2.http.Path("id") String calificacionId,
-        @Body Map<String, Object> datos
-    );
-
     // ============================================
     // NOTIFICACIONES (Historial)
     // ============================================

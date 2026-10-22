@@ -1,118 +1,73 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import supabase from '../config/database';
+import { signAccessToken } from '../middleware/auth';
+import { createRateLimiter } from '../middleware/rate-limit';
 
 const router = Router();
+const loginRateLimit = createRateLimiter(15 * 60 * 1000, 10, req => {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : 'invalid';
+  return `${req.ip || 'unknown'}:${email}`;
+});
+const registerRateLimit = createRateLimiter(60 * 60 * 1000, 5);
 
 // Login
-router.post('/login', async (req, res) => {
+router.post('/login', loginRateLimit, async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
 
-    if (!email || !password) {
+    if (!email || !password || email.length > 254 || password.length > 256 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({
         success: false,
-        message: 'Email y contraseña son requeridos'
+        message: 'Credenciales inválidas'
       });
     }
 
-    // Buscar persona por correo
-    const { data: personas, error: personaError } = await supabase
-      .from('personas')
-      .select(`
-        id,
-        dni,
-        nombres,
-        apellidos,
-        correo,
-        alumnos (
-          id, 
-          codigo_alumno, 
-          estado,
-          matriculas (
-            seccion_id,
-            secciones (
-              nombre,
-              grados (
-                nombre
-              )
-            )
-          )
-        ),
-        docentes (id, codigo_docente, estado)
-      `)
-      .eq('correo', email)
-      .limit(1);
+    const { data: usuario, error: usuarioError } = await supabase
+      .from('usuarios')
+      .select('id, persona_id, email, rol, activo, password')
+      .ilike('email', email)
+      .maybeSingle();
 
-    if (personaError || !personas || personas.length === 0) {
+    if (usuarioError || !usuario || usuario.activo === false) {
       return res.status(401).json({
         success: false,
         message: 'Credenciales incorrectas'
       });
     }
 
-    const persona = personas[0];
-
-    // Determinar rol y contraseña esperada (fallback al sistema anterior)
-    const rolFallback = () => {
-      if (email === 'admin@colegio.com') return 'administrador';
-      if (email === 'profesor@colegio.com' || (persona.docentes && persona.docentes.length > 0)) return 'profesor';
-      return 'padre';
-    };
-
-    const passwordFallback = {
-      administrador: 'admin123',
-      profesor: 'profesor123',
-      padre: 'Suizo2026*'
-    } as Record<string, string>;
-
-    // Verificar contraseña contra la tabla usuarios (bcrypt) si existe un hash real
-    let rol: string;
-    let passwordOk = false;
-
-    const { data: usuario } = await supabase
-      .from('usuarios')
-      .select('id, email, rol, activo, password')
-      .eq('email', email)
-      .maybeSingle();
-
-    const esHashReal = (h: string | null | undefined) =>
-      !!h && (h.startsWith('$2a$') || h.startsWith('$2b$') || h.startsWith('$2y$')) && !h.includes('placeholder');
-
-    if (usuario && esHashReal(usuario.password)) {
-      // Usuario con hash real en la BD -> verificar con bcrypt
-      if (usuario.activo === false) {
-        return res.status(401).json({ success: false, message: 'Usuario inactivo' });
-      }
-      try {
-        passwordOk = await bcrypt.compare(password, usuario.password);
-      } catch {
-        passwordOk = false;
-      }
-      if (!passwordOk) {
-        return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
-      }
-      rol = usuario.rol || rolFallback();
-    } else {
-      // No existe en usuarios (o hash inválido) -> fallback al sistema anterior
-      rol = rolFallback();
-      passwordOk = password === passwordFallback[rol];
-      if (!passwordOk) {
-        return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
-      }
+    const validHash = typeof usuario.password === 'string' && /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(usuario.password);
+    if (!validHash || !usuario.persona_id || !usuario.rol) {
+      return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
     }
 
-    // Generar token
-    const token = jwt.sign(
-      { 
-        id: persona.id, 
-        email: persona.correo, 
-        rol: rol 
-      },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '7d' }
-    );
+    const passwordOk = await bcrypt.compare(password, usuario.password);
+    if (!passwordOk) return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+
+    const { data: persona, error: personaError } = await supabase
+      .from('personas')
+      .select(`
+        id,
+        nombres,
+        apellidos,
+        correo,
+        alumnos (
+          matriculas (
+            seccion_id,
+            secciones ( nombre, grados ( nombre ) )
+          )
+        )
+      `)
+      .eq('id', usuario.persona_id)
+      .maybeSingle();
+
+    if (personaError || !persona) {
+      return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+    }
+
+    const rol = usuario.rol;
+    const token = signAccessToken({ id: persona.id, email: persona.correo, rol });
 
     // Obtener sección si es alumno/padre
     let seccion = '';
@@ -151,8 +106,7 @@ router.post('/login', async (req, res) => {
           seccion: seccion
         },
         tokens: {
-          access: token,
-          refresh: token
+          access: token
         }
       }
     });
@@ -160,20 +114,21 @@ router.post('/login', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error en el login',
-      error: error.message
     });
   }
 });
 
 // Register
-router.post('/register', async (req, res) => {
+router.post('/register', registerRateLimit, async (req, res) => {
   try {
-    const { email, password, nombres, apellidos, telefono, dni } = req.body;
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
+    const { nombres, apellidos, telefono, dni } = req.body || {};
 
-    if (!email || !password || !nombres || !apellidos) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || password.length < 12 || password.length > 256 || !nombres || !apellidos || String(nombres).length > 100 || String(apellidos).length > 100) {
       return res.status(400).json({
         success: false,
-        message: 'Todos los campos son requeridos'
+        message: 'Datos de registro inválidos'
       });
     }
 
@@ -207,7 +162,7 @@ router.post('/register', async (req, res) => {
     if (personaError) throw personaError;
 
     // Hash de la contraseña
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Crear usuario
     const { data: newUser, error: userError } = await supabase
@@ -238,8 +193,7 @@ router.post('/register', async (req, res) => {
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: 'Error al registrar usuario',
-      error: error.message
+      message: 'Error al registrar usuario'
     });
   }
 });

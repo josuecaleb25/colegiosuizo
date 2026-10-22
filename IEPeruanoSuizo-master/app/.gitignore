@@ -1,1 +1,11 @@
 /build
+
+*.jks
+*.keystore
+key.properties
+*.p12
+*.pfx
+*.pem
+*.key
+*.sql
+*.txt

@@ -16,17 +16,8 @@ public class EstudiantesAdapter extends RecyclerView.Adapter<EstudiantesAdapter.
     public static final int VIEW_TYPE_LIST = 0;
     public static final int VIEW_TYPE_GRID = 1;
 
-    public interface OnEstudianteClickListener {
-        void onEstudianteClick(Estudiante estudiante);
-    }
-
     private List<Estudiante> mValues = new ArrayList<>();
     private int mCurrentViewType = VIEW_TYPE_LIST;
-    private OnEstudianteClickListener mListener;
-
-    public void setOnEstudianteClickListener(OnEstudianteClickListener listener) {
-        this.mListener = listener;
-    }
 
     public void setViewType(int viewType) {
         this.mCurrentViewType = viewType;
@@ -58,27 +49,12 @@ public class EstudiantesAdapter extends RecyclerView.Adapter<EstudiantesAdapter.
         
         boolean esUsted = item.isEsUsted();
 
-        if (mCurrentViewType == VIEW_TYPE_LIST) {
-            if (esUsted) {
-                holder.mLabelUsted.setVisibility(View.VISIBLE);
-                holder.mChevron.setVisibility(View.GONE);
-            } else {
-                holder.mLabelUsted.setVisibility(View.GONE);
-                holder.mChevron.setVisibility(View.VISIBLE);
-            }
+        holder.mLabelUsted.setVisibility(esUsted ? View.VISIBLE : View.GONE);
+        if (holder.mChevron != null) {
+            holder.mChevron.setVisibility(View.GONE);
         }
-
-        if (esUsted) {
-            holder.itemView.setOnClickListener(null);
-            holder.itemView.setClickable(false);
-        } else {
-            holder.itemView.setOnClickListener(v -> {
-                if (mListener != null) {
-                    mListener.onEstudianteClick(item);
-                }
-            });
-            holder.itemView.setClickable(true);
-        }
+        holder.itemView.setOnClickListener(null);
+        holder.itemView.setClickable(false);
     }
 
     @Override

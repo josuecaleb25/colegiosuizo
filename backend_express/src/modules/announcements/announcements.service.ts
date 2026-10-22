@@ -3,8 +3,8 @@ import notificationService from '../notifications/notifications.service';
 
 export interface ListAnnouncementsInput {
   rol?: string;
-  seccionId?: string;
-  gradoId?: string;
+  seccionIds?: string[];
+  gradoIds?: string[];
 }
 
 export interface CreateAnnouncementInput {

@@ -92,6 +92,7 @@ public class RetrofitClient {
                     .connectTimeout(ApiConfig.CONNECT_TIMEOUT, TimeUnit.SECONDS)
                     .readTimeout(ApiConfig.READ_TIMEOUT, TimeUnit.SECONDS)
                     .writeTimeout(ApiConfig.WRITE_TIMEOUT, TimeUnit.SECONDS)
+                    .callTimeout(ApiConfig.CALL_TIMEOUT, TimeUnit.SECONDS)
                     .build();
 
             // Retrofit instance

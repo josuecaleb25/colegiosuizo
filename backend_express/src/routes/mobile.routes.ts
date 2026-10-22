@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import supabase from '../config/database';
-import { authMiddleware, optionalAuthMiddleware, AuthRequest } from '../middleware/auth';
+import { authMiddleware, AuthRequest, requireRoles, requireSelfOrAdmin } from '../middleware/auth';
 import notificationService from '../modules/notifications/notifications.service';
 import { scanAttendanceQr } from '../modules/attendance/qr/qr.controller';
 import { attendanceNotificationTitle, buildAttendanceMessage, formatAttendanceTime } from '../modules/attendance/attendance-notification-text';
@@ -8,10 +8,7 @@ import { getLimaDate } from '../services/attendance-session.service';
 
 const router = Router();
 
-// The QR flow is handled by the attendance module. The legacy handler below
-// remains temporarily for compatibility while the rest of this mobile router
-// is migrated.
-router.post('/asistencia/escanear-qr', authMiddleware, scanAttendanceQr);
+router.post('/asistencia/escanear-qr', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), scanAttendanceQr);
 
 // Test endpoint
 router.get('/test', (req, res) => {
@@ -23,7 +20,7 @@ router.get('/test', (req, res) => {
 });
 
 // Test usuarios sin autenticación
-router.get('/test-usuarios', async (req, res) => {
+router.get('/test-usuarios', authMiddleware, requireRoles('administrador', 'admin'), async (req, res) => {
   try {
     const { data: alumnos, error } = await supabase
       .from('alumnos')
@@ -55,7 +52,7 @@ router.get('/test-usuarios', async (req, res) => {
 });
 
 // Obtener todos los alumnos con QR (sin autenticación)
-router.get('/usuarios', async (req, res) => {
+router.get('/usuarios', authMiddleware, requireRoles('administrador', 'admin'), async (req, res) => {
   try {
     const { seccion, search } = req.query;
     
@@ -121,7 +118,7 @@ router.get('/usuarios', async (req, res) => {
 });
 
 // Obtener alumnos para asistencia
-router.get('/asistencia/alumnos', optionalAuthMiddleware, async (req: AuthRequest, res) => {
+router.get('/asistencia/alumnos', authMiddleware, requireRoles('profesor', 'administrador', 'admin'), async (req: AuthRequest, res) => {
   try {
     const { salon, search } = req.query;
     const user = req.user;
@@ -154,6 +151,10 @@ router.get('/asistencia/alumnos', optionalAuthMiddleware, async (req: AuthReques
           seccionesPermitidas = asignaciones?.map((a: any) => a.seccion_id) || [];
         }
       }
+
+      if (seccionesPermitidas.length === 0) {
+        return res.json({ success: true, data: [], total: 0, message: 'No hay secciones asignadas' });
+      }
     }
     
     let query = supabase
@@ -178,23 +179,15 @@ router.get('/asistencia/alumnos', optionalAuthMiddleware, async (req: AuthReques
       `)
       .eq('estado', 'activo');
 
+    if (user?.rol === 'profesor') {
+      query = query.in('matriculas.seccion_id', seccionesPermitidas);
+    }
+
     const { data: alumnos, error } = await query;
 
     if (error) throw error;
 
-    // Filtrar por secciones permitidas si es profesor
-    let alumnosFiltrados = alumnos || [];
-    if (user && user.rol === 'profesor' && seccionesPermitidas.length > 0) {
-      alumnosFiltrados = alumnosFiltrados.filter((a: any) => {
-        const matricula = a.matriculas?.[0];
-        return seccionesPermitidas.includes(matricula?.seccion_id);
-      });
-    }
-
-    // NO devolver asistencias del día, solo la lista de alumnos
-    // El panel de asistencia debe empezar siempre desde cero
-
-    const alumnosFormateados = alumnosFiltrados.map((a: any) => {
+    const alumnosFormateados = (alumnos || []).map((a: any) => {
       const matricula = a.matriculas?.[0];
       const seccionNombre = matricula?.secciones?.nombre || '';
       const gradoNombre = matricula?.secciones?.grados?.nombre || '';
@@ -224,224 +217,7 @@ router.get('/asistencia/alumnos', optionalAuthMiddleware, async (req: AuthReques
   }
 });
 
-// Escanear QR (solo profesores y admins)
-router.post('/asistencia/escanear-qr', authMiddleware, async (req: AuthRequest, res) => {
-  try {
-    // Verificar que el usuario sea profesor o administrador
-    const rol = req.user?.rol;
-    if (rol !== 'profesor' && rol !== 'administrador' && rol !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'No tienes permiso para escanear códigos QR'
-      });
-    }
-
-    const { qr_token, sesion_id } = req.body;
-
-    if (!qr_token || !sesion_id) {
-      return res.status(400).json({
-        success: false,
-        code: 'SESSION_ID_REQUIRED',
-        message: 'Se requieren qr_token y sesion_id'
-      });
-    }
-
-    const ahora = new Date();
-    const fechaLima = ahora.toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
-    const { data: sesion, error: sesionError } = await supabase
-      .from('asistencia_sesiones')
-      .select('id, fecha, estado')
-      .eq('id', sesion_id)
-      .maybeSingle();
-
-    if (sesionError) throw sesionError;
-    if (!sesion) {
-      return res.status(404).json({
-        success: false,
-        code: 'SESSION_NOT_FOUND',
-        message: 'Sesión de asistencia no encontrada'
-      });
-    }
-    if (sesion.estado !== 'abierta') {
-      return res.status(409).json({
-        success: false,
-        code: 'SESSION_CLOSED',
-        message: 'La sesión de asistencia ya fue cerrada'
-      });
-    }
-    if (sesion.fecha !== fechaLima) {
-      return res.status(400).json({
-        success: false,
-        code: 'SESSION_DATE_MISMATCH',
-        message: 'La sesión no corresponde al día actual'
-      });
-    }
-
-    // Buscar código QR
-    const { data: codigosQr, error: qrError } = await supabase
-      .from('codigos_qr')
-      .select(`
-        persona_id,
-        personas!inner (
-          id,
-          nombres,
-          apellidos
-        )
-      `)
-      .eq('codigo', qr_token)
-      .eq('activo', true)
-      .limit(1);
-
-    if (qrError || !codigosQr || codigosQr.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'QR no válido'
-      });
-    }
-
-    const personaData = codigosQr[0]?.personas as any;
-    const horaLima24 = ahora.toLocaleTimeString('en-GB', { timeZone: 'America/Lima', hour12: false });
-    const horaLima12 = ahora.toLocaleTimeString('en-US', { timeZone: 'America/Lima', hour: '2-digit', minute: '2-digit', hour12: true });
-    const [horaStr, minStr] = horaLima24.split(':');
-    const hora = parseInt(horaStr, 10);
-    const minutos = parseInt(minStr, 10);
-    const estado = (hora < 7 || (hora === 7 && minutos <= 30)) ? 'presente' : 'tardanza';
-
-    let asistencia: any = null;
-    let creada = true;
-    const { data: atomicData, error: atomicError } = await supabase.rpc('registrar_asistencia_atomica', {
-      p_persona_id: personaData?.id,
-      p_sesion_id: sesion_id,
-      p_fecha: fechaLima,
-      p_hora_entrada: horaLima12,
-      p_estado: estado
-    });
-
-    if (!atomicError) {
-      asistencia = atomicData;
-      creada = atomicData?.creada !== false;
-    } else if (atomicError.code === 'PGRST202' || atomicError.code === '42883') {
-      const { data: inserted, error: insertError } = await supabase
-        .from('asistencias')
-        .insert({
-          persona_id: personaData?.id,
-          tipo_persona: 'alumno',
-          fecha: fechaLima,
-          hora_entrada: horaLima12,
-          estado,
-          sesion_id
-        })
-        .select('id, hora_entrada, estado')
-        .single();
-
-      if (insertError?.code === '23505') {
-        const { data: existing, error: existingError } = await supabase
-          .from('asistencias')
-          .select('id, hora_entrada, estado')
-          .eq('persona_id', personaData?.id)
-          .eq('fecha', fechaLima)
-          .limit(1)
-          .maybeSingle();
-        if (existingError) throw existingError;
-        asistencia = existing;
-        creada = false;
-      } else if (insertError) {
-        throw insertError;
-      } else {
-        asistencia = inserted;
-      }
-    } else {
-      throw atomicError;
-    }
-
-    const horaFormateada = asistencia?.hora_entrada || horaLima12;
-    const estadoRegistrado = asistencia?.estado || estado;
-    let asistenciaId = asistencia?.id || null;
-
-    if (creada && !asistenciaId) {
-      const { data: savedAttendance, error: savedAttendanceError } = await supabase
-        .from('asistencias')
-        .select('id')
-        .eq('persona_id', personaData?.id)
-        .eq('fecha', fechaLima)
-        .eq('sesion_id', sesion_id)
-        .eq('tipo_persona', 'alumno')
-        .maybeSingle();
-      if (savedAttendanceError) throw savedAttendanceError;
-      asistenciaId = savedAttendance?.id || null;
-    }
-    
-
-    res.json({
-      success: true,
-      reused: !creada,
-      message: creada ? 'Asistencia registrada exitosamente' : 'La asistencia ya estaba registrada',
-      data: {
-        alumno: `${personaData?.nombres} ${personaData?.apellidos}`,
-        estado: estadoRegistrado,
-        hora: horaFormateada,
-        reused: !creada
-      }
-    });
-
-    if (creada) {
-      void (async () => {
-        try {
-          const { data: alumno, error: alumnoError } = await supabase
-            .from('alumnos')
-            .select('id')
-            .eq('persona_id', personaData?.id)
-            .single();
-          if (alumnoError || !alumno) return;
-
-          const nombreCompleto = `${personaData?.nombres} ${personaData?.apellidos}`;
-          await notificationService.enviarAEstudiante(alumno.id, {
-            tipo: 'asistencia',
-            titulo: attendanceNotificationTitle(estadoRegistrado),
-            mensaje: buildAttendanceMessage({
-              name: nombreCompleto,
-              status: estadoRegistrado,
-              time: horaFormateada,
-              date: fechaLima
-            }),
-            asistenciaId,
-            datos: {
-              alumno_id: alumno.id.toString(),
-              estado: estadoRegistrado,
-              hora: formatAttendanceTime(horaFormateada),
-              fecha: fechaLima
-            }
-          });
-        } catch (notifError: any) {
-          console.error('Error enviando notificación de asistencia:', notifError.message);
-        }
-      })();
-    }
-  } catch (error: any) {
-    console.error('❌ Error en escanear-qr:', error);
-    const knownCode = ['SESSION_NOT_FOUND', 'SESSION_CLOSED', 'SESSION_DATE_MISMATCH']
-      .find(code => error?.message?.includes(code));
-    const status = knownCode === 'SESSION_NOT_FOUND' ? 404
-      : knownCode === 'SESSION_CLOSED' ? 409
-      : knownCode === 'SESSION_DATE_MISMATCH' ? 400
-      : 500;
-    res.status(status).json({
-      success: false,
-      code: knownCode || 'ATTENDANCE_SCAN_FAILED',
-      message: knownCode === 'SESSION_CLOSED'
-        ? 'La sesión de asistencia ya fue cerrada'
-        : knownCode === 'SESSION_NOT_FOUND'
-          ? 'Sesión de asistencia no encontrada'
-          : knownCode === 'SESSION_DATE_MISMATCH'
-            ? 'La sesión no corresponde al día actual'
-            : 'Error al registrar asistencia',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-});
-
-// GET /api/mobile/asistencia/dias-asistidos/:personaId - Obtener días asistidos de un alumno
-router.get('/asistencia/dias-asistidos/:personaId', async (req, res) => {
+router.get('/asistencia/dias-asistidos/:personaId', authMiddleware, requireSelfOrAdmin(req => req.params.personaId), async (req, res) => {
   try {
     const { personaId } = req.params;
     const { semana } = req.query; // Opcional: filtrar por semana actual

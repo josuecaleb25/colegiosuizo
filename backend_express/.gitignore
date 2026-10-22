@@ -8,10 +8,23 @@ dist/
 .env
 .env.local
 .env.production
-.env.example
+.env.*
+!.env.example
 
 # Firebase credentials (NEVER commit this file)
 serviceAccountKey.json
+*service-account*.json
+*serviceAccount*.json
+firebase-adminsdk-*.json
+credentials*.json
+
+*.pem
+*.key
+*.p12
+*.pfx
+
+*.dump
+*.sql.gz
 
 # Logs
 logs/
@@ -37,7 +50,6 @@ coverage/
 
 # SQL scripts and credentials (development only)
 *.sql
-!migrations/*.sql
 *.txt
 ALUMNOS_CREDENCIALES.txt
 VERIFICAR_ENDPOINTS.txt

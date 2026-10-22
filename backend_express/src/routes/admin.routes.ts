@@ -4,62 +4,157 @@ import QRCode from 'qrcode';
 import { authMiddleware, requireRoles } from '../middleware/auth';
 
 const router = Router();
+const qrImageCache = new Map<string, Promise<string>>();
+const qrImageCacheLimit = 1000;
 
-// Todas las rutas bajo /api/admin son exclusivas del administrador.
+const normalizeLabel = (value: unknown) => String(value || '')
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .replace(/[\s-]+/g, '');
+
+const getQrImage = (code: string) => {
+  const cached = qrImageCache.get(code);
+  if (cached) return cached;
+
+  const imagePromise = QRCode.toDataURL(code, {
+    width: 300,
+    margin: 2,
+    color: {
+      dark: '#000000',
+      light: '#FFFFFF'
+    }
+  }).then(image => {
+    if (qrImageCache.size >= qrImageCacheLimit) {
+      const oldestCode = qrImageCache.keys().next().value;
+      if (oldestCode) qrImageCache.delete(oldestCode);
+    }
+    return image;
+  }).catch(error => {
+    qrImageCache.delete(code);
+    throw error;
+  });
+
+  qrImageCache.set(code, imagePromise);
+  return imagePromise;
+};
+
 router.use(authMiddleware, requireRoles('administrador', 'admin'));
 
-// Obtener todos los alumnos con filtros (para admin)
 router.get('/alumnos', async (req, res) => {
   try {
     const { seccion, search, limit = 100 } = req.query;
-    
-    let query = supabase
-      .from('alumnos')
-      .select(`
-        id,
-        codigo_alumno,
-        estado,
-        persona_id,
-        personas!inner (
-          id,
-          nombres,
-          apellidos,
-          dni,
-          correo
-        ),
-        matriculas!inner (
-          id,
-          secciones!inner (
-            id,
-            nombre,
-            grados!inner (
-              nombre
-            )
-          )
-        )
-      `)
-      .order('personas(apellidos)', { ascending: true });
 
-    const { data: alumnos, error } = await query;
+    const limitNum = Math.min(Math.max(Number(limit) || 100, 1), 500);
+    const { data: seccionesActivas, error: seccionesError } = await supabase
+      .from('secciones')
+      .select('id, nombre, grados!inner(nombre), anios_lectivos!inner(activo)')
+      .eq('anios_lectivos.activo', true);
 
-    if (error) throw error;
+    if (seccionesError) throw seccionesError;
 
-    // Filtrar ANTES de generar QR
-    let alumnosFiltrados = alumnos || [];
-    
-    if (seccion) {
-      alumnosFiltrados = alumnosFiltrados.filter((alumno: any) => {
-        const matriculas = Array.isArray(alumno.matriculas) ? alumno.matriculas : [alumno.matriculas];
-        const matriculaActiva = matriculas[0];
-        const secciones = Array.isArray(matriculaActiva?.secciones) ? matriculaActiva.secciones[0] : matriculaActiva?.secciones;
-        const grados = Array.isArray(secciones?.grados) ? secciones.grados[0] : secciones?.grados;
-        const seccionNombre = secciones && grados ? `${grados.nombre} ${secciones.nombre}` : '';
-        return seccionNombre.toLowerCase().includes(seccion.toString().toLowerCase());
-      });
+    const seccionSolicitada = normalizeLabel(seccion);
+    const seccionIds = (seccionesActivas || [])
+      .filter((item: any) => {
+        if (!seccionSolicitada) return true;
+        const grado = Array.isArray(item.grados) ? item.grados[0] : item.grados;
+        return normalizeLabel(`${grado?.nombre || ''} ${item.nombre}`) === seccionSolicitada;
+      })
+      .map((item: any) => item.id);
+
+    if (!seccionIds.length) {
+      return res.json({ success: true, data: [], total: 0 });
     }
 
-    // Ahora sí, generar QR solo de los filtrados
-    const alumnosFormateados = await Promise.all(alumnosFiltrados.map(async (alumno: any) => {
+    const alumnosFiltrados: any[] = [];
+    const pageSize = search ? 1000 : limitNum;
+    const searchLower = String(search || '').trim().toLowerCase();
+
+    for (let offset = 0; ; offset += pageSize) {
+      let query = supabase
+        .from('alumnos')
+        .select(`
+          id,
+          codigo_alumno,
+          estado,
+          persona_id,
+          personas!inner (
+            id,
+            nombres,
+            apellidos,
+            dni,
+            correo
+          ),
+          matriculas!inner (
+            id,
+            anio_lectivo_id,
+            seccion_id,
+            secciones!inner (
+              id,
+              nombre,
+              grados!inner (
+                nombre
+              )
+            )
+          )
+        `)
+        .eq('estado', 'activo')
+        .eq('matriculas.estado', 'activo')
+        .in('matriculas.seccion_id', seccionIds)
+        .order('apellidos', { ascending: true, referencedTable: 'personas' })
+        .order('nombres', { ascending: true, referencedTable: 'personas' })
+        .range(offset, offset + pageSize - 1);
+
+      const { data: alumnos, error } = await query;
+      if (error) throw error;
+      if (!alumnos?.length) break;
+
+      for (const alumno of alumnos as any[]) {
+        if (searchLower) {
+          const persona = Array.isArray(alumno.personas) ? alumno.personas[0] : alumno.personas;
+          const matriculas = Array.isArray(alumno.matriculas) ? alumno.matriculas : [alumno.matriculas];
+          const matriculaActiva = matriculas[0];
+          const secciones = Array.isArray(matriculaActiva?.secciones) ? matriculaActiva.secciones[0] : matriculaActiva?.secciones;
+          const grados = Array.isArray(secciones?.grados) ? secciones.grados[0] : secciones?.grados;
+          const seccionNombre = secciones && grados ? `${grados.nombre} ${secciones.nombre}` : 'Sin sección';
+          const nombreCompleto = `${persona?.nombres || ''} ${persona?.apellidos || ''}`.toLowerCase();
+          const coincide = nombreCompleto.includes(searchLower) ||
+            String(alumno.codigo_alumno || '').toLowerCase().includes(searchLower) ||
+            seccionNombre.toLowerCase().includes(searchLower) ||
+            String(persona?.dni || '').toLowerCase().includes(searchLower);
+          if (!coincide) continue;
+        }
+
+        alumnosFiltrados.push(alumno);
+        if (alumnosFiltrados.length >= limitNum) break;
+      }
+
+      if (!searchLower || alumnosFiltrados.length >= limitNum || alumnos.length < pageSize) break;
+    }
+
+    const alumnosPaginados = alumnosFiltrados.slice(0, limitNum);
+    const personaIds = alumnosPaginados
+      .map((alumno: any) => Array.isArray(alumno.personas) ? alumno.personas[0]?.id : alumno.personas?.id)
+      .filter(Boolean);
+    const codigosQrPorPersona = new Map<string, string>();
+
+    if (personaIds.length > 0) {
+      const { data: codigosQr, error: qrError } = await supabase
+        .from('codigos_qr')
+        .select('persona_id, codigo, generado_en')
+        .in('persona_id', personaIds)
+        .eq('activo', true)
+        .order('generado_en', { ascending: false });
+
+      if (qrError) throw qrError;
+      for (const codigoQr of codigosQr || []) {
+        if (!codigosQrPorPersona.has(codigoQr.persona_id)) {
+          codigosQrPorPersona.set(codigoQr.persona_id, codigoQr.codigo);
+        }
+      }
+    }
+
+    const alumnosFormateados = await Promise.all(alumnosPaginados.map(async (alumno: any) => {
       const persona = Array.isArray(alumno.personas) ? alumno.personas[0] : alumno.personas;
       const matriculas = Array.isArray(alumno.matriculas) ? alumno.matriculas : [alumno.matriculas];
       const matriculaActiva = matriculas[0];
@@ -68,29 +163,15 @@ router.get('/alumnos', async (req, res) => {
       
       const seccionNombre = secciones && grados ? `${grados.nombre} ${secciones.nombre}` : 'Sin sección';
 
-      // Obtener código QR de la tabla codigos_qr usando persona.id
-      const { data: codigoQR, error: qrError } = await supabase
-        .from('codigos_qr')
-        .select('codigo')
-        .eq('persona_id', persona.id)
-        .eq('activo', true)
-        .single();
-
-      const qrCodeString = codigoQR?.codigo || alumno.codigo_alumno;
+      const qrCodeString = codigosQrPorPersona.get(persona.id) || null;
       
-      // Generar imagen QR en base64
       let qrImage = '';
-      try {
-        qrImage = await QRCode.toDataURL(qrCodeString, {
-          width: 300,
-          margin: 2,
-          color: {
-            dark: '#000000',
-            light: '#FFFFFF'
-          }
-        });
-      } catch (qrError) {
-        console.error('QR generation failed:', qrError);
+      if (qrCodeString) {
+        try {
+          qrImage = await getQrImage(qrCodeString);
+        } catch (qrError) {
+          console.error('QR generation failed:', qrError);
+        }
       }
 
       return {
@@ -106,56 +187,34 @@ router.get('/alumnos', async (req, res) => {
         qr_code: qrCodeString,
         qr_image: qrImage
       };
-    }) || []);
-
-    // Aplicar búsqueda si existe
-    let alumnosFinales = alumnosFormateados;
-
-    if (search) {
-      const searchLower = search.toString().toLowerCase();
-      alumnosFinales = alumnosFinales.filter((a: any) =>
-        a.nombre_completo.toLowerCase().includes(searchLower) ||
-        a.codigo_alumno.toLowerCase().includes(searchLower) ||
-        a.seccion.toLowerCase().includes(searchLower) ||
-        (a.dni && a.dni.includes(searchLower))
-      );
-    }
-
-    // Limitar resultados
-    const limitNum = Number(limit);
-    if (limitNum > 0) {
-      alumnosFinales = alumnosFinales.slice(0, limitNum);
-    }
+    }));
 
     res.json({
       success: true,
-      data: alumnosFinales,
-      total: alumnosFinales.length
+      data: alumnosFormateados,
+      total: alumnosFormateados.length
     });
   } catch (error: any) {
+    console.error('Admin student list failed:', error.message);
     res.status(500).json({
       success: false,
       message: 'Error al obtener alumnos',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
 
-// Obtener estadísticas de alumnos
 router.get('/alumnos/estadisticas', async (req, res) => {
   try {
-    // Total de alumnos
     const { count: totalAlumnos } = await supabase
       .from('alumnos')
       .select('*', { count: 'exact', head: true });
 
-    // Alumnos por estado
     const { data: alumnosPorEstado } = await supabase
       .from('alumnos')
       .select('estado')
       .eq('estado', 'activo');
 
-    // Alumnos por sección
     const { data: alumnosPorSeccion } = await supabase
       .from('matriculas')
       .select(`
@@ -184,7 +243,6 @@ router.get('/alumnos/estadisticas', async (req, res) => {
   }
 });
 
-// GET /api/admin/asistencia/historial - Obtener resumen de asistencias por rango
 router.get('/asistencia/historial', async (req, res) => {
   try {
     const desde = String(req.query.desde || '');
@@ -224,7 +282,6 @@ router.get('/asistencia/historial', async (req, res) => {
         });
       }
     } else if (rpcError.code === 'PGRST202' || rpcError.code === '42883') {
-      // Fallback for deployments where the summary function has not been applied yet.
       for (let offset = 0; ; offset += 1000) {
         const { data, error } = await supabase
           .from('asistencias')
@@ -269,7 +326,6 @@ router.get('/asistencia/historial', async (req, res) => {
   }
 });
 
-// GET /api/admin/asistencia/fecha - Obtener asistencias por fecha
 router.get('/asistencia/fecha', async (req, res) => {
   try {
     const { fecha } = req.query;
@@ -281,7 +337,6 @@ router.get('/asistencia/fecha', async (req, res) => {
       });
     }
 
-    // Obtener asistencias de la fecha especificada
     const { data: asistencias, error } = await supabase
       .from('asistencias')
       .select(`
@@ -309,7 +364,6 @@ router.get('/asistencia/fecha', async (req, res) => {
       });
     }
 
-    // Obtener solo los alumnos del día en lotes para evitar respuestas innecesarias.
     const personaIds = [...new Set(asistencias.map((asistencia: any) => asistencia.persona_id).filter(Boolean))];
     const alumnos: any[] = [];
     for (let index = 0; index < personaIds.length; index += 100) {
@@ -341,10 +395,8 @@ router.get('/asistencia/fecha', async (req, res) => {
       alumnos.push(...(data || []));
     }
 
-    // Indexar alumnos por persona_id para búsqueda rápida
     const alumnosPorPersonaId = new Map((alumnos || []).map(a => [a.persona_id, a]));
 
-    // Mapear asistencias con información de alumnos
     const asistenciasFormateadas = asistencias.map(asist => {
       const alumno = alumnosPorPersonaId.get(asist.persona_id);
       

@@ -32,7 +32,7 @@ export async function getTodaySession(_req: AuthRequest, res: Response) {
 
 export async function createSession(req: AuthRequest, res: Response) {
   try {
-    const result = await sessionsService.create(req.body?.creado_por || null);
+    const result = await sessionsService.create(req.user?.id || null);
     return res.status(result.reused ? 200 : 201).json({
       success: true,
       reused: result.reused,

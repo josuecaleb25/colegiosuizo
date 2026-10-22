@@ -27,34 +27,10 @@ import retrofit2.Response;
 
 public class EstudiantesFragment extends Fragment {
 
-    private static final String ARG_CURSO_ID = "curso_id";
-    private static final String ARG_SALON = "salon";
-
     private RecyclerView rvEstudiantes;
     private EstudiantesAdapter adapter;
     private TextView tvContador;
     private ImageButton btnList, btnGrid;
-    private String cursoId;
-    private String salon;
-
-    public static EstudiantesFragment newInstance(String cursoId, String salon) {
-        EstudiantesFragment fragment = new EstudiantesFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_CURSO_ID, cursoId);
-        args.putString(ARG_SALON, salon);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            cursoId = getArguments().getString(ARG_CURSO_ID);
-            salon = getArguments().getString(ARG_SALON);
-        }
-    }
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -66,15 +42,6 @@ public class EstudiantesFragment extends Fragment {
         btnGrid = view.findViewById(R.id.btn_view_grid);
 
         adapter = new EstudiantesAdapter();
-        adapter.setOnEstudianteClickListener(estudiante -> {
-            if (getParentFragment() instanceof ContainerEstudiantesFragment) {
-                ((ContainerEstudiantesFragment) getParentFragment()).navegarADetalle(
-                    estudiante.getId(), 
-                    estudiante.getNombre(), 
-                    cursoId
-                );
-            }
-        });
 
         rvEstudiantes.setLayoutManager(new LinearLayoutManager(getContext()));
         rvEstudiantes.setAdapter(adapter);

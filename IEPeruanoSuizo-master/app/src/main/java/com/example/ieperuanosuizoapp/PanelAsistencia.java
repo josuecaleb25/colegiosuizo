@@ -118,7 +118,8 @@ public class PanelAsistencia extends AppCompatActivity {
     private String sesionActualFecha = null;
     private Handler pollingHandler = new Handler();
     private boolean pollingActivo = false;
-    private static final int POLLING_INTERVALO_MS = 3000;
+    private static final int POLLING_INTERVALO_MS = 5000;
+    private boolean sincronizacionEnCurso = false;
     private final Runnable pollingRunnable = new Runnable() {
         @Override
         public void run() {
@@ -409,11 +410,13 @@ public class PanelAsistencia extends AppCompatActivity {
     private void sincronizarAsistencias() {
         String hoy = sesionActualFecha;
         String sesionId = sesionActualId;
-        if (hoy == null || sesionId == null || sesionId.trim().isEmpty()) return;
+        if (sincronizacionEnCurso || hoy == null || sesionId == null || sesionId.trim().isEmpty()) return;
+        sincronizacionEnCurso = true;
 
         RetrofitClient.getApiService().getAsistenciasDelDia(hoy, sesionId).enqueue(new retrofit2.Callback<ApiResponse<List<AsistenciaVivo>>>() {
             @Override
             public void onResponse(retrofit2.Call<ApiResponse<List<AsistenciaVivo>>> call, retrofit2.Response<ApiResponse<List<AsistenciaVivo>>> response) {
+                sincronizacionEnCurso = false;
                 if (!response.isSuccessful() || response.body() == null || !response.body().isSuccess()) {
                     if (response.code() == 404 || response.code() == 409) {
                         manejarSesionCerrada();
@@ -451,6 +454,7 @@ public class PanelAsistencia extends AppCompatActivity {
 
             @Override
             public void onFailure(retrofit2.Call<ApiResponse<List<AsistenciaVivo>>> call, Throwable t) {
+                sincronizacionEnCurso = false;
                 stopCamera();
                 btnActivarCamara.setEnabled(false);
                 if (!falloRedMostrado) {

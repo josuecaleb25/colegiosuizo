@@ -1,4 +1,4 @@
-export type NotificationKind = 'asistencia' | 'comunicado' | 'calificacion';
+export type NotificationKind = 'asistencia' | 'comunicado';
 
 export interface NotificationUser {
   personaId: string;

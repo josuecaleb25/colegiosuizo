@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import supabase from '../config/database';
 import QRCode from 'qrcode';
-import { authMiddleware, requireRoles } from '../middleware/auth';
+import { AuthRequest, authMiddleware, requireRoles, requireSelfOrAdmin } from '../middleware/auth';
 
 const router = Router();
 
 // Obtener perfil de usuario por ID
-router.get('/perfil/:id', async (req, res) => {
+router.get('/perfil/:id', authMiddleware, requireSelfOrAdmin(req => req.params.id), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -123,30 +123,6 @@ router.get('/perfil/:id', async (req, res) => {
       }
     }
 
-    // Si es padre, buscar datos del hijo a través de padres_alumnos
-    if (rol === 'padre' && (!persona.alumnos || persona.alumnos.length === 0)) {
-      const { data: relacion } = await supabase
-        .from('padres_alumnos')
-        .select('alumno_id, alumnos!inner(persona_id, estado)')
-        .eq('padre_id', persona.id)
-        .eq('alumnos.estado', 'activo')
-        .maybeSingle();
-
-      if (relacion) {
-        const alumnosData = relacion.alumnos as any;
-        const { data: hijoAlumno } = await supabase
-          .from('alumnos')
-          .select('id, codigo_alumno, matriculas!inner(secciones!inner(id, nombre, grados!inner(nombre)))')
-          .eq('persona_id', alumnosData.persona_id)
-          .eq('activo', true)
-          .limit(1);
-
-        if (hijoAlumno && hijoAlumno.length > 0) {
-          perfilCompleto.alumno = await generarQRCompleto(hijoAlumno[0], alumnosData.persona_id);
-        }
-      }
-    }
-
     // Si es docente, obtener datos adicionales
     if (rol === 'profesor' && persona.docentes && persona.docentes.length > 0) {
       const { data: docente } = await supabase
@@ -248,7 +224,7 @@ router.put('/perfil/:id', authMiddleware, requireRoles('administrador', 'admin')
 });
 
 // Obtener todos los usuarios (para admin)
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, requireRoles('administrador', 'admin'), async (req, res) => {
   try {
     const { rol, activo, search, limit = 100 } = req.query;
 

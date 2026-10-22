@@ -1,4 +1,6 @@
 import { Request, Response } from 'express';
+import supabase from '../../config/database';
+import { AuthRequest } from '../../middleware/auth';
 import announcementsService from './announcements.service';
 
 export async function getAnnouncement(req: Request, res: Response) {
@@ -12,9 +14,9 @@ export async function getAnnouncement(req: Request, res: Response) {
 
 export async function markAnnouncementAsRead(req: Request, res: Response) {
   try {
-    const { usuario_id } = req.body;
-    if (!usuario_id) return res.status(400).json({ success: false, message: 'usuario_id es requerido' });
-    const message = await announcementsService.markAsRead(req.params.id, usuario_id);
+    const user = (req as AuthRequest).user;
+    if (!user) return res.status(401).json({ success: false, message: 'Autenticación requerida' });
+    const message = await announcementsService.markAsRead(req.params.id, user.id);
     return res.json({ success: true, message });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: 'Error al marcar comunicado como leído', error: error.message });
@@ -23,9 +25,9 @@ export async function markAnnouncementAsRead(req: Request, res: Response) {
 
 export async function listSentAnnouncements(req: Request, res: Response) {
   try {
-    const { usuario_id, rol } = req.query;
-    if (!usuario_id) return res.status(400).json({ success: false, message: 'usuario_id es requerido' });
-    const data = await announcementsService.listSent(usuario_id as string, rol as string | undefined);
+    const user = (req as AuthRequest).user;
+    if (!user) return res.status(401).json({ success: false, message: 'Autenticación requerida' });
+    const data = await announcementsService.listSent(user.id, user.rol);
     return res.json({ success: true, data });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: 'Error al obtener historial', error: error.message });
@@ -61,11 +63,37 @@ export async function deleteAnnouncement(req: Request, res: Response) {
 
 export async function listAnnouncements(req: Request, res: Response) {
   try {
-    const { rol, seccion_id, grado_id } = req.query;
+    const user = (req as AuthRequest).user;
+    if (!user) return res.status(401).json({ success: false, message: 'Autenticación requerida' });
+    let seccionIds: string[] = [];
+    let gradoIds: string[] = [];
+
+    if (user.rol === 'alumno') {
+      const { data, error } = await supabase.from('alumnos').select('id').eq('persona_id', user.id);
+      if (error) throw error;
+      const alumnoIds = (data || []).map(row => row.id);
+
+      if (alumnoIds.length) {
+        const { data, error } = await supabase
+          .from('matriculas')
+          .select('seccion_id')
+          .in('alumno_id', alumnoIds)
+          .eq('estado', 'activo');
+        if (error) throw error;
+        seccionIds = [...new Set((data || []).map(row => row.seccion_id).filter(Boolean))];
+      }
+
+      if (seccionIds.length) {
+        const { data, error } = await supabase.from('secciones').select('grado_id').in('id', seccionIds);
+        if (error) throw error;
+        gradoIds = [...new Set((data || []).map(row => row.grado_id).filter(Boolean))];
+      }
+    }
+
     const data = await announcementsService.listVisible({
-      rol: rol as string | undefined,
-      seccionId: seccion_id as string | undefined,
-      gradoId: grado_id as string | undefined
+      rol: user.rol,
+      seccionIds,
+      gradoIds
     });
 
     return res.json({ success: true, data });
@@ -81,8 +109,9 @@ export async function listAnnouncements(req: Request, res: Response) {
 
 export async function createAnnouncement(req: Request, res: Response) {
   try {
+    const user = (req as AuthRequest).user;
+    if (!user) return res.status(401).json({ success: false, message: 'Autenticación requerida' });
     const {
-      usuario_id,
       titulo,
       contenido,
       tipo,
@@ -91,10 +120,10 @@ export async function createAnnouncement(req: Request, res: Response) {
       grado_id
     } = req.body;
 
-    if (!usuario_id || !titulo || !contenido || !destinatario_tipo) {
+    if (!titulo || !contenido || !destinatario_tipo || String(titulo).length > 160 || String(contenido).length > 20000) {
       return res.status(400).json({
         success: false,
-        message: 'Faltan datos requeridos: usuario_id (persona_id), titulo, contenido, destinatario_tipo'
+        message: 'Datos del comunicado inválidos'
       });
     }
 
@@ -113,7 +142,7 @@ export async function createAnnouncement(req: Request, res: Response) {
     }
 
     const data = await announcementsService.create({
-      personaId: usuario_id,
+      personaId: user.id,
       titulo,
       contenido,
       tipo,

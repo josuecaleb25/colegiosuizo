@@ -11,7 +11,7 @@ export interface CreateAnnouncementRecord {
 }
 
 class AnnouncementsRepository {
-  async findVisible(filters: { rol?: string; seccionId?: string; gradoId?: string }) {
+  async findVisible(filters: { rol?: string; seccionIds?: string[]; gradoIds?: string[] }) {
     let query: any = supabase
       .from('comunicados_nuevos')
       .select(`
@@ -28,9 +28,10 @@ class AnnouncementsRepository {
       .order('fecha_publicacion', { ascending: false });
 
     if (filters.rol === 'alumno' || filters.rol === 'padre') {
-      query = query.or(
-        `destinatario_tipo.eq.global,and(destinatario_tipo.eq.seccion,seccion_id.eq.${filters.seccionId}),and(destinatario_tipo.eq.grado,grado_id.eq.${filters.gradoId})`
-      );
+      const audiences = ['destinatario_tipo.eq.global'];
+      if (filters.seccionIds?.length) audiences.push(`and(destinatario_tipo.eq.seccion,seccion_id.in.(${filters.seccionIds.join(',')}))`);
+      if (filters.gradoIds?.length) audiences.push(`and(destinatario_tipo.eq.grado,grado_id.in.(${filters.gradoIds.join(',')}))`);
+      query = query.or(audiences.join(','));
     }
 
     const { data, error } = await query;

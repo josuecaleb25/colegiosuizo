@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import supabase from '../config/database';
+import { requireSelfOrAdmin } from '../middleware/auth';
+import { requireSectionAccess, requireTeacherAccess } from '../middleware/student-access';
 
 const router = Router();
 
@@ -28,7 +30,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/cursos/alumno/:personaId - Cursos de un alumno (usando persona_id)
-router.get('/alumno/:personaId', async (req, res) => {
+router.get('/alumno/:personaId', requireSelfOrAdmin(req => req.params.personaId), async (req, res) => {
   try {
     const { personaId } = req.params;
 
@@ -36,42 +38,21 @@ router.get('/alumno/:personaId', async (req, res) => {
 
     // Primero intentar buscar como alumno directo
     let alumno = null;
-    let alumnoPersonaId = personaId;
 
     const { data: alumnoDirecto, error: alumnoError } = await supabase
       .from('alumnos')
       .select('id, persona_id')
       .eq('persona_id', personaId)
       .eq('estado', 'activo')
-      .single();
+      .maybeSingle();
+
+    if (alumnoError) throw alumnoError;
 
     if (alumnoDirecto) {
       console.log('✅ Encontrado como alumno directo');
       alumno = alumnoDirecto;
-      alumnoPersonaId = alumnoDirecto.persona_id;
     } else {
-      // Si no es alumno, buscar si es padre y obtener el hijo
-      console.log('🔍 No es alumno, buscando como padre...');
-      
-      const { data: relacion, error: relacionError } = await supabase
-        .from('padres_alumnos')
-        .select('alumno_id, alumnos!inner(persona_id, estado)')
-        .eq('padre_id', personaId)
-        .eq('alumnos.estado', 'activo')
-        .single();
-
-      if (relacion) {
-        const alumnosData = relacion.alumnos as any;
-        console.log('✅ Encontrado como padre, hijo persona_id:', alumnosData.persona_id);
-        alumnoPersonaId = alumnosData.persona_id;
-        alumno = { id: relacion.alumno_id, persona_id: alumnosData.persona_id };
-      } else {
-        console.log('❌ No se encontró alumno ni relación padre-hijo');
-        return res.status(404).json({
-          success: false,
-          message: 'Alumno no encontrado'
-        });
-      }
+      return res.status(404).json({ success: false, message: 'Alumno no encontrado' });
     }
 
     // Obtener la matrícula del alumno para saber su sección
@@ -126,17 +107,15 @@ router.get('/alumno/:personaId', async (req, res) => {
       const primerNombre = docente.personas.nombres.split(' ')[0];
 
       return {
-        id: asignacion.id, // IMPORTANTE: Devolver asignacion_id para que funcionen las evaluaciones
-        curso_id: curso.id, // Mantener curso_id por si se necesita
-        alumno_id: alumnoPersonaId, // ID del alumno (persona_id) para las calificaciones - SIEMPRE el del hijo
+        id: asignacion.id,
+        curso_id: curso.id,
         nombre: curso.nombre,
         descripcion: curso.descripcion,
         color: curso.color,
         icono: curso.icono,
         profesor: primerNombre,
         salon: seccion,
-        seccion: seccion,
-        promedio: '0'
+        seccion: seccion
       };
     });
 
@@ -155,7 +134,7 @@ router.get('/alumno/:personaId', async (req, res) => {
 });
 
 // GET /api/cursos/profesor/:docenteId - Cursos de un profesor
-router.get('/profesor/:docenteId', async (req, res) => {
+router.get('/profesor/:docenteId', requireTeacherAccess(req => req.params.docenteId), async (req, res) => {
   try {
     const { docenteId } = req.params; // Este es el persona_id
 
@@ -216,8 +195,7 @@ router.get('/profesor/:docenteId', async (req, res) => {
         icono: curso.icono,
         profesor: 'Tú',
         salon: salon,
-        seccion: salon,
-        promedio: '--'
+        seccion: salon
       };
     });
 
@@ -236,7 +214,7 @@ router.get('/profesor/:docenteId', async (req, res) => {
 });
 
 // GET /api/cursos/:cursoId/alumnos/:seccionId - Alumnos de un curso
-router.get('/:cursoId/alumnos/:seccionId', async (req, res) => {
+router.get('/:cursoId/alumnos/:seccionId', requireSectionAccess(req => req.params.seccionId), async (req, res) => {
   try {
     const { seccionId } = req.params;
 

@@ -13,12 +13,9 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.tabs.TabLayout;
-import com.google.android.material.tabs.TabLayoutMediator;
 
 public class CursoDetalleProfesorActivity extends AppCompatActivity {
 
-    private String cursoId;
     private String nombreCurso;
     private String salon;
 
@@ -28,7 +25,6 @@ public class CursoDetalleProfesorActivity extends AppCompatActivity {
         setContentView(R.layout.activity_curso_detalle_profesor);
 
         // Obtener datos del intent
-        cursoId = getIntent().getStringExtra("curso_id");
         nombreCurso = getIntent().getStringExtra("nombre_curso");
         salon = getIntent().getStringExtra("salon");
 
@@ -50,37 +46,8 @@ public class CursoDetalleProfesorActivity extends AppCompatActivity {
     }
 
     private void setupTabs() {
-        TabLayout tabLayout = findViewById(R.id.tab_layout);
         ViewPager2 viewPager = findViewById(R.id.view_pager);
-
-        SectionsPagerAdapter adapter = new SectionsPagerAdapter(this);
-        viewPager.setAdapter(adapter);
-
-        new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
-            switch (position) {
-                case 0:
-                    tab.setText("Estudiantes");
-                    break;
-                case 1:
-                    tab.setText("Evaluaciones");
-                    break;
-            }
-        }).attach();
-
-        // Listener para detectar cambios de pestaña
-        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-            @Override
-            public void onPageSelected(int position) {
-                super.onPageSelected(position);
-                // Cuando se selecciona la pestaña de Estudiantes, notificar al fragmento
-                if (position == 0) {
-                    Fragment fragment = getSupportFragmentManager().findFragmentByTag("f" + position);
-                    if (fragment instanceof ContainerEstudiantesFragment) {
-                        ((ContainerEstudiantesFragment) fragment).onTabSelected();
-                    }
-                }
-            }
-        });
+        viewPager.setAdapter(new SectionsPagerAdapter(this));
     }
 
     private void setupBottomNavigation() {
@@ -131,17 +98,12 @@ public class CursoDetalleProfesorActivity extends AppCompatActivity {
         @NonNull
         @Override
         public Fragment createFragment(int position) {
-            if (position == 0) {
-                return ContainerEstudiantesFragment.newInstance(cursoId, salon);
-            } else if (position == 1) {
-                return EvaluacionesFragment.newInstance(cursoId); // cursoId es realmente asignacion_id
-            }
-            return ContainerEstudiantesFragment.newInstance(cursoId, salon);
+            return new EstudiantesFragment();
         }
 
         @Override
         public int getItemCount() {
-            return 2;
+            return 1;
         }
     }
 
