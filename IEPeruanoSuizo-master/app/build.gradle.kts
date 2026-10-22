@@ -5,9 +5,9 @@ plugins {
 
 val configuredApiBaseUrl = providers.gradleProperty("API_BASE_URL")
     .orElse(providers.environmentVariable("API_BASE_URL"))
-    .orElse("")
+    .orElse("https://coleservicework.onrender.com/api/")
     .get()
-val debugApiBaseUrl = configuredApiBaseUrl.ifBlank { "http://10.0.2.2:8000/api/" }
+val debugApiBaseUrl = configuredApiBaseUrl
 
 android {
     namespace = "com.example.ieperuanosuizoapp"
@@ -32,9 +32,6 @@ android {
             buildConfigField("String", "API_BASE_URL", "\"$debugApiBaseUrl\"")
         }
         release {
-            if (configuredApiBaseUrl.isBlank()) {
-                throw GradleException("Configure API_BASE_URL with the deployed backend URL before building release")
-            }
             buildConfigField("String", "API_BASE_URL", "\"$configuredApiBaseUrl\"")
             isMinifyEnabled = false
             proguardFiles(
