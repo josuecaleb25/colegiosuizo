@@ -6,7 +6,7 @@ process.env.JWT_SECRET = 'test-only-secret-with-more-than-32-bytes';
 
 const { authMiddleware, requireRoles, requireSelfOrAdmin, signAccessToken } = require('../dist/middleware/auth');
 const { createRateLimiter } = require('../dist/middleware/rate-limit');
-const { studentHasParentLoginCredentials } = require('../dist/services/student-parent-login');
+const { personaHasParentLoginCredentials } = require('../dist/services/student-parent-login');
 
 function makeResponse() {
   return {
@@ -89,11 +89,10 @@ test('rate limiter blocks requests after the configured limit', () => {
   assert.ok(secondResponse.headers['Retry-After']);
 });
 
-test('student parent login accepts only the configured shared password for a student persona email', () => {
-  const persona = { correo: 'alumno@colegio.test', alumnos: [{ id: 'student-1' }] };
+test('legacy parent login accepts the configured password for a matching persona email', () => {
+  const persona = { correo: 'alumno@colegio.test', alumnos: [] };
 
-  assert.equal(studentHasParentLoginCredentials(persona, 'ALUMNO@COLEGIO.TEST', 'Suizo2026*'), true);
-  assert.equal(studentHasParentLoginCredentials(persona, 'otra@colegio.test', 'Suizo2026*'), false);
-  assert.equal(studentHasParentLoginCredentials({ ...persona, alumnos: [] }, 'alumno@colegio.test', 'Suizo2026*'), false);
-  assert.equal(studentHasParentLoginCredentials(persona, 'alumno@colegio.test', 'incorrecta'), false);
+  assert.equal(personaHasParentLoginCredentials(persona, 'ALUMNO@COLEGIO.TEST', 'Suizo2026*'), true);
+  assert.equal(personaHasParentLoginCredentials(persona, 'otra@colegio.test', 'Suizo2026*'), false);
+  assert.equal(personaHasParentLoginCredentials(persona, 'alumno@colegio.test', 'incorrecta'), false);
 });

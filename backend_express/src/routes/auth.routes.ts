@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import { studentHasParentLoginCredentials } from '../services/student-parent-login';
+import { personaHasParentLoginCredentials } from '../services/student-parent-login';
 import supabase from '../config/database';
 import { signAccessToken } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rate-limit';
@@ -90,7 +90,7 @@ router.post('/login', loginRateLimit, async (req, res) => {
         .eq('correo', email)
         .maybeSingle();
 
-      if (result.error || !result.data || !studentHasParentLoginCredentials(result.data, email, password)) {
+      if (result.error || !result.data || !personaHasParentLoginCredentials(result.data, email, password)) {
         return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
       }
       persona = result.data;
