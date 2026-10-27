@@ -129,7 +129,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Cursos"
+                    android:text="Asignatura"
                     android:textSize="14sp"
                     android:textColor="#BCC1CD"
                     android:fontFamily="@font/poppinsmedium"
@@ -145,13 +145,12 @@
 
             <!-- Course List Items (Contenedor Dinámico) -->
             <LinearLayout
-                android:id="@+id/courses_container"
+                android:id="@+id/schedule_items_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:paddingHorizontal="24dp"
                 android:layout_marginTop="16dp">
-                <!-- Los cursos se generarán dinámicamente desde HorariosActivity.java -->
             </LinearLayout>
 
         </LinearLayout>

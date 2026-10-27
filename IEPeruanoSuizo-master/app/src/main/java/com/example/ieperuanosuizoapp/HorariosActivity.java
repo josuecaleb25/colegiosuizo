@@ -25,7 +25,7 @@ import java.util.Locale;
 public class HorariosActivity extends AppCompatActivity {
 
     private TextView tvDayNumber, tvDayName, tvMonthYear;
-    private LinearLayout calendarStrip, coursesContainer;
+    private LinearLayout calendarStrip, scheduleItemsContainer;
     private HorizontalScrollView calendarScroll;
     private Calendar selectedDate;
     private Calendar today;
@@ -68,7 +68,7 @@ public class HorariosActivity extends AppCompatActivity {
         tvMonthYear = findViewById(R.id.tv_month_year);
         calendarScroll = findViewById(R.id.calendar_scroll);
         calendarStrip = findViewById(R.id.calendar_strip);
-        coursesContainer = findViewById(R.id.courses_container);
+        scheduleItemsContainer = findViewById(R.id.schedule_items_container);
 
         updateHeaderDate();
         generateCalendarStrip();
@@ -169,7 +169,7 @@ public class HorariosActivity extends AppCompatActivity {
     }
 
     private void loadCoursesForSelectedDate() {
-        coursesContainer.removeAllViews();
+        scheduleItemsContainer.removeAllViews();
         
         // Obtener fecha seleccionada en formato YYYY-MM-DD
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
@@ -229,14 +229,14 @@ public class HorariosActivity extends AppCompatActivity {
     
     private void mostrarMensajeVacio() {
         LayoutInflater inflater = LayoutInflater.from(this);
-        View emptyView = inflater.inflate(android.R.layout.simple_list_item_1, coursesContainer, false);
+        View emptyView = inflater.inflate(android.R.layout.simple_list_item_1, scheduleItemsContainer, false);
         TextView tv = emptyView.findViewById(android.R.id.text1);
         tv.setText("No hay actividades programadas para este día");
         tv.setGravity(android.view.Gravity.CENTER);
         tv.setTextColor(Color.parseColor("#BCC1CD"));
         tv.setTypeface(ResourcesCompat.getFont(this, R.font.poppinsmedium));
         tv.setPadding(0, (int) (40 * getResources().getDisplayMetrics().density), 0, 0);
-        coursesContainer.addView(emptyView);
+        scheduleItemsContainer.addView(emptyView);
         
         ImageView iv = new ImageView(this);
         iv.setImageResource(R.drawable.buhope);
@@ -245,7 +245,7 @@ public class HorariosActivity extends AppCompatActivity {
         lp.gravity = android.view.Gravity.CENTER;
         lp.topMargin = (int) (20 * getResources().getDisplayMetrics().density);
         iv.setLayoutParams(lp);
-        coursesContainer.addView(iv);
+        scheduleItemsContainer.addView(iv);
     }
     
     private void mostrarHorarios(List<Object> horariosData) {
@@ -255,7 +255,7 @@ public class HorariosActivity extends AppCompatActivity {
         for (int i = 0; i < horariosData.size(); i++) {
             com.google.gson.JsonObject jsonObj = gson.toJsonTree(horariosData.get(i)).getAsJsonObject();
             
-            String curso = jsonObj.has("curso") ? jsonObj.get("curso").getAsString() : "";
+            String asignatura = jsonObj.has("asignatura") ? jsonObj.get("asignatura").getAsString() : "";
             String horaInicio = jsonObj.has("hora_inicio") ? jsonObj.get("hora_inicio").getAsString() : "";
             String horaFin = jsonObj.has("hora_fin") ? jsonObj.get("hora_fin").getAsString() : "";
             String profesor = jsonObj.has("profesor") ? jsonObj.get("profesor").getAsString() : "";
@@ -263,7 +263,7 @@ public class HorariosActivity extends AppCompatActivity {
             String seccion = jsonObj.has("seccion") ? jsonObj.get("seccion").getAsString() : "";
             
             // Si es RECREO, mostrar solo una línea divisoria
-            if ("RECREO".equals(curso)) {
+            if ("RECREO".equals(asignatura)) {
                 View lineaDivisoria = new View(this);
                 lineaDivisoria.setBackgroundColor(Color.parseColor("#CCCCCC"));
                 LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -273,15 +273,15 @@ public class HorariosActivity extends AppCompatActivity {
                 params.topMargin = (int) (16 * getResources().getDisplayMetrics().density);
                 params.bottomMargin = (int) (16 * getResources().getDisplayMetrics().density);
                 lineaDivisoria.setLayoutParams(params);
-                coursesContainer.addView(lineaDivisoria);
+                scheduleItemsContainer.addView(lineaDivisoria);
                 continue; // Saltar al siguiente horario
             }
             
-            View itemView = inflater.inflate(R.layout.item_horario, coursesContainer, false);
+            View itemView = inflater.inflate(R.layout.item_horario, scheduleItemsContainer, false);
 
             ((TextView) itemView.findViewById(R.id.tv_start_time)).setText(convertirHoraAMPM(horaInicio));
             ((TextView) itemView.findViewById(R.id.tv_end_time)).setText(convertirHoraAMPM(horaFin));
-            ((TextView) itemView.findViewById(R.id.tv_course_name)).setText(curso);
+            ((TextView) itemView.findViewById(R.id.tv_subject_name)).setText(asignatura);
             
             View layoutLocation = (View) itemView.findViewById(R.id.iv_loc_icon).getParent();
             TextView tvPerson = itemView.findViewById(R.id.tv_person_name);
@@ -292,14 +292,14 @@ public class HorariosActivity extends AppCompatActivity {
                 tvPerson.setText(seccion);
                 layoutLocation.setVisibility(View.VISIBLE);
             } else {
-                // Alumno: Solo ve curso y nombre del profesor
+                // El alumno solo ve materia y nombre del profesor
                 tvPerson.setText(profesor);
                 layoutLocation.setVisibility(View.GONE);
             }
 
-            // Marcar curso actual si la fecha seleccionada es hoy
+            // Resaltar la materia activa si la fecha seleccionada es hoy
             boolean esHoy = isSameDay(selectedDate, Calendar.getInstance());
-            boolean esCursoActual = false;
+            boolean esAsignaturaActual = false;
             if (esHoy) {
                 Calendar ahora = Calendar.getInstance();
                 int horaActual = ahora.get(Calendar.HOUR_OF_DAY);
@@ -318,22 +318,22 @@ public class HorariosActivity extends AppCompatActivity {
                     int tiempoFin = horaF * 60 + minF;
 
                     if (tiempoActualEnMinutos >= tiempoInicio && tiempoActualEnMinutos < tiempoFin) {
-                        esCursoActual = true;
+                        esAsignaturaActual = true;
                     }
                 } catch (Exception ignored) {}
             }
 
-            if (esCursoActual) {
+            if (esAsignaturaActual) {
                 View card = itemView.findViewById(R.id.card_content);
                 card.setBackgroundResource(R.drawable.bg_course_card_red);
-                ((TextView) itemView.findViewById(R.id.tv_course_name)).setTextColor(Color.WHITE);
+                ((TextView) itemView.findViewById(R.id.tv_subject_name)).setTextColor(Color.WHITE);
                 ((TextView) itemView.findViewById(R.id.tv_location)).setTextColor(Color.WHITE);
                 tvPerson.setTextColor(Color.WHITE);
                 ((ImageView) itemView.findViewById(R.id.iv_options)).setColorFilter(Color.WHITE);
                 ((ImageView) itemView.findViewById(R.id.iv_loc_icon)).setColorFilter(Color.WHITE);
             }
 
-            coursesContainer.addView(itemView);
+            scheduleItemsContainer.addView(itemView);
         }
     }
 
@@ -430,10 +430,6 @@ public class HorariosActivity extends AppCompatActivity {
             int id = item.getItemId();
             if (id == R.id.nav_home) {
                 startActivity(new Intent(this, HomeActivity.class).addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION));
-                finish();
-                return true;
-            } else if (id == R.id.nav_homework) {
-                startActivity(new Intent(this, CursosActivity.class).addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION));
                 finish();
                 return true;
             }

@@ -2,15 +2,24 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { personaHasStudentLoginCredentials } from '../services/student-login';
 import supabase from '../config/database';
-import { signAccessToken } from '../middleware/auth';
+import { AuthRequest, authMiddleware, signAccessToken } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rate-limit';
+import { hashAccountActivationToken, resolveAccountRole } from '../services/account-activation';
+import { isPasswordChangeValid } from '../services/password-change';
 
 const router = Router();
 const loginRateLimit = createRateLimiter(15 * 60 * 1000, 10, req => {
   const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : 'invalid';
   return `${req.ip || 'unknown'}:${email}`;
 });
-const registerRateLimit = createRateLimiter(60 * 60 * 1000, 5);
+const activationRateLimit = createRateLimiter(15 * 60 * 1000, 5, req => {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : 'invalid';
+  return `${req.ip || 'unknown'}:${email}`;
+});
+const passwordChangeRateLimit = createRateLimiter(15 * 60 * 1000, 5, req => {
+  const user = (req as AuthRequest).user;
+  return `${req.ip || 'unknown'}:${user?.id || 'unauthenticated'}`;
+});
 
 // Login
 router.post('/login', loginRateLimit, async (req, res) => {
@@ -28,7 +37,7 @@ router.post('/login', loginRateLimit, async (req, res) => {
     const { data: usuario, error: usuarioError } = await supabase
       .from('usuarios')
       .select('id, persona_id, email, rol, activo, password')
-      .ilike('email', email)
+      .eq('email', email)
       .maybeSingle();
 
     if (usuarioError) {
@@ -148,84 +157,128 @@ router.post('/login', loginRateLimit, async (req, res) => {
   }
 });
 
-// Register
-router.post('/register', registerRateLimit, async (req, res) => {
+router.post('/change-password', authMiddleware, passwordChangeRateLimit, async (req, res) => {
+  try {
+    const currentPassword = typeof req.body?.current_password === 'string' ? req.body.current_password : '';
+    const newPassword = typeof req.body?.new_password === 'string' ? req.body.new_password : '';
+
+    if (!isPasswordChangeValid(currentPassword, newPassword)) {
+      return res.status(400).json({ success: false, message: 'La nueva contraseña debe tener al menos 12 caracteres y ser distinta a la actual.' });
+    }
+
+    const userId = (req as AuthRequest).user?.id;
+    const { data: user, error: userError } = await supabase
+      .from('usuarios')
+      .select('id, password, activo')
+      .eq('persona_id', userId)
+      .maybeSingle();
+
+    if (userError) throw userError;
+    const validHash = typeof user?.password === 'string' && /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(user.password);
+    if (!user || user.activo === false || !validHash || !(await bcrypt.compare(currentPassword, user.password))) {
+      return res.status(400).json({ success: false, message: 'No se pudo validar la contraseña actual.' });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    const { data: updated, error: updateError } = await supabase
+      .from('usuarios')
+      .update({ password: passwordHash, actualizado_en: new Date().toISOString() })
+      .eq('id', user.id)
+      .select('id')
+      .maybeSingle();
+
+    if (updateError) throw updateError;
+    if (!updated) return res.status(500).json({ success: false, message: 'No se pudo actualizar la contraseña.' });
+
+    return res.json({ success: true, message: 'Contraseña actualizada.' });
+  } catch {
+    return res.status(500).json({ success: false, message: 'No se pudo cambiar la contraseña.' });
+  }
+});
+
+router.post('/activate-account', activationRateLimit, async (req, res) => {
   try {
     const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
     const password = typeof req.body?.password === 'string' ? req.body.password : '';
-    const { nombres, apellidos, telefono, dni } = req.body || {};
+    const activationCode = typeof req.body?.activation_code === 'string' ? req.body.activation_code.trim() : '';
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || password.length < 12 || password.length > 256 || !nombres || !apellidos || String(nombres).length > 100 || String(apellidos).length > 100) {
-      return res.status(400).json({
-        success: false,
-        message: 'Datos de registro inválidos'
-      });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || password.length < 12 || password.length > 256 || !/^[A-Za-z0-9_-]{43}$/.test(activationCode)) {
+      return res.status(400).json({ success: false, message: 'Datos de activación inválidos' });
     }
 
-    // Verificar si el usuario ya existe
-    const { data: existingUsers } = await supabase
-      .from('usuarios')
-      .select('id')
-      .eq('email', email)
-      .limit(1);
+    const { data: activation, error: activationError } = await supabase
+      .from('account_activation_tokens')
+      .select('id, persona_id, expires_at, consumed_at, revoked_at')
+      .eq('token_hash', hashAccountActivationToken(activationCode))
+      .maybeSingle();
 
-    if (existingUsers && existingUsers.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'El email ya está registrado'
-      });
+    if (activationError) throw activationError;
+    if (!activation || activation.consumed_at || activation.revoked_at || Date.parse(activation.expires_at) <= Date.now()) {
+      return res.status(400).json({ success: false, message: 'El código no es válido o venció' });
     }
 
-    // Crear persona primero
-    const { data: newPersona, error: personaError } = await supabase
+    const { data: persona, error: personaError } = await supabase
       .from('personas')
-      .insert({
-        dni: dni || null,
-        nombres,
-        apellidos,
-        telefono: telefono || null,
-        correo: email
-      })
-      .select()
-      .single();
+      .select('id, correo, alumnos(id, estado), docentes(id, estado)')
+      .eq('id', activation.persona_id)
+      .maybeSingle();
 
     if (personaError) throw personaError;
+    if (!persona || String(persona.correo || '').trim().toLowerCase() !== email) {
+      return res.status(400).json({ success: false, message: 'El código no es válido o venció' });
+    }
 
-    // Hash de la contraseña
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const students = Array.isArray(persona.alumnos) ? persona.alumnos : [];
+    const teachers = Array.isArray(persona.docentes) ? persona.docentes : [];
+    const role = resolveAccountRole(
+      students.some((student: any) => student.estado === 'activo'),
+      teachers.some((teacher: any) => teacher.estado === 'activo')
+    );
 
-    // Crear usuario
-    const { data: newUser, error: userError } = await supabase
-      .from('usuarios')
-      .insert({
-        persona_id: newPersona.id,
-        email,
-        password: hashedPassword,
-        rol: 'alumno',
-        activo: true
-      })
-      .select()
-      .single();
+    if (!role) return res.status(400).json({ success: false, message: 'El código no es válido o venció' });
 
-    if (userError) throw userError;
+    const [{ data: accountByPersona, error: accountByPersonaError }, { data: accountByEmail, error: accountByEmailError }] = await Promise.all([
+      supabase.from('usuarios').select('id, persona_id').eq('persona_id', persona.id).maybeSingle(),
+      supabase.from('usuarios').select('id, persona_id').eq('email', email).maybeSingle()
+    ]);
 
-    res.json({
-      success: true,
-      message: 'Usuario registrado exitosamente',
-      data: {
-        id: newUser.id,
-        email: newUser.email,
-        nombres,
-        apellidos,
-        rol: newUser.rol
-      }
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al registrar usuario'
-    });
+    if (accountByPersonaError) throw accountByPersonaError;
+    if (accountByEmailError) throw accountByEmailError;
+    if (accountByEmail && accountByEmail.persona_id !== persona.id) {
+      return res.status(400).json({ success: false, message: 'El código no es válido o venció' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    const now = new Date().toISOString();
+    const { data: consumed, error: consumeError } = await supabase
+      .from('account_activation_tokens')
+      .update({ consumed_at: now })
+      .eq('id', activation.id)
+      .is('consumed_at', null)
+      .is('revoked_at', null)
+      .gt('expires_at', now)
+      .select('id')
+      .maybeSingle();
+
+    if (consumeError) throw consumeError;
+    if (!consumed) return res.status(400).json({ success: false, message: 'El código no es válido o venció' });
+
+    const account = accountByPersona || accountByEmail;
+    const accountQuery = account
+      ? supabase.from('usuarios').update({ email, password: passwordHash, rol: role, activo: true, actualizado_en: now }).eq('id', account.id)
+      : supabase.from('usuarios').insert({ persona_id: persona.id, email, password: passwordHash, rol: role, activo: true });
+    const { error: saveError } = await accountQuery;
+
+    if (saveError) throw saveError;
+
+    return res.json({ success: true, message: 'Cuenta activada. Ya puedes iniciar sesión con tu nueva contraseña.' });
+  } catch {
+    return res.status(500).json({ success: false, message: 'No se pudo activar la cuenta. Solicita un nuevo código.' });
   }
+});
+
+router.post('/register', (_req, res) => {
+  res.status(410).json({ success: false, message: 'El registro requiere un código de activación emitido por la institución.' });
 });
 
 export default router;

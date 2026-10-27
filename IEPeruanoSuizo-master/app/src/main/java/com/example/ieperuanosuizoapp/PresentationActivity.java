@@ -92,7 +92,7 @@ public class PresentationActivity extends AppCompatActivity {
         onboardingItems.add(new OnboardingItem(
                 R.drawable.horarioescolar,
                 "Controla tu horario escolar",
-                "Lleva el registro de tus cursos, salones y horarios en un solo lugar"
+                "Consulta tus materias, salones y horarios en un solo lugar"
         ));
 
         onboardingItems.add(new OnboardingItem(

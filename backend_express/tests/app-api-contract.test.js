@@ -54,7 +54,7 @@ test('every Android API method and path is registered by the backend', () => {
   ));
 
   assert.deepEqual(missing, []);
-  assert.equal(appCalls.length, 29);
+  assert.equal(appCalls.length, 32);
 });
 
 test('the agenda displays assignment subjects without a standalone courses screen', () => {

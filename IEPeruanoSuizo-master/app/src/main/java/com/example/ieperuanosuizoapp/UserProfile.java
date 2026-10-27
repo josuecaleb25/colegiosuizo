@@ -90,6 +90,11 @@ public class UserProfile extends AppCompatActivity {
             });
         }
 
+        View optionSecurity = findViewById(R.id.option_security);
+        if (optionSecurity != null) {
+            optionSecurity.setOnClickListener(v -> startActivity(new Intent(UserProfile.this, CambiarContrasenaActivity.class)));
+        }
+
         // Cerrar sesión
         View btnLogout = findViewById(R.id.btn_logout_profile);
         if (btnLogout != null) {
@@ -198,11 +203,6 @@ public class UserProfile extends AppCompatActivity {
                 if (itemId == R.id.nav_home) {
                     Intent intent = new Intent(this, HomeActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
-                    finish();
-                    return true;
-                } else if (itemId == R.id.nav_homework) {
-                    Intent intent = new Intent(this, CursosActivity.class);
                     startActivity(intent);
                     finish();
                     return true;

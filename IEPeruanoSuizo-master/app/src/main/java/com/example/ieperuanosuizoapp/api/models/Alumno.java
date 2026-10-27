@@ -8,7 +8,6 @@ public class Alumno {
     private String apellidos;
     private String nombre_completo;
     private String fecha_nacimiento;
-    private String email_padre;
     private String qr_token;
     private boolean activo;
     private String seccion;
@@ -73,13 +72,6 @@ public class Alumno {
         this.fecha_nacimiento = fecha_nacimiento;
     }
 
-    public String getEmail_padre() {
-        return email_padre;
-    }
-
-    public void setEmail_padre(String email_padre) {
-        this.email_padre = email_padre;
-    }
 
     public String getQr_token() {
         return qr_token;

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="28dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="Activación de cuentas"
+            android:textColor="#0E0D18"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="24dp"
+            android:text="Genera un código único para el correo institucional de un alumno o profesor. El código vence en 7 días y solo puede usarse una vez. Entrégalo individualmente por un canal privado."
+            android:textColor="#666666"
+            android:textSize="14sp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="22dp"
+            android:hint="Correo institucional">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/admin_activation_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textEmailAddress"
+                android:maxLength="254" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/admin_activation_issue"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:backgroundTint="#BA1924"
+            android:text="Generar código individual"
+            android:textColor="@color/white" />
+    </LinearLayout>
+</ScrollView>

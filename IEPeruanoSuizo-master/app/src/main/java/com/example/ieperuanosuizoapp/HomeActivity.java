@@ -175,13 +175,6 @@ public class HomeActivity extends AppCompatActivity {
                 // Ya estamos en Home, solo cerrar el drawer
                 drawerLayout.closeDrawer(GravityCompat.START);
                 return true;
-            } else if (id == R.id.nav_cursos) {
-                Intent intent = new Intent(HomeActivity.this, CursosActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-                startActivity(intent);
-                overridePendingTransition(0, 0);
-                drawerLayout.closeDrawer(GravityCompat.START);
-                return true;
             } else if (id == R.id.nav_horarios) {
                 Intent intent = new Intent(HomeActivity.this, HorariosActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
@@ -279,12 +272,6 @@ public class HomeActivity extends AppCompatActivity {
                 // Para el Home presionado, aplicamos el tinte dinámico si es verde
                 bottomNav.setItemIconTintList(navTint);
                 item.setIcon(R.drawable.icon_home_google);
-            } else if (item.getItemId() == R.id.nav_homework) {
-                android.content.Intent intent = new android.content.Intent(this, CursosActivity.class);
-                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION);
-                startActivity(intent);
-                overridePendingTransition(0, 0);
-                return true;
             } else if (item.getItemId() == R.id.nav_horarios) {
                 android.content.Intent intent = new android.content.Intent(this, HorariosActivity.class);
                 intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION);
@@ -387,17 +374,15 @@ public class HomeActivity extends AppCompatActivity {
         
         // Items base (Siempre visibles para todos)
         menu.findItem(R.id.nav_home).setVisible(true);
-        menu.findItem(R.id.nav_cursos).setVisible(true);
         menu.findItem(R.id.nav_horarios).setVisible(true);
         menu.findItem(R.id.nav_perfil).setVisible(true);
         menu.findItem(R.id.nav_identificacion).setVisible(false);
         
         // Lógica de visibilidad por Rol
         // Normalizar el rol para comparación (aceptar variantes)
-        String rolNormalizado = userMode != null ? userMode.toUpperCase().trim() : "PADRE";
+        String rolNormalizado = userMode != null ? userMode.toUpperCase().trim() : "ALUMNO";
         
-        if ("ALUMNO".equals(rolNormalizado) || "PADRE".equals(rolNormalizado)) {
-            menu.findItem(R.id.nav_cursos).setVisible(true);
+        if ("ALUMNO".equals(rolNormalizado)) {
             menu.findItem(R.id.nav_horarios).setVisible(true);
             menu.findItem(R.id.nav_perfil).setVisible(true);
             menu.findItem(R.id.nav_identificacion).setVisible(true);
@@ -406,7 +391,6 @@ public class HomeActivity extends AppCompatActivity {
             menu.findItem(R.id.nav_panel_admin).setVisible(false);
             
         } else if ("PROFESOR".equals(rolNormalizado)) {
-            menu.findItem(R.id.nav_cursos).setVisible(true);
             menu.findItem(R.id.nav_horarios).setVisible(true);
             menu.findItem(R.id.nav_perfil).setVisible(true);
             menu.findItem(R.id.nav_identificacion).setVisible(false);
@@ -420,7 +404,6 @@ public class HomeActivity extends AppCompatActivity {
             menu.findItem(R.id.nav_asistencia).setVisible(true);
             
             // Ocultar el resto
-            menu.findItem(R.id.nav_cursos).setVisible(false);
             menu.findItem(R.id.nav_horarios).setVisible(false);
             menu.findItem(R.id.nav_perfil).setVisible(false);
             menu.findItem(R.id.nav_identificacion).setVisible(false);
@@ -436,13 +419,11 @@ public class HomeActivity extends AppCompatActivity {
             menu.findItem(R.id.nav_asistencia).setVisible(true);
             menu.findItem(R.id.nav_panel_admin).setVisible(true);
             
-            // Ocultar Cursos y Horarios para el Admin
-            menu.findItem(R.id.nav_cursos).setVisible(false);
+            // Ocultar Asignaturas y Horarios para el Admin
             menu.findItem(R.id.nav_horarios).setVisible(false);
         } else {
             // Rol desconocido - mostrar como alumno por defecto
             android.util.Log.w("HomeActivity", "Rol desconocido: '" + userMode + "' - usando permisos de ALUMNO");
-            menu.findItem(R.id.nav_cursos).setVisible(true);
             menu.findItem(R.id.nav_horarios).setVisible(true);
             menu.findItem(R.id.nav_perfil).setVisible(true);
             menu.findItem(R.id.nav_identificacion).setVisible(false);
@@ -1130,10 +1111,10 @@ public class HomeActivity extends AppCompatActivity {
                     
                     if (!horariosData.isEmpty()) {
                         ultimosHorarios = horariosData;
-                        // Encontrar el curso actual según la hora
-                        Object cursoActual = encontrarCursoActual(horariosData);
-                        if (cursoActual != null) {
-                            actualizarUIHorario(cursoActual);
+                        // Encontrar la materia que corresponde a la hora actual
+                        Object asignaturaActual = encontrarAsignaturaActual(horariosData);
+                        if (asignaturaActual != null) {
+                            actualizarUIHorario(asignaturaActual);
                         } else {
                             mostrarSinActividad();
                         }
@@ -1155,7 +1136,7 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
     
-    private Object encontrarCursoActual(List<Object> horarios) {
+    private Object encontrarAsignaturaActual(List<Object> horarios) {
         // Obtener hora actual
         Calendar ahora = Calendar.getInstance();
         int horaActual = ahora.get(Calendar.HOUR_OF_DAY);
@@ -1164,16 +1145,16 @@ public class HomeActivity extends AppCompatActivity {
         
         com.google.gson.Gson gson = new com.google.gson.Gson();
         
-        // Buscar el curso que está en progreso AHORA
+        // Buscar la materia que está en curso
         for (Object obj : horarios) {
             com.google.gson.JsonObject jsonObj = gson.toJsonTree(obj).getAsJsonObject();
             
             String horaInicio = jsonObj.has("hora_inicio") ? jsonObj.get("hora_inicio").getAsString() : "";
             String horaFin = jsonObj.has("hora_fin") ? jsonObj.get("hora_fin").getAsString() : "";
-            String curso = jsonObj.has("curso") ? jsonObj.get("curso").getAsString() : "";
+            String asignatura = jsonObj.has("asignatura") ? jsonObj.get("asignatura").getAsString() : "";
             
             // Saltar recreos
-            if ("RECREO".equals(curso)) {
+            if ("RECREO".equals(asignatura)) {
                 continue;
             }
             
@@ -1190,24 +1171,24 @@ public class HomeActivity extends AppCompatActivity {
                 int minF = Integer.parseInt(partesFin[1]);
                 int tiempoFinEnMinutos = horaF * 60 + minF;
                 
-                // Verificar si estamos dentro del rango de este curso
+                // Verificar si estamos dentro del horario de esta materia
                 if (tiempoActualEnMinutos >= tiempoInicioEnMinutos && tiempoActualEnMinutos < tiempoFinEnMinutos) {
-                    return obj; // Este es el curso actual
+                    return obj; // Esta es la materia actual
                 }
             } catch (Exception e) {
                 android.util.Log.e("HomeActivity", "Error parseando horas: " + e.getMessage());
             }
         }
         
-        // Si no hay curso en progreso, devolver el próximo curso
+        // Si no hay una materia en curso, devolver la siguiente
         for (Object obj : horarios) {
             com.google.gson.Gson gson2 = new com.google.gson.Gson();
             com.google.gson.JsonObject jsonObj = gson2.toJsonTree(obj).getAsJsonObject();
             
             String horaInicio = jsonObj.has("hora_inicio") ? jsonObj.get("hora_inicio").getAsString() : "";
-            String curso = jsonObj.has("curso") ? jsonObj.get("curso").getAsString() : "";
+            String asignatura = jsonObj.has("asignatura") ? jsonObj.get("asignatura").getAsString() : "";
             
-            if ("RECREO".equals(curso)) {
+            if ("RECREO".equals(asignatura)) {
                 continue;
             }
             
@@ -1218,21 +1199,21 @@ public class HomeActivity extends AppCompatActivity {
                 int tiempoInicioEnMinutos = horaIni * 60 + minIni;
                 
                 if (tiempoActualEnMinutos < tiempoInicioEnMinutos) {
-                    return obj; // Este es el próximo curso
+                    return obj; // Esta es la siguiente materia
                 }
             } catch (Exception e) {
                 android.util.Log.e("HomeActivity", "Error parseando horas: " + e.getMessage());
             }
         }
         
-        // Si no hay próximo curso, todos ya terminaron
+        // Si ya no quedan materias, devolver null
         return null;
     }
-    private void actualizarUIHorario(Object cursoData) {
+    private void actualizarUIHorario(Object asignaturaData) {
         com.google.gson.Gson gson = new com.google.gson.Gson();
-        com.google.gson.JsonObject jsonObj = gson.toJsonTree(cursoData).getAsJsonObject();
+        com.google.gson.JsonObject jsonObj = gson.toJsonTree(asignaturaData).getAsJsonObject();
         
-        String curso = jsonObj.has("curso") ? jsonObj.get("curso").getAsString() : "";
+        String asignatura = jsonObj.has("asignatura") ? jsonObj.get("asignatura").getAsString() : "";
         String horaInicio = jsonObj.has("hora_inicio") ? jsonObj.get("hora_inicio").getAsString() : "";
         String horaFin = jsonObj.has("hora_fin") ? jsonObj.get("hora_fin").getAsString() : "";
         String profesor = jsonObj.has("profesor") ? jsonObj.get("profesor").getAsString() : "";
@@ -1263,11 +1244,11 @@ public class HomeActivity extends AppCompatActivity {
             tvHoraFinAgenda.setVisibility(View.VISIBLE);
         }
         
-        // Actualizar nombre del curso
-        TextView tvCursoAgenda = findViewById(R.id.tv_curso_agenda);
-        if (tvCursoAgenda != null) {
-            tvCursoAgenda.setText(curso);
-            tvCursoAgenda.setVisibility(View.VISIBLE);
+        // Actualizar el nombre de la materia
+        TextView tvAsignaturaAgenda = findViewById(R.id.tv_asignatura_agenda);
+        if (tvAsignaturaAgenda != null) {
+            tvAsignaturaAgenda.setText(asignatura);
+            tvAsignaturaAgenda.setVisibility(View.VISIBLE);
         }
         
         // Actualizar salón/sección
@@ -1326,9 +1307,9 @@ public class HomeActivity extends AppCompatActivity {
         }
         
         // Buscar el LinearLayout horizontal principal y agregar padding
-        TextView tvCursoAgenda = findViewById(R.id.tv_curso_agenda);
-        if (tvCursoAgenda != null) {
-            android.view.ViewParent parent = tvCursoAgenda.getParent();
+        TextView tvAsignaturaAgenda = findViewById(R.id.tv_asignatura_agenda);
+        if (tvAsignaturaAgenda != null) {
+            android.view.ViewParent parent = tvAsignaturaAgenda.getParent();
             if (parent instanceof android.view.ViewGroup) {
                 android.view.ViewParent grandParent = parent.getParent();
                 if (grandParent instanceof android.widget.LinearLayout) {
@@ -1344,14 +1325,14 @@ public class HomeActivity extends AppCompatActivity {
             }
             
             // Mostrar mensaje centrado en gris
-            tvCursoAgenda.setText("Ninguna actividad programada");
-            tvCursoAgenda.setTextColor(0xFF9E9E9E); // Gris
-            tvCursoAgenda.setGravity(android.view.Gravity.CENTER);
-            tvCursoAgenda.setVisibility(View.VISIBLE);
+            tvAsignaturaAgenda.setText("Ninguna actividad programada");
+            tvAsignaturaAgenda.setTextColor(0xFF9E9E9E); // Gris
+            tvAsignaturaAgenda.setGravity(android.view.Gravity.CENTER);
+            tvAsignaturaAgenda.setVisibility(View.VISIBLE);
             
             // Centrar el contenedor del texto
-            if (tvCursoAgenda.getParent() instanceof android.widget.LinearLayout) {
-                android.widget.LinearLayout parentLayout = (android.widget.LinearLayout) tvCursoAgenda.getParent();
+            if (tvAsignaturaAgenda.getParent() instanceof android.widget.LinearLayout) {
+                android.widget.LinearLayout parentLayout = (android.widget.LinearLayout) tvAsignaturaAgenda.getParent();
                 parentLayout.setGravity(android.view.Gravity.CENTER);
             }
         }
@@ -1374,9 +1355,9 @@ public class HomeActivity extends AppCompatActivity {
         }
         horarioRunnable = () -> {
             if (ultimosHorarios != null && !ultimosHorarios.isEmpty()) {
-                Object cursoActual = encontrarCursoActual(ultimosHorarios);
-                if (cursoActual != null) {
-                    actualizarUIHorario(cursoActual);
+                Object asignaturaActual = encontrarAsignaturaActual(ultimosHorarios);
+                if (asignaturaActual != null) {
+                    actualizarUIHorario(asignaturaActual);
                 } else {
                     mostrarSinActividad();
                 }
@@ -1435,7 +1416,7 @@ public class HomeActivity extends AppCompatActivity {
         }
 
         if (menorMs == Long.MAX_VALUE) {
-            return 300000; // Todos los cursos terminaron, revisar en 5 min
+            return 300000; // Revisar en cinco minutos
         }
         return Math.max(menorMs, 1000);
     }
@@ -1461,9 +1442,9 @@ public class HomeActivity extends AppCompatActivity {
         if (horarios == null || horarios.isEmpty()) return;
 
         ultimosHorarios = horarios;
-        Object cursoActual = encontrarCursoActual(horarios);
-        if (cursoActual != null) {
-            actualizarUIHorario(cursoActual);
+        Object asignaturaActual = encontrarAsignaturaActual(horarios);
+        if (asignaturaActual != null) {
+            actualizarUIHorario(asignaturaActual);
         } else {
             mostrarSinActividad();
         }

@@ -419,10 +419,6 @@ public class GestionAsistenciaActivity extends AppCompatActivity {
                 startActivity(new Intent(this, HomeActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
                 finish();
                 return true;
-            } else if (id == R.id.nav_homework) {
-                startActivity(new Intent(this, CursosActivity.class));
-                finish();
-                return true;
             } else if (id == R.id.nav_horarios) {
                 startActivity(new Intent(this, HorariosActivity.class));
                 finish();

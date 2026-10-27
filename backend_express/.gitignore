@@ -51,6 +51,7 @@ coverage/
 # SQL scripts and credentials (development only)
 *.sql
 *.txt
+credenciales-iniciales-*.csv
 ALUMNOS_CREDENCIALES.txt
 VERIFICAR_ENDPOINTS.txt
 

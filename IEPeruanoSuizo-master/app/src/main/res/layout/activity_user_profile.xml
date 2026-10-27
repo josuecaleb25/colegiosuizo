@@ -145,14 +145,16 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/option_security"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:alpha="0.4"
-                android:clickable="false">
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
                 <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/securtitynew" app:tint="?android:attr/textColorPrimary" />
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Contraseña y Seguridad" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Cambiar contraseña" android:textColor="?attr/homeTextColorSebastian" android:textSize="14sp" />
                 <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="?android:attr/textColorSecondary" />
             </LinearLayout>
 

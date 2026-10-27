@@ -6,10 +6,6 @@
             android:icon="@drawable/icon_home_google"
             android:title="Inicio" />
         <item
-            android:id="@+id/nav_cursos"
-            android:icon="@drawable/icon_cursos"
-            android:title="Cursos" />
-        <item
             android:id="@+id/nav_horarios"
             android:icon="@drawable/icon_calendar_google"
             android:title="Horarios" />

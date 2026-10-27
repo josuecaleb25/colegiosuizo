@@ -142,11 +142,6 @@ public class ViewApariencia extends AppCompatActivity {
                 if (itemId == R.id.nav_home) {
                     goBackToHome();
                     return true;
-                } else if (itemId == R.id.nav_homework) {
-                    Intent intent = new Intent(this, CursosActivity.class);
-                    startActivity(intent);
-                    finish();
-                    return true;
                 } else if (itemId == R.id.nav_horarios) {
                     Intent intent = new Intent(this, HorariosActivity.class);
                     startActivity(intent);

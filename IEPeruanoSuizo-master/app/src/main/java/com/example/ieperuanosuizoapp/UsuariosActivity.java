@@ -221,11 +221,6 @@ public class UsuariosActivity extends AppCompatActivity implements UsuariosAdapt
             if (id == R.id.nav_home) {
                 finish();
                 return true;
-            } else if (id == R.id.nav_homework) {
-                Intent intent = new Intent(this, CursosActivity.class);
-                startActivity(intent);
-                finish();
-                return true;
             } else if (id == R.id.nav_horarios) {
                 Intent intent = new Intent(this, HorariosActivity.class);
                 startActivity(intent);

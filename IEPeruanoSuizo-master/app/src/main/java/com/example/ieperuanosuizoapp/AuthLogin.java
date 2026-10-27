@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -42,6 +43,14 @@ public class AuthLogin extends AppCompatActivity {
         etEmail = findViewById(R.id.inputTypeIDUSER);
         etPassword = findViewById(R.id.inputTypePassword);
         btnLogin = findViewById(R.id.Login);
+        String email = getIntent().getStringExtra("email");
+        if (email != null) etEmail.setText(email);
+        TextView activationLink = findViewById(R.id.ForgotPassword);
+        activationLink.setOnClickListener(view -> {
+            Intent intent = new Intent(this, ActivarCuentaActivity.class);
+            intent.putExtra("email", etEmail.getText().toString().trim());
+            startActivity(intent);
+        });
 
         // Fix autofill background color
         fixAutofillBackground();

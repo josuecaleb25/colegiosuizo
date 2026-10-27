@@ -538,13 +538,6 @@ public class ViewComunicadosActivity extends AppCompatActivity {
                 overridePendingTransition(0, 0);
                 finish();
                 return true;
-            } else if (id == R.id.nav_homework) {
-                Intent intent = new Intent(this, CursosActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-                startActivity(intent);
-                overridePendingTransition(0, 0);
-                finish();
-                return true;
             } else if (id == R.id.nav_horarios) {
                 Intent intent = new Intent(this, HorariosActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);

@@ -6,6 +6,7 @@ import com.example.ieperuanosuizoapp.api.models.AsistenciaAlumno;
 import com.example.ieperuanosuizoapp.api.models.EscanearQrData;
 import com.example.ieperuanosuizoapp.api.models.LoginRequest;
 import com.example.ieperuanosuizoapp.api.models.LoginResponse;
+import com.example.ieperuanosuizoapp.api.models.ActivationCodeResponse;
 import com.example.ieperuanosuizoapp.api.models.Notificacion;
 import com.example.ieperuanosuizoapp.api.models.NotificacionesNoLeidasResponse;
 import com.example.ieperuanosuizoapp.api.models.NotificacionesResponse;
@@ -26,6 +27,15 @@ public interface ApiService {
     // Autenticación
     @POST("auth/login")
     Call<LoginResponse> login(@Body LoginRequest request);
+
+    @POST("auth/activate-account")
+    Call<okhttp3.ResponseBody> activateAccount(@Body Map<String, String> body);
+
+    @POST("auth/change-password")
+    Call<ApiResponse<Object>> changePassword(@Body Map<String, String> body);
+
+    @POST("admin/accounts/activation-code")
+    Call<ActivationCodeResponse> issueActivationCode(@Body Map<String, String> body);
     
     // Alumnos
     @GET("alumnos")
@@ -77,17 +87,6 @@ public interface ApiService {
         @Query("tipo") String tipo,
         @Query("seccion_id") String seccionId,
         @Query("usuario_id") String usuarioId
-    );
-    
-    // Cursos
-    @GET("cursos/alumno/{alumno_id}")
-    Call<ApiResponse<List<Object>>> getCursosAlumno(
-        @retrofit2.http.Path("alumno_id") String alumnoId
-    );
-    
-    @GET("cursos/profesor/{profesor_id}")
-    Call<ApiResponse<List<Object>>> getCursosProfesor(
-        @retrofit2.http.Path("profesor_id") String profesorId
     );
     
     // Horarios

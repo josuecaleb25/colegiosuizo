@@ -7,6 +7,8 @@ process.env.JWT_SECRET = 'test-only-secret-with-more-than-32-bytes';
 const { authMiddleware, requireRoles, requireSelfOrAdmin, signAccessToken } = require('../dist/middleware/auth');
 const { createRateLimiter } = require('../dist/middleware/rate-limit');
 const { personaHasStudentLoginCredentials } = require('../dist/services/student-login');
+const { createAccountActivationToken, hashAccountActivationToken, resolveAccountRole } = require('../dist/services/account-activation');
+const { isPasswordChangeValid } = require('../dist/services/password-change');
 
 function makeResponse() {
   return {
@@ -90,9 +92,34 @@ test('rate limiter blocks requests after the configured limit', () => {
 });
 
 test('student login accepts the configured password for a matching persona email', () => {
-  const persona = { correo: 'alumno@colegio.test', alumnos: [] };
+  const persona = { correo: 'alumno@colegio.test', alumnos: [{ id: 'student-1' }] };
 
   assert.equal(personaHasStudentLoginCredentials(persona, 'ALUMNO@COLEGIO.TEST', 'Suizo2026*'), true);
   assert.equal(personaHasStudentLoginCredentials(persona, 'otra@colegio.test', 'Suizo2026*'), false);
   assert.equal(personaHasStudentLoginCredentials(persona, 'alumno@colegio.test', 'incorrecta'), false);
+  assert.equal(personaHasStudentLoginCredentials({ ...persona, alumnos: [] }, 'alumno@colegio.test', 'Suizo2026*'), false);
+  assert.equal(personaHasStudentLoginCredentials({ correo: 'docente@colegio.test', docentes: [{ id: 'teacher-1' }] }, 'docente@colegio.test', 'Suizo2026*'), false);
+});
+
+test('account activation codes are random, one-way stored, and single role identities', () => {
+  const first = createAccountActivationToken();
+  const second = createAccountActivationToken();
+
+  assert.equal(first.token.length, 43);
+  assert.notEqual(first.token, second.token);
+  assert.equal(first.tokenHash, hashAccountActivationToken(first.token));
+  assert.notEqual(first.tokenHash, first.token);
+  assert.equal(resolveAccountRole(true, false), 'alumno');
+  assert.equal(resolveAccountRole(false, true), 'profesor');
+  assert.equal(resolveAccountRole(false, false), null);
+  assert.equal(resolveAccountRole(true, true), null);
+});
+
+test('password changes require a current password and a different password of at least 12 characters', () => {
+  assert.equal(isPasswordChangeValid('actual', 'nueva-clave-segura'), true);
+  assert.equal(isPasswordChangeValid('', 'nueva-clave-segura'), false);
+  assert.equal(isPasswordChangeValid('actual', 'corta'), false);
+  assert.equal(isPasswordChangeValid('misma-clave-123', 'misma-clave-123'), false);
+  assert.equal(isPasswordChangeValid('x'.repeat(257), 'nueva-clave-segura'), false);
+  assert.equal(isPasswordChangeValid('actual', 'x'.repeat(257)), false);
 });

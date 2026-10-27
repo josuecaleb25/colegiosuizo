@@ -19,6 +19,7 @@ public class AdminPanelActivity extends AppCompatActivity {
         // Cards de gestión
         CardView cardGestionAlumnos = findViewById(R.id.card_gestion_alumnos);
         CardView cardAsistencia = findViewById(R.id.card_asistencia);
+        CardView cardActivationAccounts = findViewById(R.id.card_activation_accounts);
 
         cardGestionAlumnos.setOnClickListener(v -> {
             Intent intent = new Intent(this, UsuariosActivity.class);
@@ -27,6 +28,11 @@ public class AdminPanelActivity extends AppCompatActivity {
         
         cardAsistencia.setOnClickListener(v -> {
             Intent intent = new Intent(this, GestionAsistenciaActivity.class);
+            startActivity(intent);
+        });
+
+        cardActivationAccounts.setOnClickListener(v -> {
+            Intent intent = new Intent(this, AdminActivarCuentaActivity.class);
             startActivity(intent);
         });
         

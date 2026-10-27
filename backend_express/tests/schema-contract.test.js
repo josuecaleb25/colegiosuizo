@@ -6,6 +6,7 @@ const path = require('node:path');
 const sourceRoot = path.join(__dirname, '..', 'src');
 const schemaTables = new Set([
   'alumnos',
+  'account_activation_tokens',
   'anios_lectivos',
   'asignaciones',
   'asistencia_sesiones',

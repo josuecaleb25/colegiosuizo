@@ -136,7 +136,7 @@
 
         <TextView
             android:id="@+id/ForgotPassword"
-            android:text="¿Olvidaste tu contraseña?"
+            android:text="¿Tienes un código? Activa o recupera tu cuenta"
             android:fontFamily="@font/leaguespartansemibold"
             android:textColor="#BA1924"
             android:layout_marginTop="12dp"
@@ -145,6 +145,8 @@
             android:textStyle="bold"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
             app:layout_constraintEnd_toEndOf="@+id/layoutPassword"
             app:layout_constraintTop_toBottomOf="@+id/layoutPassword" />
 

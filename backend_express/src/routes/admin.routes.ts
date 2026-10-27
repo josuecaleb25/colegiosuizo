@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import supabase from '../config/database';
 import QRCode from 'qrcode';
-import { authMiddleware, requireRoles } from '../middleware/auth';
+import { AuthRequest, authMiddleware, requireRoles } from '../middleware/auth';
+import { createRateLimiter } from '../middleware/rate-limit';
+import { createAccountActivationToken, resolveAccountRole } from '../services/account-activation';
 
 const router = Router();
 const qrImageCache = new Map<string, Promise<string>>();
@@ -40,6 +42,88 @@ const getQrImage = (code: string) => {
 };
 
 router.use(authMiddleware, requireRoles('administrador', 'admin'));
+
+const activationCodeRateLimit = createRateLimiter(15 * 60 * 1000, 20);
+
+router.post('/accounts/activation-code', activationCodeRateLimit, async (req, res) => {
+  try {
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
+      return res.status(400).json({ success: false, message: 'Correo inválido' });
+    }
+
+    const { data: persona, error: personaError } = await supabase
+      .from('personas')
+      .select('id, correo')
+      .eq('correo', email)
+      .maybeSingle();
+
+    if (personaError) throw personaError;
+    if (!persona?.correo || String(persona.correo).trim().toLowerCase() !== email) {
+      return res.status(404).json({ success: false, message: 'No se encontró la persona' });
+    }
+
+    const [{ data: student, error: studentError }, { data: teacher, error: teacherError }] = await Promise.all([
+      supabase.from('alumnos').select('id, estado').eq('persona_id', persona.id).maybeSingle(),
+      supabase.from('docentes').select('id, estado').eq('persona_id', persona.id).maybeSingle()
+    ]);
+
+    if (studentError) throw studentError;
+    if (teacherError) throw teacherError;
+
+    const role = resolveAccountRole(student?.estado === 'activo', teacher?.estado === 'activo');
+    if (!role) {
+      return res.status(409).json({ success: false, message: 'La persona no tiene un único rol activo de alumno o profesor' });
+    }
+
+    const { data: accountByEmail, error: accountByEmailError } = await supabase
+      .from('usuarios')
+      .select('id, persona_id')
+      .eq('email', persona.correo)
+      .maybeSingle();
+
+    if (accountByEmailError) throw accountByEmailError;
+    if (accountByEmail && accountByEmail.persona_id !== persona.id) {
+      return res.status(409).json({ success: false, message: 'El correo ya pertenece a otra cuenta' });
+    }
+
+    const now = new Date().toISOString();
+    const { error: revokeError } = await supabase
+      .from('account_activation_tokens')
+      .update({ revoked_at: now })
+      .eq('persona_id', persona.id)
+      .is('consumed_at', null)
+      .is('revoked_at', null);
+
+    if (revokeError) throw revokeError;
+
+    const { token, tokenHash } = createAccountActivationToken();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { error: insertError } = await supabase
+      .from('account_activation_tokens')
+      .insert({
+        persona_id: persona.id,
+        token_hash: tokenHash,
+        expires_at: expiresAt,
+        created_by: (req as AuthRequest).user?.id
+      });
+
+    if (insertError) throw insertError;
+
+    return res.status(201).json({
+      success: true,
+      message: 'Código de activación generado. Solo se mostrará en esta respuesta.',
+      data: {
+        email: persona.correo,
+        rol: role,
+        activation_code: token,
+        expires_at: expiresAt
+      }
+    });
+  } catch {
+    return res.status(500).json({ success: false, message: 'No se pudo generar el código de activación' });
+  }
+});
 
 router.get('/alumnos', async (req, res) => {
   try {

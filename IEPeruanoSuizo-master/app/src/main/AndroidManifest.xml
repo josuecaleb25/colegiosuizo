@@ -26,6 +26,15 @@
         android:theme="@style/Theme.IEPeruanoSuizoAPP"
         android:usesCleartextTraffic="false">
         <activity
+            android:name=".ActivarCuentaActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CambiarContrasenaActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AdminActivarCuentaActivity"
+            android:exported="false" />
+        <activity
             android:name=".DetalleAsistenciaActivity"
             android:exported="false" />
         <activity
@@ -33,9 +42,6 @@
             android:exported="false" />
         <activity
             android:name=".CrearComunicadoActivity"
-            android:exported="false" />
-        <activity
-            android:name=".CursoDetalleProfesorActivity"
             android:exported="false" />
         <activity
             android:name=".UsuariosActivity"
@@ -70,9 +76,6 @@
             android:exported="false" />
         <activity
             android:name=".UserProfile"
-            android:exported="false" />
-        <activity
-            android:name=".CursosActivity"
             android:exported="false" />
         <activity
             android:name=".HomeActivity"

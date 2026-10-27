@@ -99,11 +99,6 @@ public class GestionComunicadosActivity extends AppCompatActivity {
                 finish();
                 overridePendingTransition(0, 0);
                 return true;
-            } else if (id == R.id.nav_homework) {
-                Intent intent = new Intent(this, CursosActivity.class);
-                startActivity(intent);
-                finish();
-                return true;
             } else if (id == R.id.nav_horarios) {
                 Intent intent = new Intent(this, HorariosActivity.class);
                 startActivity(intent);
