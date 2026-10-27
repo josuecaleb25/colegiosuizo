@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
+import { studentHasParentLoginCredentials } from '../services/student-parent-login';
 import supabase from '../config/database';
 import { signAccessToken } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rate-limit';
@@ -30,43 +31,72 @@ router.post('/login', loginRateLimit, async (req, res) => {
       .ilike('email', email)
       .maybeSingle();
 
-    if (usuarioError || !usuario || usuario.activo === false) {
+    if (usuarioError) {
       return res.status(401).json({
         success: false,
         message: 'Credenciales incorrectas'
       });
     }
 
-    const validHash = typeof usuario.password === 'string' && /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(usuario.password);
-    if (!validHash || !usuario.persona_id || !usuario.rol) {
-      return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
-    }
+    let persona: any;
+    let rol: string;
 
-    const passwordOk = await bcrypt.compare(password, usuario.password);
-    if (!passwordOk) return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+    if (usuario) {
+      if (usuario.activo === false) return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
 
-    const { data: persona, error: personaError } = await supabase
-      .from('personas')
-      .select(`
-        id,
-        nombres,
-        apellidos,
-        correo,
-        alumnos (
-          matriculas (
-            seccion_id,
-            secciones ( nombre, grados ( nombre ) )
+      const validHash = typeof usuario.password === 'string' && /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(usuario.password);
+      if (!validHash || !usuario.persona_id || !usuario.rol) {
+        return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+      }
+
+      const passwordOk = await bcrypt.compare(password, usuario.password);
+      if (!passwordOk) return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+
+      const result = await supabase
+        .from('personas')
+        .select(`
+          id,
+          nombres,
+          apellidos,
+          correo,
+          alumnos (
+            matriculas (
+              seccion_id,
+              secciones ( nombre, grados ( nombre ) )
+            )
           )
-        )
-      `)
-      .eq('id', usuario.persona_id)
-      .maybeSingle();
+        `)
+        .eq('id', usuario.persona_id)
+        .maybeSingle();
 
-    if (personaError || !persona) {
-      return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+      if (result.error || !result.data) return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+      persona = result.data;
+      rol = usuario.rol;
+    } else {
+      const result = await supabase
+        .from('personas')
+        .select(`
+          id,
+          nombres,
+          apellidos,
+          correo,
+          alumnos (
+            matriculas (
+              seccion_id,
+              secciones ( nombre, grados ( nombre ) )
+            )
+          )
+        `)
+        .eq('correo', email)
+        .maybeSingle();
+
+      if (result.error || !result.data || !studentHasParentLoginCredentials(result.data, email, password)) {
+        return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+      }
+      persona = result.data;
+      rol = 'padre';
     }
 
-    const rol = usuario.rol;
     const token = signAccessToken({ id: persona.id, email: persona.correo, rol });
 
     // Obtener sección si es alumno/padre

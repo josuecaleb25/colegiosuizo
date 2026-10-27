@@ -40,3 +40,12 @@ test('parent access is denied without querying the missing parent-child relation
   assert.equal(allowed, false);
   assert.deepEqual(queriedTables, ['alumnos']);
 });
+
+test('a parent-role account linked to the student persona can access that student', async () => {
+  queriedTables.length = 0;
+
+  const allowed = await canAccessStudent({ id: 'child-id', email: 'student@example.test', rol: 'padre' }, 'student-id');
+
+  assert.equal(allowed, true);
+  assert.deepEqual(queriedTables, ['alumnos']);
+});

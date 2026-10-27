@@ -68,7 +68,7 @@ export async function listAnnouncements(req: Request, res: Response) {
     let seccionIds: string[] = [];
     let gradoIds: string[] = [];
 
-    if (user.rol === 'alumno') {
+    if (user.rol === 'alumno' || user.rol === 'padre') {
       const { data, error } = await supabase.from('alumnos').select('id').eq('persona_id', user.id);
       if (error) throw error;
       const alumnoIds = (data || []).map(row => row.id);

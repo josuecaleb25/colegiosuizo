@@ -1,5 +1,7 @@
 package com.example.ieperuanosuizoapp.api;
 
+import com.example.ieperuanosuizoapp.BuildConfig;
+
 public class ApiConfig {
     public static final String BASE_URL = BuildConfig.API_BASE_URL;
 
