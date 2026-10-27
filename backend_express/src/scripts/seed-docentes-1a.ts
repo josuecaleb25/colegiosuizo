@@ -1,8 +1,8 @@
 import bcrypt from 'bcryptjs';
 import supabase from '../config/database';
 
-// Cursos de 1°A
-const cursos = [
+// Asignaturas de 1°A
+const asignaturas = [
   { nombre: 'Matemática', color: '#FF5722', icono: '📐' },
   { nombre: 'Comunicación', color: '#2196F3', icono: '📖' },
   { nombre: 'Inglés', color: '#4CAF50', icono: '🌍' },
@@ -23,83 +23,83 @@ const docentes = [
     apellidos: 'Moreno', 
     correo: 'anibalmoreno@peruanosuizo.edu.pe',
     dni: '10000001',
-    curso: 'Matemática'
+    asignatura: 'Matemática'
   },
   { 
     nombres: 'Elcy Filomena', 
     apellidos: 'Hernandez Rodas', 
     correo: 'elcyhernandez@peruanosuizo.edu.pe',
     dni: '10000002',
-    curso: 'Comunicación'
+    asignatura: 'Comunicación'
   },
   { 
     nombres: 'Nelly', 
     apellidos: 'Mujica Galvez', 
     correo: 'nellymujica@peruanosuizo.edu.pe',
     dni: '10000003',
-    curso: 'Inglés'
+    asignatura: 'Inglés'
   },
   { 
     nombres: 'Pablo', 
     apellidos: 'Veramendi Rivera', 
     correo: 'pabloveramendi@peruanosuizo.edu.pe',
     dni: '10000004',
-    curso: 'CC.SS.'
+    asignatura: 'CC.SS.'
   },
   { 
     nombres: 'Aydee Glosbinda', 
     apellidos: 'Arellano Cabada', 
     correo: 'aydeearellano@peruanosuizo.edu.pe',
     dni: '10000005',
-    curso: 'D.P.C.C.'
+    asignatura: 'D.P.C.C.'
   },
   { 
     nombres: 'Edgar Mauro', 
     apellidos: 'Vega Quiñones', 
     correo: 'edgarvega@peruanosuizo.edu.pe',
     dni: '10000006',
-    curso: 'Ed. Religiosa'
+    asignatura: 'Ed. Religiosa'
   },
   { 
     nombres: 'Rocío', 
     apellidos: 'Sosa', 
     correo: 'rociososa@peruanosuizo.edu.pe',
     dni: '10000007',
-    curso: 'C y T'
+    asignatura: 'C y T'
   },
   { 
     nombres: 'Rosmery Ysabel', 
     apellidos: 'Correa Caytano', 
     correo: 'rosmerycorrea@peruanosuizo.edu.pe',
     dni: '10000008',
-    curso: 'EPT'
+    asignatura: 'EPT'
   },
   { 
     nombres: 'Maricella Johana', 
     apellidos: 'Timoteo Gahona', 
     correo: 'maricellatimoteo@peruanosuizo.edu.pe',
     dni: '10000009',
-    curso: 'Arte'
+    asignatura: 'Arte'
   },
   { 
     nombres: 'Walter Manuel', 
     apellidos: 'Castro Valdivia', 
     correo: 'castrovaldivia@peruanosuizo.edu.pe',
     dni: '10000010',
-    curso: 'Ed. Física'
+    asignatura: 'Ed. Física'
   },
   { 
     nombres: 'Walter Manuel', 
     apellidos: 'Castro Valdivia', 
     correo: 'castrovaldivia@peruanosuizo.edu.pe',
     dni: '10000010',
-    curso: 'Tutoría'
+    asignatura: 'Tutoría'
   }
 ];
 
-async function seedDocentesYCursos() {
+async function seedDocentesYAsignaturas() {
   try {
-    console.log('🚀 Iniciando seed de docentes y cursos de 1°A...\n');
+    console.log('🚀 Iniciando seed de docentes y asignaturas de 1°A...\n');
 
     // 1. Obtener año lectivo 2026
     const { data: anio, error: anioError } = await supabase
@@ -142,46 +142,7 @@ async function seedDocentesYCursos() {
 
     console.log('✅ Sección 1°A:', seccion.id);
 
-    // 4. Crear cursos
-    console.log('\n📚 Creando cursos...');
-    const cursosCreados: any = {};
-
-    for (const curso of cursos) {
-      // Verificar si ya existe
-      const { data: existeCurso } = await supabase
-        .from('cursos')
-        .select('id')
-        .eq('nombre', curso.nombre)
-        .single();
-
-      if (existeCurso) {
-        console.log(`   ⚠️  Curso ${curso.nombre} ya existe`);
-        cursosCreados[curso.nombre] = existeCurso.id;
-        continue;
-      }
-
-      const { data: cursoCreado, error: cursoError } = await supabase
-        .from('cursos')
-        .insert({
-          nombre: curso.nombre,
-          descripcion: `Curso de ${curso.nombre} para 1° de secundaria`,
-          color: curso.color,
-          icono: curso.icono,
-          activo: true
-        })
-        .select()
-        .single();
-
-      if (cursoError) {
-        console.error(`   ❌ Error creando curso ${curso.nombre}:`, cursoError);
-        continue;
-      }
-
-      cursosCreados[curso.nombre] = cursoCreado.id;
-      console.log(`   ✅ Curso creado: ${curso.nombre}`);
-    }
-
-    // 5. Crear docentes y asignarlos
+    // 4. Crear docentes y asignarlos
     console.log('\n👨‍🏫 Creando docentes...');
     
     for (const docente of docentes) {
@@ -233,7 +194,7 @@ async function seedDocentesYCursos() {
           .insert({
             persona_id: persona.id,
             codigo_docente: codigoDocente,
-            especialidad: docente.curso,
+            especialidad: docente.asignatura,
             estado: 'activo'
           })
           .select()
@@ -248,25 +209,19 @@ async function seedDocentesYCursos() {
         console.log(`   ✅ Docente creado: ${codigoDocente}`);
       }
 
-      // Asignar docente al curso en la sección 1°A
-      const cursoId = cursosCreados[docente.curso];
-      
-      if (!cursoId) {
-        console.error(`   ❌ No se encontró el curso ${docente.curso}`);
-        continue;
-      }
+      const asignatura = asignaturas.find(item => item.nombre === docente.asignatura);
+      if (!asignatura) continue;
 
-      // Verificar si ya existe la asignación
       const { data: asignacionExiste } = await supabase
         .from('asignaciones')
         .select('id')
         .eq('docente_id', docenteExiste.id)
-        .eq('curso_id', cursoId)
+        .eq('asignatura', asignatura.nombre)
         .eq('seccion_id', seccion.id)
         .single();
 
       if (asignacionExiste) {
-        console.log(`   ⚠️  Asignación ya existe: ${docente.curso}`);
+        console.log(`   ⚠️  Asignación ya existe: ${docente.asignatura}`);
         continue;
       }
 
@@ -274,21 +229,22 @@ async function seedDocentesYCursos() {
         .from('asignaciones')
         .insert({
           docente_id: docenteExiste.id,
-          curso_id: cursoId,
+          asignatura: asignatura.nombre,
+          color: asignatura.color,
+          icono: asignatura.icono,
           seccion_id: seccion.id,
           anio_lectivo_id: anio.id
         });
 
       if (asignacionError) {
-        console.error(`   ❌ Error asignando curso:`, asignacionError);
+        console.error(`   ❌ Error asignando asignatura:`, asignacionError);
         continue;
       }
 
-      console.log(`   ✅ Asignado: ${docente.nombres} → ${docente.curso}`);
+      console.log(`   ✅ Asignado: ${docente.nombres} → ${asignatura.nombre}`);
     }
 
     console.log('\n🎉 ¡Seed completado exitosamente!');
-    console.log(`📊 Cursos creados: ${Object.keys(cursosCreados).length}`);
     console.log(`👨‍🏫 Docentes procesados: ${docentes.length}`);
 
   } catch (error) {
@@ -297,7 +253,7 @@ async function seedDocentesYCursos() {
 }
 
 // Ejecutar
-seedDocentesYCursos()
+seedDocentesYAsignaturas()
   .then(() => {
     console.log('\n✅ Proceso completado');
     process.exit(0);

@@ -2,7 +2,7 @@ import { timingSafeEqual } from 'crypto';
 
 const sharedStudentPassword = 'Suizo2026*';
 
-export function personaHasParentLoginCredentials(persona: any, email: string, password: string) {
+export function personaHasStudentLoginCredentials(persona: any, email: string, password: string) {
   const personaEmail = typeof persona?.correo === 'string' ? persona.correo.trim().toLowerCase() : '';
   if (!personaEmail || personaEmail !== email.trim().toLowerCase()) return false;
 

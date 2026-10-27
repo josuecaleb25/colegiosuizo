@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import { personaHasParentLoginCredentials } from '../services/student-parent-login';
+import { personaHasStudentLoginCredentials } from '../services/student-login';
 import supabase from '../config/database';
 import { signAccessToken } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rate-limit';
@@ -90,16 +90,16 @@ router.post('/login', loginRateLimit, async (req, res) => {
         .eq('correo', email)
         .maybeSingle();
 
-      if (result.error || !result.data || !personaHasParentLoginCredentials(result.data, email, password)) {
+      if (result.error || !result.data || !personaHasStudentLoginCredentials(result.data, email, password)) {
         return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
       }
       persona = result.data;
-      rol = 'padre';
+      rol = 'alumno';
     }
 
     const token = signAccessToken({ id: persona.id, email: persona.correo, rol });
 
-    // Obtener sección si es alumno/padre
+    // Obtener sección del alumno
     let seccion = '';
     if (persona.alumnos && persona.alumnos.length > 0) {
       const alumno = persona.alumnos[0];
@@ -201,7 +201,7 @@ router.post('/register', registerRateLimit, async (req, res) => {
         persona_id: newPersona.id,
         email,
         password: hashedPassword,
-        rol: 'padre',
+        rol: 'alumno',
         activo: true
       })
       .select()

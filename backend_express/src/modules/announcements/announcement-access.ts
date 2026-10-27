@@ -19,10 +19,10 @@ export function requireAnnouncementVisible(req: AuthRequest, res: Response, next
       if (error) throw error;
       if (!announcement || announcement.activo === false) return res.status(404).json({ success: false, message: 'Comunicado no encontrado' });
       if (managerRoles.has(user.rol) || announcement.destinatario_tipo === 'global') return next();
-      if (user.rol !== 'alumno' && user.rol !== 'padre') return res.status(403).json({ success: false, message: 'No tienes acceso a este comunicado' });
+      if (user.rol !== 'alumno') return res.status(403).json({ success: false, message: 'No tienes acceso a este comunicado' });
 
       let studentIds: string[] = [];
-      if (user.rol === 'alumno' || user.rol === 'padre') {
+      if (user.rol === 'alumno') {
         const { data, error: studentError } = await supabase.from('alumnos').select('id').eq('persona_id', user.id);
         if (studentError) throw studentError;
         studentIds = (data || []).map(row => row.id);

@@ -31,9 +31,6 @@ npm run load:api
 ## Rutas de lectura permitidas
 
 - `/healthz`
-- `/api/cursos`
-- `/api/cursos/alumno/:personaId`
-- `/api/cursos/profesor/:docenteId`
 - `/api/horarios/test`
 - `/api/horarios/alumno/:personaId`
 - `/api/horarios/profesor/:personaId`
@@ -59,9 +56,9 @@ Las rutas que requieren autenticación reciben el token mediante `LOAD_BEARER_TO
 Ejemplo con una ruta autenticada y carga moderada:
 
 ```sh
-LOAD_PATH=/api/cursos/alumno/ID_DE_PRUEBA LOAD_BEARER_TOKEN='TOKEN_LOCAL' LOAD_CONNECTIONS=25 LOAD_DURATION_SECONDS=30 npm run load:api
+LOAD_PATH=/api/horarios/alumno/ID_DE_PRUEBA LOAD_BEARER_TOKEN='TOKEN_LOCAL' LOAD_CONNECTIONS=25 LOAD_DURATION_SECONDS=30 npm run load:api
 ```
 
 Para subir la concurrencia, aumenta las conexiones gradualmente y revisa latencia, errores, CPU y conexiones de la base de datos entre ejecuciones. Más de 100 conexiones requiere `LOAD_CONFIRM_HIGH_CONCURRENCY=1`. Las pruebas contra hosts remotos requieren `LOAD_ALLOW_REMOTE=1`; no ejecutes pruebas de carga contra producción sin autorización y una ventana acordada. Autocannon también usa CPU local, así que un generador saturado puede limitar el resultado antes que el backend.
 
-El recorrido estudiantil visita `/api/cursos`, `/api/comunicados`, `/api/secciones`, `/api/notificaciones`, `/api/notificaciones/no-leidas` y `/api/mobile/asistencia/dias-asistidos/:personaId`. No simula login, escrituras, FCM ni WebSockets.
+El recorrido estudiantil consulta horarios, `/api/comunicados`, `/api/secciones`, `/api/notificaciones`, `/api/notificaciones/no-leidas` y `/api/mobile/asistencia/dias-asistidos/:personaId`. No simula login, escrituras, FCM ni WebSockets.

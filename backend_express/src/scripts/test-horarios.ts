@@ -28,7 +28,7 @@ async function testHorarios() {
       const dias = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
       console.log('Primeros 5 horarios:');
       data.data.slice(0, 5).forEach((h: any) => {
-        console.log(`   ${dias[h.dia_semana]} ${h.hora_inicio}-${h.hora_fin}: ${h.curso} (${h.seccion})`);
+        console.log(`   ${dias[h.dia_semana]} ${h.hora_inicio}-${h.hora_fin}: ${h.asignatura} (${h.seccion})`);
       });
     }
 

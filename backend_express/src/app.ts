@@ -43,7 +43,6 @@ app.get('/', (_req, res) => {
       alumnos: '/api/alumnos',
       asistencia: '/api/asistencia',
       mobile: '/api/mobile',
-      cursos: '/api/cursos',
       horarios: '/api/horarios',
       comunicados: '/api/comunicados',
       usuarios: '/api/usuarios',

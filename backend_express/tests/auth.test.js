@@ -6,7 +6,7 @@ process.env.JWT_SECRET = 'test-only-secret-with-more-than-32-bytes';
 
 const { authMiddleware, requireRoles, requireSelfOrAdmin, signAccessToken } = require('../dist/middleware/auth');
 const { createRateLimiter } = require('../dist/middleware/rate-limit');
-const { personaHasParentLoginCredentials } = require('../dist/services/student-parent-login');
+const { personaHasStudentLoginCredentials } = require('../dist/services/student-login');
 
 function makeResponse() {
   return {
@@ -59,7 +59,7 @@ test('does not accept tokens signed with a different algorithm or secret', () =>
 });
 
 test('enforces role and self-or-admin checks', () => {
-  const req = { user: { id: 'person-1', rol: 'padre' }, params: { id: 'person-2' } };
+  const req = { user: { id: 'person-1', rol: 'alumno' }, params: { id: 'person-2' } };
   const roleResponse = makeResponse();
   requireRoles('admin')(req, roleResponse, () => assert.fail('request should not continue'));
   assert.equal(roleResponse.statusCode, 403);
@@ -89,10 +89,10 @@ test('rate limiter blocks requests after the configured limit', () => {
   assert.ok(secondResponse.headers['Retry-After']);
 });
 
-test('legacy parent login accepts the configured password for a matching persona email', () => {
+test('student login accepts the configured password for a matching persona email', () => {
   const persona = { correo: 'alumno@colegio.test', alumnos: [] };
 
-  assert.equal(personaHasParentLoginCredentials(persona, 'ALUMNO@COLEGIO.TEST', 'Suizo2026*'), true);
-  assert.equal(personaHasParentLoginCredentials(persona, 'otra@colegio.test', 'Suizo2026*'), false);
-  assert.equal(personaHasParentLoginCredentials(persona, 'alumno@colegio.test', 'incorrecta'), false);
+  assert.equal(personaHasStudentLoginCredentials(persona, 'ALUMNO@COLEGIO.TEST', 'Suizo2026*'), true);
+  assert.equal(personaHasStudentLoginCredentials(persona, 'otra@colegio.test', 'Suizo2026*'), false);
+  assert.equal(personaHasStudentLoginCredentials(persona, 'alumno@colegio.test', 'incorrecta'), false);
 });

@@ -14,7 +14,6 @@ const schemaTables = new Set([
   'codigos_qr',
   'colegio',
   'comunicados_nuevos',
-  'cursos',
   'device_tokens',
   'docentes',
   'evaluaciones',

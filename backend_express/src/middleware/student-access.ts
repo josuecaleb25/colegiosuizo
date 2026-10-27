@@ -31,8 +31,6 @@ export async function canAccessStudent(user: UserIdentity, studentRef: string): 
   if (!student) return false;
   if (student.persona_id === user.id) return true;
 
-  if (user.rol === 'padre') return false;
-
   if (user.rol === 'profesor') {
     const { data: docente, error: docenteError } = await supabase
       .from('docentes')

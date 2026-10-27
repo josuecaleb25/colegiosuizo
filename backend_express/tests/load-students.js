@@ -48,7 +48,7 @@ function run() {
   if (connections > 100 && !confirmed) throw new Error('Más de 100 conexiones requiere LOAD_CONFIRM_HIGH_CONCURRENCY=1');
   const users = createUsers(connections);
   const endpointPaths = [
-    '/api/cursos',
+    '/api/horarios/test',
     '/api/comunicados',
     '/api/secciones',
     '/api/notificaciones?limit=20&page=1',

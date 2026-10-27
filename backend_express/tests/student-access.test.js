@@ -32,19 +32,19 @@ require.cache[databasePath] = {
 
 const { canAccessStudent } = require('../dist/middleware/student-access');
 
-test('parent access is denied without querying the missing parent-child relationship table', async () => {
+test('a student cannot read another student without a family relationship', async () => {
   queriedTables.length = 0;
 
-  const allowed = await canAccessStudent({ id: 'parent-id', email: 'parent@example.test', rol: 'padre' }, 'student-id');
+  const allowed = await canAccessStudent({ id: 'other-student-id', email: 'other@example.test', rol: 'alumno' }, 'student-id');
 
   assert.equal(allowed, false);
   assert.deepEqual(queriedTables, ['alumnos']);
 });
 
-test('a parent-role account linked to the student persona can access that student', async () => {
+test('a student identity linked to its own persona can access its student record', async () => {
   queriedTables.length = 0;
 
-  const allowed = await canAccessStudent({ id: 'child-id', email: 'student@example.test', rol: 'padre' }, 'student-id');
+  const allowed = await canAccessStudent({ id: 'child-id', email: 'student@example.test', rol: 'alumno' }, 'student-id');
 
   assert.equal(allowed, true);
   assert.deepEqual(queriedTables, ['alumnos']);

@@ -88,11 +88,9 @@ router.get('/alumno/:personaId', requireSelfOrAdmin(req => req.params.personaId)
         hora_fin,
         salon,
         asignaciones!inner (
-          cursos!inner (
-            nombre,
-            color,
-            icono
-          ),
+          asignatura,
+          color,
+          icono,
           docentes!inner (
             personas!inner (
               nombres,
@@ -124,9 +122,9 @@ router.get('/alumno/:personaId', requireSelfOrAdmin(req => req.params.personaId)
       hora_inicio: formatearHora(horario.hora_inicio.substring(0, 5)), // 07:30:00 -> 7:30
       hora_fin: formatearHora(horario.hora_fin.substring(0, 5)), // 08:15:00 -> 8:15
       aula: horario.salon || '1A',
-      curso: horario.asignaciones.cursos.nombre,
-      color: horario.asignaciones.cursos.color,
-      icono: horario.asignaciones.cursos.icono,
+      asignatura: horario.asignaciones.asignatura,
+      color: horario.asignaciones.color,
+      icono: horario.asignaciones.icono,
       profesor: `${horario.asignaciones.docentes.personas.nombres} ${horario.asignaciones.docentes.personas.apellidos}`,
       seccion: `${horario.asignaciones.secciones.grados.nombre}${horario.asignaciones.secciones.nombre}`
     })) || [];
@@ -146,7 +144,7 @@ router.get('/alumno/:personaId', requireSelfOrAdmin(req => req.params.personaId)
         hora_inicio: '10:30',
         hora_fin: '10:50',
         aula: '',
-        curso: 'RECREO',
+        asignatura: 'RECREO',
         color: '#4CAF50',
         icono: '☕',
         profesor: '',
@@ -219,11 +217,9 @@ router.get('/profesor/:personaId', requireSelfOrAdmin(req => req.params.personaI
         hora_fin,
         salon,
         asignaciones!inner (
-          cursos!inner (
-            nombre,
-            color,
-            icono
-          ),
+          asignatura,
+          color,
+          icono,
           secciones!inner (
             nombre,
             grados!inner (
@@ -249,9 +245,9 @@ router.get('/profesor/:personaId', requireSelfOrAdmin(req => req.params.personaI
       hora_inicio: formatearHora(horario.hora_inicio.substring(0, 5)), // 07:30:00 -> 7:30
       hora_fin: formatearHora(horario.hora_fin.substring(0, 5)), // 08:15:00 -> 8:15
       aula: horario.salon || '1A',
-      curso: horario.asignaciones.cursos.nombre,
-      color: horario.asignaciones.cursos.color,
-      icono: horario.asignaciones.cursos.icono,
+      asignatura: horario.asignaciones.asignatura,
+      color: horario.asignaciones.color,
+      icono: horario.asignaciones.icono,
       seccion: `${horario.asignaciones.secciones.grados.nombre}${horario.asignaciones.secciones.nombre}`
     })) || [];
 
@@ -269,7 +265,7 @@ router.get('/profesor/:personaId', requireSelfOrAdmin(req => req.params.personaI
         hora_inicio: '10:30',
         hora_fin: '10:50',
         aula: '',
-        curso: 'RECREO',
+        asignatura: 'RECREO',
         color: '#4CAF50',
         icono: '☕',
         seccion: ''
@@ -304,11 +300,9 @@ router.get('/seccion/:seccionId', requireSectionAccess(req => req.params.seccion
         hora_fin,
         salon,
         asignaciones!inner (
-          cursos!inner (
-            nombre,
-            color,
-            icono
-          ),
+          asignatura,
+          color,
+          icono,
           docentes!inner (
             personas!inner (
               nombres,
@@ -330,9 +324,9 @@ router.get('/seccion/:seccionId', requireSectionAccess(req => req.params.seccion
       hora_inicio: horario.hora_inicio,
       hora_fin: horario.hora_fin,
       salon: horario.salon,
-      curso: horario.asignaciones.cursos.nombre,
-      color: horario.asignaciones.cursos.color,
-      icono: horario.asignaciones.cursos.icono,
+      asignatura: horario.asignaciones.asignatura,
+      color: horario.asignaciones.color,
+      icono: horario.asignaciones.icono,
       profesor: `${horario.asignaciones.docentes.personas.nombres} ${horario.asignaciones.docentes.personas.apellidos}`
     })) || [];
 

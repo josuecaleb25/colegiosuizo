@@ -20,10 +20,8 @@ function parseInteger(name, fallback, minimum, maximum) {
 
 function isAllowedPath(value) {
   return value === '/healthz'
-    || value === '/api/cursos'
     || value === '/api/horarios/test'
     || value === '/api/mobile/test'
-    || /^\/api\/cursos\/(alumno|profesor)\/[a-zA-Z0-9_-]+$/.test(value)
     || /^\/api\/horarios\/(alumno|profesor|seccion)\/[a-zA-Z0-9_-]+$/.test(value);
 }
 

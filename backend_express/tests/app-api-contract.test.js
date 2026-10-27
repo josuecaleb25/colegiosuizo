@@ -10,7 +10,6 @@ const routeFiles = new Map([
   ['alumnos', 'backend_express/src/routes/alumnos.routes.ts'],
   ['mobile', 'backend_express/src/routes/mobile.routes.ts'],
   ['comunicados', 'backend_express/src/modules/announcements/announcements.routes.ts'],
-  ['cursos', 'backend_express/src/routes/cursos.routes.ts'],
   ['horarios', 'backend_express/src/routes/horarios.routes.ts'],
   ['secciones', 'backend_express/src/routes/secciones.routes.ts'],
   ['usuarios', 'backend_express/src/routes/usuarios.routes.ts'],
@@ -55,5 +54,18 @@ test('every Android API method and path is registered by the backend', () => {
   ));
 
   assert.deepEqual(missing, []);
-  assert.equal(appCalls.length, 31);
+  assert.equal(appCalls.length, 29);
+});
+
+test('the agenda displays assignment subjects without a standalone courses screen', () => {
+  const scheduleRoute = fs.readFileSync(path.join(repositoryRoot, 'backend_express/src/routes/horarios.routes.ts'), 'utf8');
+  const homeActivity = fs.readFileSync(path.join(repositoryRoot, 'IEPeruanoSuizo-master/app/src/main/java/com/example/ieperuanosuizoapp/HomeActivity.java'), 'utf8');
+  const scheduleActivity = fs.readFileSync(path.join(repositoryRoot, 'IEPeruanoSuizo-master/app/src/main/java/com/example/ieperuanosuizoapp/HorariosActivity.java'), 'utf8');
+  const bottomNavigation = fs.readFileSync(path.join(repositoryRoot, 'IEPeruanoSuizo-master/app/src/main/res/menu/bottom_nav_menu.xml'), 'utf8');
+
+  assert.match(scheduleRoute, /asignatura: horario\.asignaciones\.asignatura/);
+  assert.match(homeActivity, /jsonObj\.has\("asignatura"\)/);
+  assert.match(scheduleActivity, /jsonObj\.has\("asignatura"\)/);
+  assert.doesNotMatch(bottomNavigation, /Cursos|nav_homework/);
+  assert.equal(fs.existsSync(path.join(repositoryRoot, 'IEPeruanoSuizo-master/app/src/main/java/com/example/ieperuanosuizoapp/CursosActivity.java')), false);
 });

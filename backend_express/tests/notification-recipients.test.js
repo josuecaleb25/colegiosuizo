@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { resolveNotificationRecipients } = require('../dist/modules/notifications/notification-recipients.service.js');
 
-test('attendance notification only targets the student account used by the parent', () => {
+test('attendance notification targets the scanned student identity', () => {
   const result = resolveNotificationRecipients({
     kind: 'asistencia',
     studentPersonaId: 'student-persona-1',

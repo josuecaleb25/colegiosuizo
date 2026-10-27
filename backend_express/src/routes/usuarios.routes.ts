@@ -50,7 +50,7 @@ router.get('/perfil/:id', authMiddleware, requireSelfOrAdmin(req => req.params.i
     const persona = personas[0];
 
     // Determinar rol igual que en login
-    let rol = 'padre';
+    let rol = 'alumno';
     if (persona.docentes && persona.docentes.length > 0) {
       rol = 'profesor';
     }

@@ -32,14 +32,12 @@ async function seedHorarios1A() {
 
     console.log(`✅ Sección 1°A encontrada: ${seccion.id}`);
 
-    // Obtener todas las asignaciones de 1°A con sus cursos
+    // Obtener todas las asignaturas de 1°A
     const { data: asignaciones, error: asignacionesError } = await supabase
       .from('asignaciones')
       .select(`
         id,
-        cursos!inner (
-          nombre
-        )
+        asignatura
       `)
       .eq('seccion_id', seccion.id);
 
@@ -49,57 +47,57 @@ async function seedHorarios1A() {
 
     console.log(`✅ ${asignaciones.length} asignaciones encontradas`);
 
-    // Crear un mapa de curso -> asignacion_id
+    // Crear un mapa de asignatura -> asignacion_id
     const asignacionMap: { [key: string]: string } = {};
     asignaciones.forEach((asig: any) => {
-      asignacionMap[asig.cursos.nombre] = asig.id;
+      asignacionMap[asig.asignatura] = asig.id;
     });
 
     // Definir el horario de 1°A
     const horarios = [
       // LUNES
-      { dia: 1, hora_inicio: '07:30', hora_fin: '08:15', curso: 'Matemática' },
-      { dia: 1, hora_inicio: '08:15', hora_fin: '09:00', curso: 'Matemática' },
-      { dia: 1, hora_inicio: '09:00', hora_fin: '09:45', curso: 'Ed. Religiosa' },
-      { dia: 1, hora_inicio: '09:45', hora_fin: '10:30', curso: 'Ed. Religiosa' },
-      { dia: 1, hora_inicio: '10:50', hora_fin: '11:35', curso: 'C y T' },
-      { dia: 1, hora_inicio: '11:35', hora_fin: '12:20', curso: 'Comunicación' },
-      { dia: 1, hora_inicio: '12:20', hora_fin: '13:05', curso: 'Comunicación' },
+      { dia: 1, hora_inicio: '07:30', hora_fin: '08:15', asignatura: 'Matemática' },
+      { dia: 1, hora_inicio: '08:15', hora_fin: '09:00', asignatura: 'Matemática' },
+      { dia: 1, hora_inicio: '09:00', hora_fin: '09:45', asignatura: 'Ed. Religiosa' },
+      { dia: 1, hora_inicio: '09:45', hora_fin: '10:30', asignatura: 'Ed. Religiosa' },
+      { dia: 1, hora_inicio: '10:50', hora_fin: '11:35', asignatura: 'C y T' },
+      { dia: 1, hora_inicio: '11:35', hora_fin: '12:20', asignatura: 'Comunicación' },
+      { dia: 1, hora_inicio: '12:20', hora_fin: '13:05', asignatura: 'Comunicación' },
 
       // MARTES
-      { dia: 2, hora_inicio: '07:30', hora_fin: '08:15', curso: 'Comunicación' },
-      { dia: 2, hora_inicio: '08:15', hora_fin: '09:00', curso: 'Comunicación' },
-      { dia: 2, hora_inicio: '09:00', hora_fin: '09:45', curso: 'Matemática' },
-      { dia: 2, hora_inicio: '09:45', hora_fin: '10:30', curso: 'Matemática' },
-      { dia: 2, hora_inicio: '10:50', hora_fin: '11:35', curso: 'Inglés' },
-      { dia: 2, hora_inicio: '11:35', hora_fin: '12:20', curso: 'C y T' },
-      { dia: 2, hora_inicio: '12:20', hora_fin: '13:05', curso: 'Inglés' },
+      { dia: 2, hora_inicio: '07:30', hora_fin: '08:15', asignatura: 'Comunicación' },
+      { dia: 2, hora_inicio: '08:15', hora_fin: '09:00', asignatura: 'Comunicación' },
+      { dia: 2, hora_inicio: '09:00', hora_fin: '09:45', asignatura: 'Matemática' },
+      { dia: 2, hora_inicio: '09:45', hora_fin: '10:30', asignatura: 'Matemática' },
+      { dia: 2, hora_inicio: '10:50', hora_fin: '11:35', asignatura: 'Inglés' },
+      { dia: 2, hora_inicio: '11:35', hora_fin: '12:20', asignatura: 'C y T' },
+      { dia: 2, hora_inicio: '12:20', hora_fin: '13:05', asignatura: 'Inglés' },
 
       // MIÉRCOLES
-      { dia: 3, hora_inicio: '07:30', hora_fin: '08:15', curso: 'D.P.C.C.' },
-      { dia: 3, hora_inicio: '08:15', hora_fin: '09:00', curso: 'D.P.C.C.' },
-      { dia: 3, hora_inicio: '09:00', hora_fin: '09:45', curso: 'Arte' },
-      { dia: 3, hora_inicio: '09:45', hora_fin: '10:30', curso: 'Arte' },
-      { dia: 3, hora_inicio: '10:50', hora_fin: '11:35', curso: 'Matemática' },
-      { dia: 3, hora_inicio: '11:35', hora_fin: '12:20', curso: 'Ed. Física' },
-      { dia: 3, hora_inicio: '12:20', hora_fin: '13:05', curso: 'Ed. Física' },
+      { dia: 3, hora_inicio: '07:30', hora_fin: '08:15', asignatura: 'D.P.C.C.' },
+      { dia: 3, hora_inicio: '08:15', hora_fin: '09:00', asignatura: 'D.P.C.C.' },
+      { dia: 3, hora_inicio: '09:00', hora_fin: '09:45', asignatura: 'Arte' },
+      { dia: 3, hora_inicio: '09:45', hora_fin: '10:30', asignatura: 'Arte' },
+      { dia: 3, hora_inicio: '10:50', hora_fin: '11:35', asignatura: 'Matemática' },
+      { dia: 3, hora_inicio: '11:35', hora_fin: '12:20', asignatura: 'Ed. Física' },
+      { dia: 3, hora_inicio: '12:20', hora_fin: '13:05', asignatura: 'Ed. Física' },
 
       // JUEVES
-      { dia: 4, hora_inicio: '07:30', hora_fin: '08:15', curso: 'CC.SS.' },
-      { dia: 4, hora_inicio: '08:15', hora_fin: '09:00', curso: 'CC.SS.' },
-      { dia: 4, hora_inicio: '09:00', hora_fin: '09:45', curso: 'Tutoría' }, // Cambio: Ed. Física por Tutoría
-      { dia: 4, hora_inicio: '09:45', hora_fin: '10:30', curso: 'Tutoría' }, // Cambio: Ed. Física por Tutoría
-      { dia: 4, hora_inicio: '10:50', hora_fin: '11:35', curso: 'D.P.C.C.' },
-      { dia: 4, hora_inicio: '11:35', hora_fin: '12:20', curso: 'D.P.C.C.' },
+      { dia: 4, hora_inicio: '07:30', hora_fin: '08:15', asignatura: 'CC.SS.' },
+      { dia: 4, hora_inicio: '08:15', hora_fin: '09:00', asignatura: 'CC.SS.' },
+      { dia: 4, hora_inicio: '09:00', hora_fin: '09:45', asignatura: 'Tutoría' }, // Cambio: Ed. Física por Tutoría
+      { dia: 4, hora_inicio: '09:45', hora_fin: '10:30', asignatura: 'Tutoría' }, // Cambio: Ed. Física por Tutoría
+      { dia: 4, hora_inicio: '10:50', hora_fin: '11:35', asignatura: 'D.P.C.C.' },
+      { dia: 4, hora_inicio: '11:35', hora_fin: '12:20', asignatura: 'D.P.C.C.' },
 
       // VIERNES
-      { dia: 5, hora_inicio: '07:30', hora_fin: '08:15', curso: 'CC.SS.' },
-      { dia: 5, hora_inicio: '08:15', hora_fin: '09:00', curso: 'Comunicación' },
-      { dia: 5, hora_inicio: '09:00', hora_fin: '09:45', curso: 'C y T' },
-      { dia: 5, hora_inicio: '09:45', hora_fin: '10:30', curso: 'C y T' },
-      { dia: 5, hora_inicio: '10:50', hora_fin: '11:35', curso: 'C y T' },
-      { dia: 5, hora_inicio: '11:35', hora_fin: '12:20', curso: 'EPT' },
-      { dia: 5, hora_inicio: '12:20', hora_fin: '13:05', curso: 'EPT' },
+      { dia: 5, hora_inicio: '07:30', hora_fin: '08:15', asignatura: 'CC.SS.' },
+      { dia: 5, hora_inicio: '08:15', hora_fin: '09:00', asignatura: 'Comunicación' },
+      { dia: 5, hora_inicio: '09:00', hora_fin: '09:45', asignatura: 'C y T' },
+      { dia: 5, hora_inicio: '09:45', hora_fin: '10:30', asignatura: 'C y T' },
+      { dia: 5, hora_inicio: '10:50', hora_fin: '11:35', asignatura: 'C y T' },
+      { dia: 5, hora_inicio: '11:35', hora_fin: '12:20', asignatura: 'EPT' },
+      { dia: 5, hora_inicio: '12:20', hora_fin: '13:05', asignatura: 'EPT' },
     ];
 
     console.log('📚 Insertando horarios...');
@@ -108,10 +106,10 @@ async function seedHorarios1A() {
     let errores = 0;
 
     for (const horario of horarios) {
-      const asignacionId = asignacionMap[horario.curso];
+      const asignacionId = asignacionMap[horario.asignatura];
       
       if (!asignacionId) {
-        console.log(`❌ No se encontró asignación para el curso: ${horario.curso}`);
+        console.log(`❌ No se encontró asignación para la asignatura: ${horario.asignatura}`);
         errores++;
         continue;
       }
@@ -129,13 +127,13 @@ async function seedHorarios1A() {
           });
 
         if (error) {
-          console.log(`❌ Error al insertar horario ${horario.curso} ${horario.hora_inicio}: ${error.message}`);
+          console.log(`❌ Error al insertar horario ${horario.asignatura} ${horario.hora_inicio}: ${error.message}`);
           errores++;
         } else {
           insertados++;
         }
       } catch (err: any) {
-        console.log(`❌ Error al insertar horario ${horario.curso}: ${err.message}`);
+        console.log(`❌ Error al insertar horario ${horario.asignatura}: ${err.message}`);
         errores++;
       }
     }
@@ -153,9 +151,7 @@ async function seedHorarios1A() {
         hora_inicio,
         hora_fin,
         asignaciones!inner (
-          cursos!inner (
-            nombre
-          )
+          asignatura
         )
       `)
       .eq('asignaciones.seccion_id', seccion.id)
@@ -168,7 +164,7 @@ async function seedHorarios1A() {
     if (horariosCreados && horariosCreados.length > 0) {
       const diasSemana = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
       horariosCreados.forEach((h: any) => {
-        console.log(`   ${diasSemana[h.dia_semana]} ${h.hora_inicio}-${h.hora_fin}: ${h.asignaciones.cursos.nombre}`);
+        console.log(`   ${diasSemana[h.dia_semana]} ${h.hora_inicio}-${h.hora_fin}: ${h.asignaciones.asignatura}`);
       });
     }
 

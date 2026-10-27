@@ -15,14 +15,14 @@ async function debugHorarios() {
     // Obtener horarios del lunes (día 1)
     const { data: horariosLunes } = await supabase
       .from('horarios')
-      .select('dia_semana, hora_inicio, hora_fin, asignaciones(cursos(nombre))')
+      .select('dia_semana, hora_inicio, hora_fin, asignaciones(asignatura)')
       .eq('dia_semana', 1)
       .eq('activo', true)
       .limit(5);
 
     console.log(`Horarios del lunes (día 1): ${horariosLunes?.length || 0}`);
     horariosLunes?.forEach(h => {
-      console.log(`  ${h.hora_inicio}-${h.hora_fin}: ${h.asignaciones?.cursos?.nombre}`);
+      console.log(`  ${h.hora_inicio}-${h.hora_fin}: ${h.asignaciones?.asignatura}`);
     });
 
     // Probar la lógica de fecha
@@ -36,7 +36,7 @@ async function debugHorarios() {
     // Obtener horarios con el filtro
     const { data: horariosFiltrados } = await supabase
       .from('horarios')
-      .select('dia_semana, hora_inicio, hora_fin, asignaciones(cursos(nombre))')
+      .select('dia_semana, hora_inicio, hora_fin, asignaciones(asignatura)')
       .eq('dia_semana', diaSemana)
       .eq('activo', true);
 
