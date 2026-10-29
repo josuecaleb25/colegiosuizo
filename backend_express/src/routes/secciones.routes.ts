@@ -22,8 +22,12 @@ router.get('/', authMiddleware, async (req: AuthRequest, res) => {
           nombre,
           grados!inner (
             nombre
+          ),
+          anios_lectivos!inner (
+            activo
           )
-        `);
+        `)
+        .eq('anios_lectivos.activo', true);
 
       if (error) throw error;
 
