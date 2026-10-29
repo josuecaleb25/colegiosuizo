@@ -130,7 +130,7 @@ router.get('/alumnos', async (req, res) => {
   try {
     const { seccion, search, limit = 100 } = req.query;
 
-    const limitNum = Math.min(Math.max(Number(limit) || 100, 1), 500);
+    const limitNum = Math.min(Math.max(Number(limit) || 100, 1), 100);
     const { data: seccionesActivas, error: seccionesError } = await supabase
       .from('secciones')
       .select('id, nombre, grados!inner(nombre), anios_lectivos!inner(activo)')
@@ -374,7 +374,7 @@ router.post('/alumnos', async (req, res) => {
 
 router.get('/docentes', async (req, res) => {
   try {
-    const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 100);
     const { data: teachers, error } = await supabase.from('docentes')
       .select('id,codigo_docente,especialidad,estado,personas!inner(id,dni,nombres,apellidos,correo,usuarios(id,email,rol,activo))')
       .order('apellidos', { ascending: true, referencedTable: 'personas' }).order('nombres', { ascending: true, referencedTable: 'personas' }).limit(limit);
