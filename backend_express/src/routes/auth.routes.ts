@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import { personaHasStudentLoginCredentials } from '../services/student-login';
 import supabase from '../config/database';
 import { AuthRequest, authMiddleware, signAccessToken } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rate-limit';
@@ -36,7 +35,7 @@ router.post('/login', loginRateLimit, async (req, res) => {
 
     const { data: usuario, error: usuarioError } = await supabase
       .from('usuarios')
-      .select('id, persona_id, email, rol, activo, password')
+      .select('id, persona_id, email, rol, activo, password, session_version')
       .eq('email', email)
       .maybeSingle();
 
@@ -47,66 +46,39 @@ router.post('/login', loginRateLimit, async (req, res) => {
       });
     }
 
-    let persona: any;
-    let rol: string;
+    if (!usuario || usuario.activo === false) return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
 
-    if (usuario) {
-      if (usuario.activo === false) return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
-
-      const validHash = typeof usuario.password === 'string' && /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(usuario.password);
-      if (!validHash || !usuario.persona_id || !usuario.rol) {
-        return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
-      }
-
-      const passwordOk = await bcrypt.compare(password, usuario.password);
-      if (!passwordOk) return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
-
-      const result = await supabase
-        .from('personas')
-        .select(`
-          id,
-          nombres,
-          apellidos,
-          correo,
-          alumnos (
-            matriculas (
-              seccion_id,
-              secciones ( nombre, grados ( nombre ) )
-            )
-          )
-        `)
-        .eq('id', usuario.persona_id)
-        .maybeSingle();
-
-      if (result.error || !result.data) return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
-      persona = result.data;
-      rol = usuario.rol;
-    } else {
-      const result = await supabase
-        .from('personas')
-        .select(`
-          id,
-          nombres,
-          apellidos,
-          correo,
-          alumnos (
-            matriculas (
-              seccion_id,
-              secciones ( nombre, grados ( nombre ) )
-            )
-          )
-        `)
-        .eq('correo', email)
-        .maybeSingle();
-
-      if (result.error || !result.data || !personaHasStudentLoginCredentials(result.data, email, password)) {
-        return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
-      }
-      persona = result.data;
-      rol = 'alumno';
+    const validHash = typeof usuario.password === 'string' && /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(usuario.password);
+    if (!validHash || !usuario.persona_id || !usuario.rol) {
+      return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
     }
 
-    const token = signAccessToken({ id: persona.id, email: persona.correo, rol });
+    const passwordOk = await bcrypt.compare(password, usuario.password);
+    if (!passwordOk) return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+
+    const result = await supabase
+      .from('personas')
+      .select(`
+        id,
+        nombres,
+        apellidos,
+        correo,
+        alumnos (
+          estado,
+          matriculas (
+            seccion_id,
+            secciones ( nombre, grados ( nombre ) )
+          )
+        )
+      `)
+      .eq('id', usuario.persona_id)
+      .maybeSingle();
+
+    if (result.error || !result.data) return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+    const persona = result.data;
+    const rol = usuario.rol;
+
+    const token = signAccessToken({ id: persona.id, email: persona.correo, rol, sessionVersion: usuario.session_version ?? 0 });
 
     // Obtener sección del alumno
     let seccion = '';
@@ -154,6 +126,40 @@ router.post('/login', loginRateLimit, async (req, res) => {
       success: false,
       message: 'Error en el login',
     });
+  }
+});
+
+router.post('/logout-all', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const { data: account, error: accountError } = await supabase
+      .from('usuarios')
+      .select('id, session_version')
+      .eq('persona_id', req.user!.id)
+      .maybeSingle();
+
+    if (accountError) throw accountError;
+    if (!account) return res.status(401).json({ success: false, message: 'La sesión no es válida.' });
+
+    const { error: deviceTokensError } = await supabase
+      .from('device_tokens')
+      .delete()
+      .eq('persona_id', req.user!.id);
+
+    if (deviceTokensError) throw deviceTokensError;
+
+    const { data: updated, error: updateError } = await supabase
+      .from('usuarios')
+      .update({ session_version: (account.session_version ?? 0) + 1 })
+      .eq('id', account.id)
+      .select('id')
+      .maybeSingle();
+
+    if (updateError) throw updateError;
+    if (!updated) return res.status(500).json({ success: false, message: 'No se pudieron cerrar las sesiones.' });
+
+    return res.json({ success: true, message: 'Se cerraron las sesiones en todos los dispositivos.' });
+  } catch {
+    return res.status(500).json({ success: false, message: 'No se pudieron cerrar las sesiones.' });
   }
 });
 
@@ -238,8 +244,8 @@ router.post('/activate-account', activationRateLimit, async (req, res) => {
     if (!role) return res.status(400).json({ success: false, message: 'El código no es válido o venció' });
 
     const [{ data: accountByPersona, error: accountByPersonaError }, { data: accountByEmail, error: accountByEmailError }] = await Promise.all([
-      supabase.from('usuarios').select('id, persona_id').eq('persona_id', persona.id).maybeSingle(),
-      supabase.from('usuarios').select('id, persona_id').eq('email', email).maybeSingle()
+      supabase.from('usuarios').select('id, persona_id, session_version').eq('persona_id', persona.id).maybeSingle(),
+      supabase.from('usuarios').select('id, persona_id, session_version').eq('email', email).maybeSingle()
     ]);
 
     if (accountByPersonaError) throw accountByPersonaError;
@@ -265,7 +271,7 @@ router.post('/activate-account', activationRateLimit, async (req, res) => {
 
     const account = accountByPersona || accountByEmail;
     const accountQuery = account
-      ? supabase.from('usuarios').update({ email, password: passwordHash, rol: role, activo: true, actualizado_en: now }).eq('id', account.id)
+      ? supabase.from('usuarios').update({ email, password: passwordHash, rol: role, activo: true, session_version: (account.session_version ?? 0) + 1, actualizado_en: now }).eq('id', account.id)
       : supabase.from('usuarios').insert({ persona_id: persona.id, email, password: passwordHash, rol: role, activo: true });
     const { error: saveError } = await accountQuery;
 

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import supabase from '../config/database';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -23,8 +24,8 @@ export function assertJwtSecretConfigured(): void {
   getJwtSecret();
 }
 
-export function signAccessToken(payload: { id: string; email: string; rol: string }): string {
-  return jwt.sign(payload, getJwtSecret(), {
+export function signAccessToken(payload: { id: string; email: string; rol: string; sessionVersion?: number }): string {
+  return jwt.sign({ id: payload.id, email: payload.email, rol: payload.rol, sv: payload.sessionVersion ?? 0 }, getJwtSecret(), {
     algorithm: 'HS256',
     expiresIn: (process.env.JWT_EXPIRES_IN || '8h') as jwt.SignOptions['expiresIn']
   });
@@ -54,7 +55,7 @@ export const requireSelfOrAdmin = (getTargetId: (req: AuthRequest) => string) =>
   };
 };
 
-export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authMiddleware = async (req: AuthRequest, res: Response, next: NextFunction) => {
   if (req.user) return next();
   const authorization = req.headers.authorization || '';
   const match = authorization.match(/^Bearer\s+(.+)$/i);
@@ -66,6 +67,15 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
     const decoded = jwt.verify(match[1], getJwtSecret(), { algorithms: ['HS256'] }) as jwt.JwtPayload;
     if (typeof decoded.id !== 'string' || typeof decoded.email !== 'string' || typeof decoded.rol !== 'string') {
       return res.status(401).json({ success: false, message: 'Token inválido' });
+    }
+    const { data: account, error } = await supabase
+      .from('usuarios')
+      .select('session_version, activo')
+      .eq('persona_id', decoded.id)
+      .maybeSingle();
+    const tokenVersion = typeof decoded.sv === 'number' ? decoded.sv : 0;
+    if (error || !account || account.activo === false || account.session_version !== tokenVersion) {
+      return res.status(401).json({ success: false, message: 'Sesión cerrada o inválida' });
     }
     req.user = { id: decoded.id, email: decoded.email, rol: decoded.rol };
     next();

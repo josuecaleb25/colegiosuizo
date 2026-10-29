@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.graphics.Insets;
@@ -101,6 +103,11 @@ public class UserProfile extends AppCompatActivity {
             btnLogout.setOnClickListener(v -> cerrarSesion());
         }
 
+        View optionLogoutAllSessions = findViewById(R.id.option_logout_all_sessions);
+        if (optionLogoutAllSessions != null) {
+            optionLogoutAllSessions.setOnClickListener(v -> confirmarCerrarSesiones());
+        }
+
         setupBottomNavigation();
     }
 
@@ -114,6 +121,36 @@ public class UserProfile extends AppCompatActivity {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
+    }
+
+    private void confirmarCerrarSesiones() {
+        new AlertDialog.Builder(this)
+            .setTitle("Cerrar sesión en todos los dispositivos")
+            .setMessage("Se cerrará tu sesión en este dispositivo y en los demás. Tendrás que volver a iniciar sesión.")
+            .setNegativeButton("Cancelar", null)
+            .setPositiveButton("Cerrar sesión", (dialog, which) -> cerrarSesionesEnTodosLosDispositivos())
+            .show();
+    }
+
+    private void cerrarSesionesEnTodosLosDispositivos() {
+        com.example.ieperuanosuizoapp.api.RetrofitClient.getApiService()
+            .logoutAllSessions()
+            .enqueue(new retrofit2.Callback<com.example.ieperuanosuizoapp.api.models.ApiResponse<Object>>() {
+                @Override
+                public void onResponse(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<Object>> call,
+                                       retrofit2.Response<com.example.ieperuanosuizoapp.api.models.ApiResponse<Object>> response) {
+                    if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                        cerrarSesion();
+                        return;
+                    }
+                    Toast.makeText(UserProfile.this, "No se pudieron cerrar las sesiones. Inténtalo de nuevo.", Toast.LENGTH_LONG).show();
+                }
+
+                @Override
+                public void onFailure(retrofit2.Call<com.example.ieperuanosuizoapp.api.models.ApiResponse<Object>> call, Throwable error) {
+                    Toast.makeText(UserProfile.this, "No se pudieron cerrar las sesiones. Revisa tu conexión.", Toast.LENGTH_LONG).show();
+                }
+            });
     }
     
     private void cargarPerfilDesdeBackend() {

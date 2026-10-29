@@ -34,6 +34,9 @@ public interface ApiService {
     @POST("auth/change-password")
     Call<ApiResponse<Object>> changePassword(@Body Map<String, String> body);
 
+    @POST("auth/logout-all")
+    Call<ApiResponse<Object>> logoutAllSessions();
+
     @POST("admin/accounts/activation-code")
     Call<ActivationCodeResponse> issueActivationCode(@Body Map<String, String> body);
     

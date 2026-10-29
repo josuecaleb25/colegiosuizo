@@ -159,6 +159,20 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/option_logout_all_sessions"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/icon_logout_google" app:tint="#BA1924" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="20dp" android:fontFamily="@font/poppinsmedium" android:text="Cerrar sesión en todos los dispositivos" android:textColor="#BA1924" android:textSize="14sp" />
+                <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/chvronlefticon" app:tint="#BA1924" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:gravity="center_vertical"

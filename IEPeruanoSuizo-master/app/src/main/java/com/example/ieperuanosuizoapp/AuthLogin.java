@@ -43,8 +43,8 @@ public class AuthLogin extends AppCompatActivity {
         etEmail = findViewById(R.id.inputTypeIDUSER);
         etPassword = findViewById(R.id.inputTypePassword);
         btnLogin = findViewById(R.id.Login);
-        String email = getIntent().getStringExtra("email");
-        if (email != null) etEmail.setText(email);
+        String emailPrefill = getIntent().getStringExtra("email");
+        if (emailPrefill != null) etEmail.setText(emailPrefill);
         TextView activationLink = findViewById(R.id.ForgotPassword);
         activationLink.setOnClickListener(view -> {
             Intent intent = new Intent(this, ActivarCuentaActivity.class);

@@ -5,8 +5,8 @@ const jwt = require('jsonwebtoken');
 process.env.JWT_SECRET = 'test-only-secret-with-more-than-32-bytes';
 
 const { authMiddleware, requireRoles, requireSelfOrAdmin, signAccessToken } = require('../dist/middleware/auth');
+const supabase = require('../dist/config/database').default;
 const { createRateLimiter } = require('../dist/middleware/rate-limit');
-const { personaHasStudentLoginCredentials } = require('../dist/services/student-login');
 const { createAccountActivationToken, hashAccountActivationToken, resolveAccountRole } = require('../dist/services/account-activation');
 const { isPasswordChangeValid } = require('../dist/services/password-change');
 
@@ -29,16 +29,50 @@ function makeResponse() {
   };
 }
 
-test('accepts a valid access token and attaches the identity', () => {
-  const token = signAccessToken({ id: 'person-1', email: 'teacher@example.test', rol: 'profesor' });
+test('accepts a current access token and attaches the identity', async () => {
+  const token = signAccessToken({ id: 'person-1', email: 'teacher@example.test', rol: 'profesor', sessionVersion: 3 });
   const req = { headers: { authorization: `Bearer ${token}` } };
   const res = makeResponse();
   let continued = false;
+  const originalFrom = supabase.from;
+  supabase.from = () => ({
+    select: () => ({
+      eq: () => ({
+        maybeSingle: async () => ({ data: { session_version: 3, activo: true }, error: null })
+      })
+    })
+  });
 
-  authMiddleware(req, res, () => { continued = true; });
+  try {
+    await authMiddleware(req, res, () => { continued = true; });
+  } finally {
+    supabase.from = originalFrom;
+  }
 
   assert.equal(continued, true);
   assert.deepEqual(req.user, { id: 'person-1', email: 'teacher@example.test', rol: 'profesor' });
+});
+
+test('rejects a token from a revoked session version', async () => {
+  const token = signAccessToken({ id: 'person-1', email: 'teacher@example.test', rol: 'profesor', sessionVersion: 2 });
+  const req = { headers: { authorization: `Bearer ${token}` } };
+  const res = makeResponse();
+  const originalFrom = supabase.from;
+  supabase.from = () => ({
+    select: () => ({
+      eq: () => ({
+        maybeSingle: async () => ({ data: { session_version: 3, activo: true }, error: null })
+      })
+    })
+  });
+
+  try {
+    await authMiddleware(req, res, () => assert.fail('revoked request should not continue'));
+  } finally {
+    supabase.from = originalFrom;
+  }
+
+  assert.equal(res.statusCode, 401);
 });
 
 test('rejects a missing or malformed token', () => {
@@ -89,16 +123,6 @@ test('rate limiter blocks requests after the configured limit', () => {
   limiter(req, secondResponse, () => assert.fail('request should be limited'));
   assert.equal(secondResponse.statusCode, 429);
   assert.ok(secondResponse.headers['Retry-After']);
-});
-
-test('student login accepts the configured password for a matching persona email', () => {
-  const persona = { correo: 'alumno@colegio.test', alumnos: [{ id: 'student-1' }] };
-
-  assert.equal(personaHasStudentLoginCredentials(persona, 'ALUMNO@COLEGIO.TEST', 'Suizo2026*'), true);
-  assert.equal(personaHasStudentLoginCredentials(persona, 'otra@colegio.test', 'Suizo2026*'), false);
-  assert.equal(personaHasStudentLoginCredentials(persona, 'alumno@colegio.test', 'incorrecta'), false);
-  assert.equal(personaHasStudentLoginCredentials({ ...persona, alumnos: [] }, 'alumno@colegio.test', 'Suizo2026*'), false);
-  assert.equal(personaHasStudentLoginCredentials({ correo: 'docente@colegio.test', docentes: [{ id: 'teacher-1' }] }, 'docente@colegio.test', 'Suizo2026*'), false);
 });
 
 test('account activation codes are random, one-way stored, and single role identities', () => {
