@@ -383,7 +383,7 @@ router.get('/docentes', async (req, res) => {
       const person = Array.isArray(teacher.personas) ? teacher.personas[0] : teacher.personas;
       const accounts = Array.isArray(person?.usuarios) ? person.usuarios : person?.usuarios ? [person.usuarios] : [];
       const account = accounts.find((item: any) => item.rol === 'profesor') || accounts[0];
-      return { id: teacher.id, usuario_id: account?.id || null, dni: person?.dni || '', nombres: person?.nombres || '', apellidos: person?.apellidos || '', nombre_completo: ((person?.nombres || '') + ' ' + (person?.apellidos || '')).trim(), email: account?.email || person?.correo || '', cargo: teacher.especialidad || 'Profesor', activo: teacher.estado === 'activo' && (account ? account.activo !== false : true), codigo_docente: teacher.codigo_docente };
+      return { id: teacher.id, usuario_id: account?.id || null, dni: person?.dni || '', nombres: person?.nombres || '', apellidos: person?.apellidos || '', nombre_completo: ((person?.nombres || '') + ' ' + (person?.apellidos || '')).trim(), email: account?.email || person?.correo || '', rol: account?.rol || 'profesor', activo: teacher.estado === 'activo' && (account ? account.activo !== false : true), codigo_docente: teacher.codigo_docente };
     });
     return res.json({ success: true, data, total: data.length });
   } catch (error: any) {
@@ -394,7 +394,7 @@ router.get('/docentes', async (req, res) => {
 
 router.post('/docentes', async (req, res) => {
   const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
-  const allowed = new Set(['dni','nombres','apellidos','telefono','correo','password','cargo']);
+  const allowed = new Set(['dni','nombres','apellidos','telefono','correo','password']);
   if (Object.keys(body).some(key => !allowed.has(key))) return res.status(400).json({ success: false, message: 'La solicitud contiene campos no permitidos' });
   const dni = typeof body.dni === 'string' ? body.dni.trim() : '';
   const nombres = typeof body.nombres === 'string' ? body.nombres.trim() : '';
@@ -402,11 +402,10 @@ router.post('/docentes', async (req, res) => {
   const telefono = typeof body.telefono === 'string' ? body.telefono.trim() : '';
   const correo = typeof body.correo === 'string' ? body.correo.trim().toLowerCase() : '';
   const password = typeof body.password === 'string' ? body.password : '';
-  const cargo = typeof body.cargo === 'string' ? body.cargo.trim() : '';
   if (!/^\d{8}$/.test(dni) || !nombres || nombres.length > 120 || !apellidos || apellidos.length > 120) return res.status(400).json({ success: false, message: 'DNI, nombres y apellidos son obligatorios y deben ser válidos' });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo) || correo.length > 254) return res.status(400).json({ success: false, message: 'Ingresa un correo institucional válido' });
   if (password.length < 12 || password.length > 256) return res.status(400).json({ success: false, message: 'La contraseña debe tener entre 12 y 256 caracteres' });
-  if (!cargo || cargo.length > 100 || telefono.length > 20 || (telefono && !/^[0-9+()\s-]+$/.test(telefono))) return res.status(400).json({ success: false, message: 'Cargo o teléfono inválido' });
+  if (telefono.length > 20 || (telefono && !/^[0-9+()\s-]+$/.test(telefono))) return res.status(400).json({ success: false, message: 'El teléfono no tiene un formato válido' });
   let personaId = '';
   let docenteId = '';
   try {
@@ -424,13 +423,13 @@ router.post('/docentes', async (req, res) => {
     if (personError) throw personError;
     personaId = person.id;
     const codigoDocente = 'DOC' + dni.slice(4);
-    const { data: teacher, error: teacherError } = await supabase.from('docentes').insert({ persona_id: personaId, codigo_docente: codigoDocente, especialidad: cargo, estado: 'activo' }).select('id').single();
+    const { data: teacher, error: teacherError } = await supabase.from('docentes').insert({ persona_id: personaId, codigo_docente: codigoDocente, especialidad: 'Profesor', estado: 'activo' }).select('id').single();
     if (teacherError) throw teacherError;
     docenteId = teacher.id;
     const passwordHash = await bcrypt.hash(password, 12);
     const { error: userError } = await supabase.from('usuarios').insert({ persona_id: personaId, email: correo, password: passwordHash, rol: 'profesor', activo: true });
     if (userError) throw userError;
-    return res.status(201).json({ success: true, message: 'Docente creado', data: { id: docenteId, usuario_id: null, dni, nombres, apellidos, nombre_completo: (nombres + ' ' + apellidos).trim(), email: correo, cargo, activo: true, codigo_docente: codigoDocente } });
+    return res.status(201).json({ success: true, message: 'Docente creado', data: { id: docenteId, usuario_id: null, dni, nombres, apellidos, nombre_completo: (nombres + ' ' + apellidos).trim(), email: correo, rol: 'profesor', activo: true, codigo_docente: codigoDocente } });
   } catch (error: any) {
     if (docenteId) await supabase.from('docentes').delete().eq('id', docenteId);
     if (personaId) {
@@ -448,20 +447,19 @@ router.patch('/docentes/:id', async (req, res) => {
   const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   if (!uuidPattern.test(id)) return res.status(400).json({ success: false, message: 'Identificador de docente inválido' });
   const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
-  const allowed = new Set(['dni','nombres','apellidos','telefono','correo','cargo','password']);
+  const allowed = new Set(['dni','nombres','apellidos','telefono','correo','password']);
   if (Object.keys(body).some(key => !allowed.has(key))) return res.status(400).json({ success: false, message: 'La solicitud contiene campos no permitidos' });
   const dni = typeof body.dni === 'string' ? body.dni.trim() : '';
   const nombres = typeof body.nombres === 'string' ? body.nombres.trim() : '';
   const apellidos = typeof body.apellidos === 'string' ? body.apellidos.trim() : '';
   const telefono = typeof body.telefono === 'string' ? body.telefono.trim() : '';
   const correo = typeof body.correo === 'string' ? body.correo.trim().toLowerCase() : '';
-  const cargo = typeof body.cargo === 'string' ? body.cargo.trim() : '';
   const password = typeof body.password === 'string' ? body.password : '';
   if (!/^\d{8}$/.test(dni) || !nombres || nombres.length > 120 || !apellidos || apellidos.length > 120) return res.status(400).json({ success: false, message: 'DNI, nombres y apellidos son obligatorios y deben ser válidos' });
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo) || correo.length > 254 || !cargo || cargo.length > 100) return res.status(400).json({ success: false, message: 'Correo y cargo son obligatorios y deben ser válidos' });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo) || correo.length > 254) return res.status(400).json({ success: false, message: 'Ingresa un correo institucional válido' });
   if (telefono.length > 20 || (telefono && !/^[0-9+()\s-]+$/.test(telefono)) || (password && (password.length < 12 || password.length > 256))) return res.status(400).json({ success: false, message: 'Teléfono o contraseña inválidos' });
   try {
-    const { data: teacher, error: teacherError } = await supabase.from('docentes').select('id,persona_id,especialidad').eq('id', id).maybeSingle();
+    const { data: teacher, error: teacherError } = await supabase.from('docentes').select('id,persona_id').eq('id', id).maybeSingle();
     if (teacherError) throw teacherError;
     if (!teacher) return res.status(404).json({ success: false, message: 'Docente no encontrado' });
     const [{ data: person, error: personError }, { data: accounts, error: accountsError }, { data: duplicateDni, error: duplicateDniError }, { data: duplicateEmail, error: duplicateEmailError }] = await Promise.all([
@@ -479,15 +477,11 @@ router.patch('/docentes/:id', async (req, res) => {
     if (!accounts?.length) return res.status(409).json({ success: false, message: 'El docente no tiene una cuenta vinculada' });
     const oldPerson = { dni: person.dni, nombres: person.nombres, apellidos: person.apellidos, telefono: person.telefono, correo: person.correo };
     let personUpdated = false;
-    let teacherUpdated = false;
     let accountUpdated = false;
     try {
       const { error } = await supabase.from('personas').update({ dni, nombres, apellidos, telefono: telefono || null, correo, actualizado_en: new Date().toISOString() }).eq('id', teacher.persona_id);
       if (error) throw error;
       personUpdated = true;
-      const { error: specializationError } = await supabase.from('docentes').update({ especialidad: cargo, actualizado_en: new Date().toISOString() }).eq('id', id);
-      if (specializationError) throw specializationError;
-      teacherUpdated = true;
       const accountChanges: any = { email: correo, actualizado_en: new Date().toISOString() };
       if (password) accountChanges.password = await bcrypt.hash(password, 12);
       const { error: accountUpdateError } = await supabase.from('usuarios').update(accountChanges).eq('persona_id', teacher.persona_id);
@@ -495,12 +489,11 @@ router.patch('/docentes/:id', async (req, res) => {
       accountUpdated = true;
     } catch (error: any) {
       if (accountUpdated) await supabase.from('usuarios').update({ email: accounts[0].email, password: accounts[0].password }).eq('persona_id', teacher.persona_id);
-      if (teacherUpdated) await supabase.from('docentes').update({ especialidad: teacher.especialidad }).eq('id', id);
       if (personUpdated) await supabase.from('personas').update(oldPerson).eq('id', teacher.persona_id);
       if (error?.code === '23505') return res.status(409).json({ success: false, message: 'El DNI o correo ya está registrado' });
       throw error;
     }
-    return res.json({ success: true, message: 'Docente actualizado', data: { id } });
+    return res.json({ success: true, message: 'Docente actualizado', data: { id, rol: 'profesor' } });
   } catch (error: any) {
     console.error('Admin teacher update failed:', error);
     if (error?.code === '23505') return res.status(409).json({ success: false, message: 'El DNI o correo ya está registrado' });
