@@ -62,7 +62,7 @@ public class MiInformacionActivity extends AppCompatActivity {
         String nombres = prefs.getString("user_nombres", "");
         String apellidos = prefs.getString("user_apellidos", "");
         String email = prefs.getString("user_email", "");
-        String rol = prefs.getString("user_mode", "Alumno");
+        String rol = formatearRol(prefs.getString("user_mode", "alumno"));
 
         // Si no hay nombres/apellidos separados, intentar separar del nombre completo
         if (nombres.isEmpty() && apellidos.isEmpty()) {
@@ -124,11 +124,20 @@ public class MiInformacionActivity extends AppCompatActivity {
             
             if (jsonObj.has("rol")) {
                 String rol = jsonObj.get("rol").getAsString();
-                if (tvRol != null) tvRol.setText(rol);
+                if (tvRol != null) tvRol.setText(formatearRol(rol));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private String formatearRol(String rol) {
+        if (rol == null) return "";
+        String normalizedRole = rol.trim().toLowerCase(java.util.Locale.ROOT);
+        if ("admin".equals(normalizedRole) || "administrador".equals(normalizedRole)) return "Administrador";
+        if ("profesor".equals(normalizedRole) || "docente".equals(normalizedRole)) return "Profesor";
+        if ("alumno".equals(normalizedRole)) return "Alumno";
+        return rol;
     }
 
     /**

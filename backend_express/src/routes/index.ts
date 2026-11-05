@@ -9,12 +9,14 @@ import usuariosRoutes from './usuarios.routes';
 import adminRoutes from './admin.routes';
 import seccionesRoutes from './secciones.routes';
 import notificacionesRoutes from '../modules/notifications/notifications.routes';
+import webAdminRoutes from './web-admin.routes';
 import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
 
 router.use('/auth', authRoutes);
 router.use(authMiddleware);
+router.use('/web', webAdminRoutes);
 router.use('/alumnos', alumnosRoutes);
 router.use('/asistencia', asistenciaRoutes);
 router.use('/mobile', mobileRoutes);

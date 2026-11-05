@@ -69,3 +69,10 @@ test('the agenda displays assignment subjects without a standalone courses scree
   assert.doesNotMatch(bottomNavigation, /Cursos|nav_homework/);
   assert.equal(fs.existsSync(path.join(repositoryRoot, 'IEPeruanoSuizo-master/app/src/main/java/com/example/ieperuanosuizoapp/CursosActivity.java')), false);
 });
+
+test('the profile endpoint reads the account role instead of defaulting non-teachers to student', () => {
+  const profileRoute = fs.readFileSync(path.join(repositoryRoot, 'backend_express/src/routes/usuarios.routes.ts'), 'utf8');
+
+  assert.match(profileRoute, /from\('usuarios'\)[\s\S]*?select\('rol, activo'\)[\s\S]*?\.eq\('persona_id', persona\.id\)/);
+  assert.match(profileRoute, /rol:\s*rol/);
+});

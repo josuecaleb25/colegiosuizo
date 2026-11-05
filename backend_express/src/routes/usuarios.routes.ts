@@ -48,18 +48,21 @@ router.get('/perfil/:id', authMiddleware, requireSelfOrAdmin(req => req.params.i
     }
 
     const persona = personas[0];
+    const { data: cuenta, error: cuentaError } = await supabase
+      .from('usuarios')
+      .select('rol, activo')
+      .eq('persona_id', persona.id)
+      .maybeSingle();
 
-    // Determinar rol igual que en login
-    let rol = 'alumno';
-    if (persona.docentes && persona.docentes.length > 0) {
-      rol = 'profesor';
-    }
+    if (cuentaError) throw cuentaError;
+
+    const rol = cuenta?.rol || (persona.docentes && persona.docentes.length > 0 ? 'profesor' : 'alumno');
 
     let perfilCompleto: any = {
       id: persona.id,
       email: persona.correo,
       rol: rol,
-      activo: true,
+      activo: cuenta?.activo !== false,
       persona: {
         id: persona.id,
         nombres: persona.nombres,
