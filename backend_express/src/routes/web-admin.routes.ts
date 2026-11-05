@@ -211,15 +211,9 @@ router.get('/members/eligible-accounts', requireWebAdministrator, async (req, re
   const offset = Math.max(Number(req.query.offset) || 0, 0);
 
   try {
-    const linkedIds: string[] = [];
-    for (let linkedOffset = 0; ; linkedOffset += 1000) {
-      const { data: linkedAccounts, error: linkedError } = await supabase.from('web_members')
-        .select('usuario_id').order('usuario_id', { ascending: true }).range(linkedOffset, linkedOffset + 999);
-      if (linkedError) throw linkedError;
-      const batch = (linkedAccounts || []).map((entry: any) => entry.usuario_id).filter(Boolean);
-      linkedIds.push(...batch);
-      if (batch.length < 1000) break;
-    }
+    const { data: linkedAccounts, error: linkedError } = await supabase.from('web_members').select('usuario_id').limit(1000);
+    if (linkedError) throw linkedError;
+    const linkedIds = (linkedAccounts || []).map((entry: any) => entry.usuario_id).filter(Boolean);
     let query = supabase.from('usuarios')
       .select('id, email, rol, personas!inner(nombres, apellidos)', { count: 'exact' })
       .eq('activo', true)
@@ -310,6 +304,10 @@ router.patch('/members/:id', (req: WebMemberRequest, res, next) => {
     const currentRole = relation(member.web_roles);
     const account = relation(member.usuarios);
 
+    if (body.role_id !== undefined && currentRole?.role_key === 'web_administrator' && body.role_id !== member.role_id) {
+      return res.status(409).json({ success: false, message: 'No se puede cambiar el rol de un administrador' });
+    }
+
     if (body.role_id !== undefined) {
       const { data: role, error } = await supabase.from('web_roles').select('id, active, role_key, permissions').eq('id', body.role_id).maybeSingle();
       if (error) throw error;
@@ -361,19 +359,8 @@ router.delete('/members/:id', requireWebAdministrator, async (req, res) => {
     if (memberError) throw memberError;
     if (!member) return res.status(404).json({ success: false, message: 'Miembro no encontrado' });
     const role = relation(member.web_roles);
-    const account = relation(member.usuarios);
-
-    if (role?.role_key === 'web_administrator' && member.active && account?.activo && role.active && member.activated_at) {
-      const { data: administrators, error } = await supabase.from('web_members')
-        .select('id, active, activated_at, usuarios!inner(activo), web_roles!inner(role_key, active)')
-        .eq('active', true);
-      if (error) throw error;
-      const activeAdmins = (administrators || []).filter((entry: any) => {
-        const entryAccount = relation(entry.usuarios);
-        const entryRole = relation(entry.web_roles);
-        return entryRole?.role_key === 'web_administrator' && entryRole.active && entryAccount?.activo && entry.activated_at;
-      });
-      if (activeAdmins.length <= 1) return res.status(409).json({ success: false, message: 'Debe quedar al menos un administrador web activo' });
+    if (role?.role_key === 'web_administrator') {
+      return res.status(409).json({ success: false, message: 'No se puede retirar a miembros con rol Administrador' });
     }
 
     const { error } = await supabase.from('web_members').update({ active: false, updated_at: new Date().toISOString() }).eq('id', id);
