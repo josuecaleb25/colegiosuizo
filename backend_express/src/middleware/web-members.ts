@@ -62,6 +62,7 @@ export const webMemberMiddleware = async (req: WebMemberRequest, res: Response, 
 export const requireWebPermissions = (...permissions: string[]) => {
   return (req: WebMemberRequest, res: Response, next: NextFunction) => {
     if (!req.webMember) return res.status(401).json({ success: false, message: 'Autenticación requerida' });
+    if (req.webMember.roleKey === 'web_administrator') return next();
     if (!hasWebPermissions(req.webMember.permissions, permissions)) {
       return res.status(403).json({ success: false, message: 'No tienes permiso para realizar esta operación' });
     }
@@ -75,4 +76,20 @@ export const requireWebAdministrator = (req: WebMemberRequest, res: Response, ne
     return res.status(403).json({ success: false, message: 'Solo un administrador puede gestionar roles y miembros' });
   }
   return next();
+};
+
+export const requireWebAdministratorOrPermissions = (...permissions: string[]) => {
+  return (req: WebMemberRequest, res: Response, next: NextFunction) => {
+    if (!req.webMember) return res.status(401).json({ success: false, message: 'Autenticación requerida' });
+    if (req.webMember.roleKey === 'web_administrator' || hasWebPermissions(req.webMember.permissions, permissions)) return next();
+    return res.status(403).json({ success: false, message: 'No tienes permiso para realizar esta operación' });
+  };
+};
+
+export const requireWebAdministratorOrAnyPermissions = (...permissions: string[]) => {
+  return (req: WebMemberRequest, res: Response, next: NextFunction) => {
+    if (!req.webMember) return res.status(401).json({ success: false, message: 'Autenticación requerida' });
+    if (req.webMember.roleKey === 'web_administrator' || permissions.some(permission => req.webMember?.permissions.includes(permission))) return next();
+    return res.status(403).json({ success: false, message: 'No tienes permiso para realizar esta operación' });
+  };
 };

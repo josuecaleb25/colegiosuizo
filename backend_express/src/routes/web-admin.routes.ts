@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import supabase from '../config/database';
-import { WebMemberRequest, requireWebAdministrator, requireWebPermissions, webMemberMiddleware } from '../middleware/web-members';
+import { WebMemberRequest, requireWebAdministrator, requireWebAdministratorOrAnyPermissions, requireWebAdministratorOrPermissions, requireWebPermissions, webMemberMiddleware } from '../middleware/web-members';
 import { normalizeWebPermissions, createWebRoleKey } from '../services/web-permissions';
 
 const router = Router();
@@ -13,7 +13,20 @@ function relation(value: any) {
 
 router.use(webMemberMiddleware);
 
-router.get('/roles', requireWebPermissions('roles.view'), async (_req, res) => {
+router.get('/session', (req: WebMemberRequest, res) => {
+  const member = req.webMember;
+  if (!member) return res.status(401).json({ success: false, message: 'Autenticación requerida' });
+  return res.json({ success: true, data: {
+    id: member.id,
+    account_id: member.accountId,
+    email: member.email,
+    role: { id: member.roleId, key: member.roleKey, name: member.roleName },
+    permissions: member.permissions,
+    is_administrator: member.roleKey === 'web_administrator'
+  } });
+});
+
+router.get('/roles', requireWebAdministratorOrAnyPermissions('roles.view', 'members.assign_role'), async (_req, res) => {
   try {
     const [{ data: roles, error: rolesError }, { data: members, error: membersError }] = await Promise.all([
       supabase.from('web_roles').select('id, role_key, name, description, permissions, is_system, active, created_at, updated_at').order('name', { ascending: true }),
@@ -76,7 +89,7 @@ router.post('/roles', requireWebAdministrator, async (req, res) => {
   }
 });
 
-router.patch('/roles/:id', requireWebAdministrator, async (req, res) => {
+router.patch('/roles/:id', requireWebAdministratorOrPermissions('roles.update'), async (req: WebMemberRequest, res) => {
   const id = String(req.params.id || '');
   const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
   if (!uuidPattern.test(id)) return res.status(400).json({ success: false, message: 'Identificador de rol inválido' });
@@ -89,6 +102,12 @@ router.patch('/roles/:id', requireWebAdministrator, async (req, res) => {
     if (roleError) throw roleError;
     if (!role) return res.status(404).json({ success: false, message: 'Rol no encontrado' });
     if (role.role_key === 'web_administrator') return res.status(409).json({ success: false, message: 'El rol Administrador está protegido' });
+    if (req.webMember?.roleKey !== 'web_administrator' && role.is_system) {
+      return res.status(403).json({ success: false, message: 'Los roles predeterminados solo pueden ser editados por un administrador' });
+    }
+    if (req.webMember?.roleKey !== 'web_administrator' && ('permissions' in body || 'active' in body)) {
+      return res.status(403).json({ success: false, message: 'Solo un administrador puede cambiar permisos o estado de un rol' });
+    }
 
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (body.name !== undefined) {
@@ -187,6 +206,46 @@ router.get('/members', requireWebPermissions('members.view'), async (req, res) =
   }
 });
 
+router.get('/members/eligible-accounts', requireWebAdministrator, async (req, res) => {
+  const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 100);
+  const offset = Math.max(Number(req.query.offset) || 0, 0);
+
+  try {
+    const linkedIds: string[] = [];
+    for (let linkedOffset = 0; ; linkedOffset += 1000) {
+      const { data: linkedAccounts, error: linkedError } = await supabase.from('web_members')
+        .select('usuario_id').order('usuario_id', { ascending: true }).range(linkedOffset, linkedOffset + 999);
+      if (linkedError) throw linkedError;
+      const batch = (linkedAccounts || []).map((entry: any) => entry.usuario_id).filter(Boolean);
+      linkedIds.push(...batch);
+      if (batch.length < 1000) break;
+    }
+    let query = supabase.from('usuarios')
+      .select('id, email, rol, personas!inner(nombres, apellidos)', { count: 'exact' })
+      .eq('activo', true)
+      .in('rol', [...eligibleAppRoles])
+      .order('email', { ascending: true });
+    if (linkedIds.length) query = query.not('id', 'in', `(${linkedIds.join(',')})`);
+
+    const { data: accounts, error, count } = await query.range(offset, offset + limit - 1);
+    if (error) throw error;
+    const data = (accounts || []).map((account: any) => {
+      const person = relation(account.personas);
+      return {
+        id: account.id,
+        nombres: person?.nombres || '',
+        apellidos: person?.apellidos || '',
+        nombre_completo: `${person?.nombres || ''} ${person?.apellidos || ''}`.trim(),
+        email: account.email || '',
+        app_role: account.rol || ''
+      };
+    });
+    return res.json({ success: true, data, total: count || 0, limit, offset });
+  } catch {
+    return res.status(500).json({ success: false, message: 'No se pudieron consultar las cuentas elegibles' });
+  }
+});
+
 router.post('/members', requireWebAdministrator, async (req: WebMemberRequest, res) => {
   const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
   if (Object.keys(body).some(key => !['usuario_id', 'role_id'].includes(key))) return res.status(400).json({ success: false, message: 'La solicitud contiene campos no permitidos' });
@@ -222,7 +281,18 @@ router.post('/members', requireWebAdministrator, async (req: WebMemberRequest, r
   }
 });
 
-router.patch('/members/:id', requireWebAdministrator, async (req, res) => {
+router.patch('/members/:id', (req: WebMemberRequest, res, next) => {
+  const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+  if (body.active === false) return requireWebAdministrator(req, res, next);
+  if (body.role_id !== undefined) {
+    return requireWebAdministratorOrAnyPermissions('members.assign_role', 'members.update')(req, res, () => {
+      if (body.active === true) return requireWebAdministratorOrPermissions('members.update')(req, res, next);
+      return next();
+    });
+  }
+  if (body.active === true) return requireWebAdministratorOrPermissions('members.update')(req, res, next);
+  return next();
+}, async (req: WebMemberRequest, res) => {
   const id = String(req.params.id || '');
   const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
   if (!uuidPattern.test(id)) return res.status(400).json({ success: false, message: 'Identificador de miembro inválido' });
@@ -241,9 +311,16 @@ router.patch('/members/:id', requireWebAdministrator, async (req, res) => {
     const account = relation(member.usuarios);
 
     if (body.role_id !== undefined) {
-      const { data: role, error } = await supabase.from('web_roles').select('id, active').eq('id', body.role_id).maybeSingle();
+      const { data: role, error } = await supabase.from('web_roles').select('id, active, role_key, permissions').eq('id', body.role_id).maybeSingle();
       if (error) throw error;
       if (!role || role.active !== true) return res.status(400).json({ success: false, message: 'El rol web no existe o está desactivado' });
+      if (req.webMember?.roleKey !== 'web_administrator') {
+        if (role.role_key === 'web_administrator') return res.status(403).json({ success: false, message: 'No puedes asignar el rol Administrador' });
+        const actorPermissions = new Set(req.webMember?.permissions || []);
+        if ((role.permissions || []).some((permission: string) => !actorPermissions.has(permission))) {
+          return res.status(403).json({ success: false, message: 'No puedes asignar un rol con permisos superiores a los tuyos' });
+        }
+      }
     }
 
     const removesActiveAdministrator = currentRole?.role_key === 'web_administrator'
