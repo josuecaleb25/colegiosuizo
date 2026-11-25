@@ -1,10 +1,11 @@
-import { Router } from 'express';
+import { NextFunction, Response, Router } from 'express';
 import bcrypt from 'bcryptjs';
 import supabase from '../config/database';
 import QRCode from 'qrcode';
 import { AuthRequest, authMiddleware, requireRoles } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rate-limit';
 import { createAccountActivationToken, resolveAccountRole } from '../services/account-activation';
+import { WebMemberRequest, requireWebAdministrator, webMemberMiddleware } from '../middleware/web-members';
 
 const router = Router();
 const qrImageCache = new Map<string, Promise<string>>();
@@ -42,7 +43,14 @@ const getQrImage = (code: string) => {
   return imagePromise;
 };
 
-router.use(authMiddleware, requireRoles('administrador', 'admin'));
+// La app móvil mantiene su autorización histórica por rol de cuenta.
+// Las sesiones emitidas para el panel web también requieren Administrador del panel.
+const authorizeAdminContext = (req: WebMemberRequest, res: Response, next: NextFunction) => {
+  if (req.user?.context !== 'web') return next();
+  return webMemberMiddleware(req, res, () => requireWebAdministrator(req, res, next));
+};
+
+router.use(authMiddleware, requireRoles('administrador', 'admin'), authorizeAdminContext);
 
 const activationCodeRateLimit = createRateLimiter(15 * 60 * 1000, 20);
 
@@ -810,7 +818,7 @@ router.get('/asistencia/historial', async (req, res) => {
         const actual = resumen.get(fecha) || { fecha, presentes: 0, tardanzas: 0, ausentes: 0 };
         const estado = String(row.estado || '').toLowerCase();
         if (estado === 'tardanza') actual.tardanzas++;
-        else if (estado === 'falta' || estado === 'ausente') actual.ausentes++;
+        else if (estado === 'falta' || estado === 'ausente' || estado === 'justificado') actual.ausentes++;
         else if (estado === 'presente') actual.presentes++;
         resumen.set(fecha, actual);
       }

@@ -5,7 +5,7 @@ import { normalizeWebPermissions, createWebRoleKey } from '../services/web-permi
 
 const router = Router();
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const eligibleAppRoles = new Set(['administrador', 'admin', 'auxiliar', 'moderador']);
+const eligibleAppRoles = new Set(['administrador', 'admin', 'profesor']);
 
 function relation(value: any) {
   return Array.isArray(value) ? value[0] || null : value || null;
@@ -255,7 +255,7 @@ router.post('/members', requireWebAdministrator, async (req: WebMemberRequest, r
     if (accountError) throw accountError;
     if (roleError) throw roleError;
     if (!account || account.activo !== true || !eligibleAppRoles.has(String(account.rol).toLowerCase())) {
-      return res.status(400).json({ success: false, message: 'Solo se pueden agregar cuentas activas de administración o auxiliares; estudiantes y profesores no son miembros web' });
+      return res.status(400).json({ success: false, message: 'Solo se pueden agregar cuentas activas de administración o profesores; los estudiantes no son miembros web' });
     }
     if (!role || role.active !== true) return res.status(400).json({ success: false, message: 'El rol web no existe o está desactivado' });
 

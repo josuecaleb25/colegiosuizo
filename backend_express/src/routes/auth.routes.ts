@@ -78,7 +78,7 @@ router.post('/login', loginRateLimit, async (req, res) => {
     const persona = result.data;
     const rol = usuario.rol;
 
-    const token = signAccessToken({ id: persona.id, email: persona.correo, rol, sessionVersion: usuario.session_version ?? 0 });
+    const token = signAccessToken({ id: persona.id, email: persona.correo, rol, sessionVersion: usuario.session_version ?? 0, context: 'app' });
 
     // Obtener sección del alumno
     let seccion = '';

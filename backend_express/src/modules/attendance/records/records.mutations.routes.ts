@@ -1,9 +1,16 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import supabase from '../../../config/database';
 import { authMiddleware, requireRoles } from '../../../middleware/auth';
+import { webMemberMiddleware } from '../../../middleware/web-members';
+import { AuthRequest } from '../../../middleware/auth';
+import { teacherOwnsAttendance } from '../web-attendance-access';
 
 const router = Router();
 const managers = ['profesor', 'administrador', 'admin'];
+const administratorRoles = ['administrador', 'admin'];
+
+const requireWebMemberWhenApplicable = (req: AuthRequest, res: any, next: any) =>
+  req.user?.context === 'web' ? webMemberMiddleware(req as any, res, next) : next();
 
 async function removeEmptyClosedSessions(sessionIds: string[]) {
   const uniqueSessionIds = [...new Set(sessionIds.filter(Boolean))];
@@ -26,10 +33,14 @@ async function removeEmptyClosedSessions(sessionIds: string[]) {
   }
 }
 
-router.put('/:id', authMiddleware, requireRoles(...managers), async (req, res) => {
+router.put('/:id', authMiddleware, requireRoles(...managers), requireWebMemberWhenApplicable, async (req: AuthRequest, res: Response) => {
   try {
-    const { estado } = req.body;
-    if (!estado) return res.status(400).json({ success: false, code: 'STATUS_REQUIRED', message: 'El estado es obligatorio' });
+    const estado = typeof req.body?.estado === 'string' ? req.body.estado.trim().toLowerCase() : '';
+    const allowedStatuses = new Set(['presente', 'tardanza', 'falta', 'justificado']);
+    if (!allowedStatuses.has(estado)) return res.status(400).json({ success: false, code: 'INVALID_ATTENDANCE_STATUS', message: 'El estado de asistencia no es válido' });
+    if (req.user?.rol === 'profesor' && !await teacherOwnsAttendance(req.user.id, String(req.params.id || ''))) {
+      return res.status(404).json({ success: false, code: 'ATTENDANCE_NOT_FOUND', message: 'Asistencia no encontrada' });
+    }
     const { data, error } = await supabase
       .from('asistencias')
       .update({ estado })
@@ -45,7 +56,7 @@ router.put('/:id', authMiddleware, requireRoles(...managers), async (req, res) =
   }
 });
 
-router.post('/eliminar-batch', authMiddleware, requireRoles(...managers), async (req, res) => {
+router.post('/eliminar-batch', authMiddleware, requireRoles(...administratorRoles), async (req, res) => {
   try {
     const ids = req.body?.ids;
     if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ success: false, code: 'IDS_REQUIRED', message: 'Se requiere un array de IDs' });
@@ -69,7 +80,7 @@ router.post('/eliminar-batch', authMiddleware, requireRoles(...managers), async 
   }
 });
 
-router.delete('/:id', authMiddleware, requireRoles(...managers), async (req, res) => {
+router.delete('/:id', authMiddleware, requireRoles(...administratorRoles), async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('asistencias')

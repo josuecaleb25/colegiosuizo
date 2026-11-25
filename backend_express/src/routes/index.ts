@@ -10,11 +10,13 @@ import adminRoutes from './admin.routes';
 import seccionesRoutes from './secciones.routes';
 import notificacionesRoutes from '../modules/notifications/notifications.routes';
 import webAdminRoutes from './web-admin.routes';
+import webMemberSessionsRoutes from './web-member-sessions.routes';
 import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
 
 router.use('/auth', authRoutes);
+router.use('/web/members', webMemberSessionsRoutes);
 router.use(authMiddleware);
 router.use('/web', webAdminRoutes);
 router.use('/alumnos', alumnosRoutes);

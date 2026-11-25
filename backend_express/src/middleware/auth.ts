@@ -7,6 +7,7 @@ export interface AuthRequest extends Request {
     id: string;
     email: string;
     rol: string;
+    context: 'app' | 'web';
   };
 }
 
@@ -24,8 +25,8 @@ export function assertJwtSecretConfigured(): void {
   getJwtSecret();
 }
 
-export function signAccessToken(payload: { id: string; email: string; rol: string; sessionVersion?: number }): string {
-  return jwt.sign({ id: payload.id, email: payload.email, rol: payload.rol, sv: payload.sessionVersion ?? 0 }, getJwtSecret(), {
+export function signAccessToken(payload: { id: string; email: string; rol: string; sessionVersion?: number; context?: 'app' | 'web' }): string {
+  return jwt.sign({ id: payload.id, email: payload.email, rol: payload.rol, sv: payload.sessionVersion ?? 0, ctx: payload.context ?? 'app' }, getJwtSecret(), {
     algorithm: 'HS256',
     expiresIn: (process.env.JWT_EXPIRES_IN || '8h') as jwt.SignOptions['expiresIn']
   });
@@ -77,7 +78,7 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
     if (error || !account || account.activo === false || account.session_version !== tokenVersion) {
       return res.status(401).json({ success: false, message: 'Sesión cerrada o inválida' });
     }
-    req.user = { id: decoded.id, email: decoded.email, rol: decoded.rol };
+    req.user = { id: decoded.id, email: decoded.email, rol: decoded.rol, context: decoded.ctx === 'web' ? 'web' : 'app' };
     next();
   } catch {
     return res.status(401).json({ success: false, message: 'Token inválido' });

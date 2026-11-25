@@ -3,6 +3,8 @@ import supabase from '../config/database';
 import { AuthRequest } from './auth';
 import { hasWebPermissions } from '../services/web-permissions';
 
+const eligibleWebAccountRoles = new Set(['administrador', 'admin', 'profesor']);
+
 export interface WebMemberRequest extends AuthRequest {
   webMember?: {
     id: string;
@@ -18,6 +20,7 @@ export interface WebMemberRequest extends AuthRequest {
 
 export const webMemberMiddleware = async (req: WebMemberRequest, res: Response, next: NextFunction) => {
   if (!req.user) return res.status(401).json({ success: false, message: 'Autenticación requerida' });
+  if (req.user.context !== 'web') return res.status(403).json({ success: false, message: 'Esta sesión no tiene acceso al panel web' });
 
   try {
     const { data: account, error: accountError } = await supabase
@@ -28,6 +31,9 @@ export const webMemberMiddleware = async (req: WebMemberRequest, res: Response, 
 
     if (accountError || !account || account.activo === false) {
       return res.status(401).json({ success: false, message: 'La cuenta no está disponible' });
+    }
+    if (!eligibleWebAccountRoles.has(String(account.rol || '').toLowerCase())) {
+      return res.status(403).json({ success: false, message: 'Esta cuenta no tiene acceso al panel web' });
     }
 
     const { data: member, error: memberError } = await supabase
@@ -73,7 +79,7 @@ export const requireWebPermissions = (...permissions: string[]) => {
 export const requireWebAdministrator = (req: WebMemberRequest, res: Response, next: NextFunction) => {
   if (!req.webMember) return res.status(401).json({ success: false, message: 'Autenticación requerida' });
   if (req.webMember.roleKey !== 'web_administrator') {
-    return res.status(403).json({ success: false, message: 'Solo un administrador puede gestionar roles y miembros' });
+    return res.status(403).json({ success: false, message: 'Esta acción requiere el rol Administrador del panel web' });
   }
   return next();
 };
