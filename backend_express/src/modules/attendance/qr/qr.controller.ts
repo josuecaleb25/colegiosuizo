@@ -42,7 +42,11 @@ export async function scanAttendanceQr(req: AuthRequest, res: Response) {
     return res.status(error.status || 500).json({
       success: false,
       code,
-      message: code === 'SESSION_CLOSED'
+      message: code === 'ATTENDANCE_WEEKEND_NOT_ALLOWED'
+        ? 'La asistencia solo se puede registrar de lunes a viernes'
+        : code === 'INVALID_ATTENDANCE_DATE'
+          ? 'La fecha de asistencia no es válida'
+          : code === 'SESSION_CLOSED'
         ? 'La sesión de asistencia ya fue cerrada'
         : code === 'SESSION_NOT_FOUND'
           ? 'Sesión de asistencia no encontrada'

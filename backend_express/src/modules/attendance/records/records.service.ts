@@ -1,6 +1,7 @@
 import notificationService from '../../notifications/notifications.service';
 import recordsRepository from './records.repository';
 import { attendanceNotificationTitle, buildAttendanceMessage } from '../attendance-notification-text';
+import { assertAttendanceWeekday } from '../attendance-calendar';
 
 const LIMA_TIME_ZONE = 'America/Lima';
 
@@ -15,12 +16,16 @@ class AttendanceRecordsService {
     const session = await recordsRepository.findSession(input.sessionId);
     if (!session) throw this.error('SESSION_NOT_FOUND', 404, 'Sesión no encontrada');
     if (session.estado !== 'abierta') throw this.error('SESSION_CLOSED', 409, 'La sesión ya fue cerrada');
+    const sessionDate = assertAttendanceWeekday(String(session.fecha || '').slice(0, 10));
+    const now = new Date();
+    const date = assertAttendanceWeekday(now.toLocaleDateString('en-CA', { timeZone: LIMA_TIME_ZONE }));
+    if (sessionDate !== date) {
+      throw this.error('SESSION_DATE_MISMATCH', 400, 'La sesión no corresponde al día actual');
+    }
 
-    const existing = await recordsRepository.findExisting(student.persona_id, session.fecha, input.sessionId);
+    const existing = await recordsRepository.findExisting(student.persona_id, sessionDate, input.sessionId);
     if (existing) throw this.error('ATTENDANCE_ALREADY_EXISTS', 400, 'Ya existe asistencia registrada para este alumno en esta sesión');
 
-    const now = new Date();
-    const date = now.toLocaleDateString('en-CA', { timeZone: LIMA_TIME_ZONE });
     const time = now.toLocaleTimeString('en-GB', { timeZone: LIMA_TIME_ZONE, hour12: false });
     const data = await recordsRepository.insert({
       personaId: student.persona_id,
@@ -37,6 +42,7 @@ class AttendanceRecordsService {
   }
 
   async registerAbsencesBatch(absences: Array<{ persona_id: string }>, date: string) {
+    assertAttendanceWeekday(date);
     const result = { guardados: 0, errores: 0, notificaciones: 0, detalles: [] as string[] };
     const students = await recordsRepository.findActiveStudents();
     const studentByPersona = new Map(students.map((student: any) => [student.persona_id, student]));
@@ -85,6 +91,7 @@ class AttendanceRecordsService {
   }
 
   async registerAbsence(personaId: string, status: string | undefined, date: string) {
+    assertAttendanceWeekday(date);
     const student = await recordsRepository.findStudentByPersona(personaId);
     if (!student) throw this.error('STUDENT_NOT_FOUND', 404, 'Alumno no encontrado');
     const existing = await recordsRepository.findExisting(personaId, date);

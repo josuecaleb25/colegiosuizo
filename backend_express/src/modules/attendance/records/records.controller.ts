@@ -8,7 +8,7 @@ export async function registerManualAttendance(req: Request, res: Response) {
     const data = await recordsService.registerManual({ sessionId: sesion_id, studentId: alumno_id, status: estado, observations: observaciones });
     return res.status(201).json({ success: true, message: 'Asistencia registrada exitosamente', data });
   } catch (error: any) {
-    return res.status(error.status || 500).json({ success: false, message: error.message || 'Error al registrar asistencia', error: error.message });
+    return res.status(error.status || 500).json({ success: false, code: error.code, message: error.message || 'Error al registrar asistencia' });
   }
 }
 
@@ -20,7 +20,7 @@ export async function registerAbsencesBatch(req: Request, res: Response) {
     const data = await recordsService.registerAbsencesBatch(ausentes, fecha);
     return res.json({ success: true, message: `Procesados: ${data.guardados} guardados, ${data.errores} errores`, data });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: 'Error al registrar ausentes', error: error.message });
+    return res.status(error.status || 500).json({ success: false, code: error.code, message: error.message || 'Error al registrar ausentes' });
   }
 }
 
@@ -32,6 +32,6 @@ export async function registerAbsence(req: Request, res: Response) {
     if (result.existing) return res.json({ success: true, message: 'Ya existe asistencia para este alumno' });
     return res.json({ success: true, message: 'Ausente registrado', data: result.data });
   } catch (error: any) {
-    return res.status(error.status || 500).json({ success: false, message: error.message || 'Error al registrar ausente', error: error.message });
+    return res.status(error.status || 500).json({ success: false, code: error.code, message: error.message || 'Error al registrar ausente' });
   }
 }

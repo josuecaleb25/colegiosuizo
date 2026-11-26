@@ -1,5 +1,6 @@
 import { closeAttendanceSession, getLimaDate } from '../../../services/attendance-session.service';
 import sessionsRepository from './sessions.repository';
+import { assertAttendanceWeekday } from '../attendance-calendar';
 
 class AttendanceSessionsService {
   async getActive() {
@@ -19,7 +20,7 @@ class AttendanceSessionsService {
   }
 
   async create(createdBy: string | null) {
-    const date = getLimaDate();
+    const date = assertAttendanceWeekday(getLimaDate());
     const active = await sessionsRepository.findActive(date);
     if (active) return { data: active, reused: true, message: 'Se reutilizó la sesión de asistencia activa' };
 

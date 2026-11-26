@@ -1,5 +1,6 @@
 import supabase from '../config/database';
 import notificationService from '../modules/notifications/notifications.service';
+import { assertAttendanceWeekday } from '../modules/attendance/attendance-calendar';
 
 const LIMA_TIME_ZONE = 'America/Lima';
 
@@ -62,6 +63,15 @@ async function notifySessionAbsences(sessionId: string, sessionDate: string) {
 }
 
 export async function closeAttendanceSession(id: string) {
+  const sessionToClose = await getSession(id);
+  if (!sessionToClose) {
+    const error: any = new Error('Sesión no encontrada');
+    error.status = 404;
+    error.code = 'SESSION_NOT_FOUND';
+    throw error;
+  }
+  assertAttendanceWeekday(String(sessionToClose.fecha || '').slice(0, 10));
+
   const { error: rpcError } = await supabase.rpc('cerrar_sesion_asistencia_atomica', {
     p_sesion_id: id
   });

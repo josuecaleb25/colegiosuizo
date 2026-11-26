@@ -41,7 +41,12 @@ export async function createSession(req: AuthRequest, res: Response) {
     });
   } catch (error: any) {
     console.error('Error creating attendance session:', error.message);
-    return res.status(500).json({ success: false, message: 'Error al crear sesión de asistencia', error: error.message });
+    return res.status(error.status || 500).json({
+      success: false,
+      code: error.code || 'ATTENDANCE_SESSION_CREATE_FAILED',
+      message: error.message || 'Error al crear sesión de asistencia',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 }
 

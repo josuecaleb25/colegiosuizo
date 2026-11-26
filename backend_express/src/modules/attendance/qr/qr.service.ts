@@ -1,13 +1,14 @@
 import notificationService from '../../notifications/notifications.service';
 import qrRepository from './qr.repository';
 import { attendanceNotificationTitle, buildAttendanceMessage, formatAttendanceTime } from '../attendance-notification-text';
+import { assertAttendanceWeekday } from '../attendance-calendar';
 
 const LIMA_TIME_ZONE = 'America/Lima';
 
 class QrAttendanceService {
   async scan(code: string, sessionId: string) {
     const now = new Date();
-    const date = now.toLocaleDateString('en-CA', { timeZone: LIMA_TIME_ZONE });
+    const date = assertAttendanceWeekday(now.toLocaleDateString('en-CA', { timeZone: LIMA_TIME_ZONE }));
     const session = await qrRepository.findSession(sessionId);
 
     if (!session) throw this.error('SESSION_NOT_FOUND', 404);
